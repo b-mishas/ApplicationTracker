@@ -10,7 +10,7 @@
 2. **Connect Gmail:** in Claude's settings, open *Connectors* and add Gmail; sign in with the Gmail account that gets your alerts. The agent only reads mail.
 3. **Start a conversation** in the desktop app and give it access to your job-search folder (use the folder/attachment option next to the message box and pick the folder).
 4. **Paste the setup prompt** from `agent/SETUP_PROMPT.md` and answer the questions. The assistant fills your profile and employer list, checks Gmail and creates the scheduled task.
-5. **LinkedIn:** when asked, open the built-in browser of the desktop app (Ctrl+Shift+B on Windows, Cmd+Shift+B on Mac, or the globe icon) and sign in to LinkedIn yourself. The sign-in stays saved there.
+5. **LinkedIn:** when asked, open the built-in browser of the desktop app (the assistant can open it for you) and sign in to LinkedIn yourself. The sign-in stays saved there.
 6. **Test run:** open *Scheduled* in the left sidebar, open "Daily job search" and run it once. Read the summary with the assistant.
 
 ## Every day

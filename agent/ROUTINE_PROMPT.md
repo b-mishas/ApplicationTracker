@@ -15,7 +15,7 @@ All personal search rules live in profile/candidate_profile.md and profile/compa
 - Candidate profile: `profile/candidate_profile.md`
 - Employer list: `profile/companies.xlsx`
 - Gmail label with job alerts: `{{GMAIL_LABEL}}`
-- Time zone for dates and deadlines: {{TIMEZONE}}
+- Time zone for dates and deadlines: {{TIMEZONE}}  (IANA name, e.g. Europe/Vienna; must equal the tracker's time-zone setting)
 - Summary language: {{SUMMARY_LANGUAGE}}
 
 ## Part B — Fixed core (identical for every user; do not edit)
@@ -26,13 +26,13 @@ Work autonomously; nobody will answer questions. Never apply, send messages, sig
 
 ### 1. Setup
 
-Locate ROOT with the file tools you have. In Claude, files on the user's computer are reached through the computer/device tools (for example get_device_info and device_bash; connected folders are usually mounted under `$HOME/mnt/<folder name>`). In Codex, ROOT is the automation's project folder. Discover deferred tools through tool search; do not assume exact tool names or that a browser is connected. Verify real paths before running commands. If a folder is unavailable, report it and continue whatever searching is possible. Never claim access without checking.
+Locate ROOT with the file tools you have. In Claude, files on the user's computer are reached through the computer/device tools (for example get_device_info and device_bash; connected folders are usually mounted under `$HOME/mnt/<folder name>`). In Codex, ROOT is the automation's project folder. Discover deferred tools through tool search; do not assume exact tool names or that a browser is connected. Verify real paths before running commands. If a folder is unavailable, report it and continue whatever searching is possible. Never claim access without checking. Never install software, packages or browser extensions; use only what the environment already has.
 
 Read, in this order:
 - `profile/candidate_profile.md` — the authoritative search rules: target roles, seniority, countries, remote rules, mismatch signals, confirmed gaps, calibration examples, alert sources, portals and their rotation, special exclusions.
 - `app/SEARCH_WORKFLOW.md` and the files it names — storage, the exact import command, validation, failure handling, and the tracker settings (supported countries, groups, time zone).
 - `app/batch.schema.json` — the exact accepted batch fields and values. The schema and tracker settings decide which country codes and group names are valid; never hardcode them.
-- `profile/companies.xlsx` — employers to check, with priorities.
+- `profile/companies.xlsx` — employers to check, with priorities. Read it with an available spreadsheet library; if none exists, read the sheet XML inside it (an .xlsx file is a zip archive). Combine its "Last checked" and "Careers page" values with the `employers` entries in coverage.json, taking the newer date.
 - `data/jobs.json` — existing vacancies and the user's decisions.
 - `data/reports/coverage.json` — checkpoints from earlier runs; may be missing on the first run.
 
@@ -77,7 +77,7 @@ Extract title, company, location and URL; deduplicate across emails and against 
 
 Never click Apply, Easy Apply, Save, Message or Follow; never sign in, solve security checks or change settings; never bypass access controls; never retry a failing access method more than once. Report the observed failure accurately. Never browse sources the profile marks as "alerts only".
 
-Employers: fill missing career URLs for at most fifteen employers per run, priority A first. After successfully checking an employer's listings, write today's date into its "Last checked" cell with openpyxl, preserving formatting and other content. Never rebuild the workbook or change its "Status" column. A blocked or incomplete check does not count. If the workbook is locked (open in Excel), skip the write and report it.
+Employers: fill missing career URLs for at most fifteen employers per run, priority A first. After successfully checking an employer's listings, record today's date in coverage.json `employers` and in the workbook's "Last checked" cell; store newly found career URLs the same way ("Careers page"). Write the workbook only with a library that preserves formatting and other content (e.g. openpyxl). If no such library is available or the workbook is locked (open in Excel), write coverage.json only and say so once under Coverage. Never rebuild the workbook or change its "Status" column. A blocked or incomplete check does not count.
 
 Portals: cover postings since each source's `lastSuccessfulCheckedThrough` with a one-day overlap; seven days if unknown. Do not discard an older relevant vacancy that is confirmed open. Failed, skipped or partial searches never advance coverage.
 
@@ -149,6 +149,9 @@ Permitted direct writes: batch creation/repair, the employer workbook's "Last ch
   "sources": {
     "<source name>": {"lastSuccessfulCheckedThrough": null, "attemptedAt": "<UTC Z>", "status": "ok|partial|failed|skipped", "candidates": 0, "relevant": 0, "reason": ""}
   },
+  "employers": {
+    "<company exactly as in the workbook>": {"lastChecked": "YYYY-MM-DD", "careersUrl": ""}
+  },
   "unfinished": []
 }
 ```
@@ -170,6 +173,6 @@ For fit 1–2, "Main gap" gives the reason for the low rating. Keep links clicka
 
 **Flags** — urgent/passed deadlines; uncertain duplicates; rejected records; closures of Shortlisted records; material title/location changes; relevant existing applications.
 
-**Coverage** — **Alerts:** mails N, candidates N, dropped N · **Employers:** checked N, missed N · **Full postings reviewed:** N (target ~25) · **LinkedIn access:** browser used / none (observed reason) · **Sources failed:** … · **Unfinished:** …
+**Coverage** — **Alerts:** mails N, candidates N, dropped N · **Employers:** checked N, missed N (dates in workbook / coverage.json only: reason) · **Full postings reviewed:** N (target ~25) · **LinkedIn access:** browser used / none (observed reason) · **Sources failed:** … · **Unfinished:** …
 
 If nothing could be imported, state "Nothing imported" and add a "Findings not imported" table. Never describe an unsaved candidate as added or an unchecked source as covered.

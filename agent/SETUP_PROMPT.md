@@ -15,13 +15,13 @@ The package is in my job-search folder (call it ROOT). It contains:
 
 Read `agent/CUSTOMIZE.md` first and follow it strictly. Then do these steps in order. After each step, tell me in one line what is done and what comes next.
 
-1. **Check the installation.** Confirm you can read and write ROOT. Read `app/README.md` (or the tracker's start file) and run the tracker's own self-check if it documents one. If something is missing or fails, stop and tell me exactly what to do.
+1. **Check the installation.** Confirm you can read and write ROOT. Read `app/README.md` and `app/SEARCH_WORKFLOW.md` and run the tracker's own self-check if one is documented. Then prove the import works where the scheduled run will work: write an empty test batch `{"schemaVersion":1,"runId":"setupcheck01","searchedAt":"<now, UTC, ending Z>","jobs":[]}` as `<today>-setupcheck01.json` into a temporary folder **outside** ROOT, run the importer on that file with `--validate-only` exactly as SEARCH_WORKFLOW.md documents (`--root` = ROOT's `data/` folder), expect exit code 0, then delete the test file. Also check whether a spreadsheet library is available to write `profile/companies.xlsx`; if not, tell me that employer check dates will be kept in `data/reports/coverage.json` instead (nothing needs installing). If Node, the tracker or a check fails, stop and tell me exactly what to do.
 
 2. **Collect my background.** Ask me to attach my CV (or put it into `profile/cv/`) and, if I have them, 3–6 job postings I applied to or found interesting, plus my verdict on each. Read them fully.
 
 3. **Fill the profile.** Interview me with short, numbered questions (at most 6 per message, multiple choice where possible) to fill every section of `profile/candidate_profile.md`: target role families, levels, countries and remote rules, preferred regions, relocation and on-site limits, strengths, confirmed gaps (and which are bridgeable), mismatch signals, calibration examples, special exclusions. Use only what my CV and I confirm; never invent experience. Show me the filled profile and change it until I approve it.
 
-4. **Align the tracker settings.** Make the tracker's configurable settings (groups, supported countries, time zone — as `app/` documents them) match the approved profile, using only the method the tracker documents. Do not change code or the batch schema.
+4. **Align the tracker settings.** Make the tracker's configurable settings (groups, supported countries, time zone — as `app/` documents them) match the approved profile, using only the method the tracker documents, and confirm afterwards that `app/batch.schema.json` accepts the new groups and country codes. If the tracker documents no settings method, stop and tell me that this tracker version cannot be personalized yet. Never change code, the batch schema or `data/` to work around it.
 
 5. **Build the employer list.** Propose 20–40 employers that fit my profile, each with group, country, sites, focus, role types, website and a priority A/B/C following the priority rule in the profile. Use web search to verify that each company exists and has relevant sites; mark anything unverified. After my approval, write them into `profile/companies.xlsx` (sheet "Companies", keep the formatting, delete the example row, leave "Careers page" empty where unknown and "Last checked" empty).
 
@@ -33,10 +33,16 @@ Read `agent/CUSTOMIZE.md` first and follow it strictly. Then do these steps in o
 
 9. **Schedule it.** Ask me which weekdays and time. Then:
    - Claude: create a scheduled task named "Daily job search" with the filled prompt, weekdays at my time, access to ROOT, the Gmail connector, and approval mode that does not stop for every file action. Tell me which model it uses and recommend a capable one (not the smallest).
-   - Codex: create an automation with the filled prompt, ROOT as project folder, my schedule, Gmail plugin enabled and permissions that allow unattended file reads and writes inside ROOT only. If you cannot create it yourself, give me numbered click-by-click steps from `guides/SETUP_CODEX.md`.
+   - Codex: create an automation with the filled prompt, ROOT as project folder, my schedule, Gmail plugin enabled, web/network access allowed (it must read job sites) and permissions that allow unattended file reads and writes inside ROOT only. It must run directly in ROOT, not in a separate copy or worktree, otherwise results never reach my tracker. If you cannot create it yourself, give me numbered click-by-click steps from `guides/SETUP_CODEX.md`.
    Remind me that the computer must be on, the app running and `profile/companies.xlsx` closed at that time.
 
 10. **Test run.** Start one run now (or ask me to press "Run now"). When it finishes, read its summary with me: did Gmail work, was anything imported, did the table appear, did LinkedIn access work? Fix only setup problems (settings, access, profile wording). Never change Part B to make a test pass; if Part B seems wrong for me, tell me and explain.
+   Setup is finished only when all of these are true; tell me which one fails and why:
+   - the summary says Gmail "OK" or "empty", not "not read";
+   - the run's batch is in `data/incoming/imported/` and its report is in `data/reports/`;
+   - `data/reports/coverage.json` exists and lists the sources that were checked;
+   - new positions, if any, show up in the tracker;
+   - the summary has the Import, New positions (or "No new positions added") and Coverage sections.
 
 Rules for the whole setup: never apply to jobs, send messages or emails, or sign in on my behalf; Gmail stays read-only; do not edit tracker code or the batch schema; ask before deleting anything.
 

@@ -4,7 +4,7 @@
 
 ## You need
 - A ChatGPT plan that includes Codex, and the **Codex desktop app** (Windows or macOS).
-- **Node.js** installed (the tracker needs it; see the tracker's README for the version and a one-click installer).
+- **Node.js**, only if the tracker's README says it is not included (the README then links an installer). Python is not needed.
 - A Gmail account that receives your job alerts.
 - The job-search folder (this package, with `app/` and `data/`), e.g. `Documents/JobSearch`.
 
@@ -13,7 +13,7 @@
 2. **Open the job-search folder as a project** in Codex.
 3. **Install the Gmail plugin:** sidebar → *Plugins* → Gmail → *Install*, then sign in with your alert account. The agent only reads mail.
 4. **Start a new thread** in the project, paste the setup prompt from `agent/SETUP_PROMPT.md`, and answer the questions.
-5. **Create the automation** (Codex may do it for you): sidebar → *Automations* → *New automation* → name "Daily job search" → project = your job-search folder → paste the content of `agent/ROUTINE_PROMPT.filled.md` → schedule: weekdays at your time → reasoning: high → permissions: a mode that lets it read and write inside the project without asking each time.
+5. **Create the automation** (Codex may do it for you): sidebar → *Automations* → *New automation* → name "Daily job search" → project = your job-search folder → paste the content of `agent/ROUTINE_PROMPT.filled.md` → schedule: weekdays at your time → reasoning: high → permissions: a mode that lets it read and write inside the project without asking each time, with web access allowed → if asked where it runs, choose the project folder itself (local), not a worktree or copy.
 6. **Test run:** run the automation once and read the summary with Codex.
 
 ## Every day
@@ -22,6 +22,7 @@
 
 ## Limits to expect
 - **LinkedIn:** LinkedIn job pages need a signed-in browser. If your Codex setup has no browser that can use your LinkedIn sign-in, LinkedIn roles stay "Unverified" unless the employer's own page is found. They are still listed in the summary.
+- **Keep it a plain folder:** do not turn the job-search folder into a Git repository. Codex may then run automations in a separate copy, and the results would never reach your tracker.
 - **Permissions:** with "ask before acting" modes, unattended runs pause. Prefer the narrowest mode that works unattended inside the project folder.
 
 Official overview: [Codex automations](https://openai.com/academy/codex-automations).

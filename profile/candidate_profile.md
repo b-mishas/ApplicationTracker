@@ -21,6 +21,8 @@ List 2–6 families. For each: typical titles, and the level that fits.
 
 Group names here must match the groups configured in the tracker settings.
 
+Search keywords (used for portal searches and job alerts): {{e.g. data engineer, data platform, bioinformatics, LIMS}}
+
 ## 3. Seniority rules
 - Below my level (keep, but mark seniority "Below level"): {{e.g. Junior, Associate}}
 - Above my level (keep only if…): {{e.g. Director only at small companies}}

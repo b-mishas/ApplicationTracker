@@ -19,6 +19,17 @@ Safety rules (no applying, no messages, no sign-in, Gmail read-only), work order
 - Employer list: your own 20–40 employers with priorities.
 - Tracker settings: groups, supported countries and time zone must match the profile (done by the setup assistant through the tracker's settings).
 
+## Where each profile section is used by the routine
+| Profile section | Routine step (Part B) | Effect if wrong or empty |
+|---|---|---|
+| §2 Role families, titles, keywords | 3 Scope, 5 Portals; group of each record | Wrong roles found or missed |
+| §3 Seniority | 3 Scope, seniority field | Junior/too-senior roles reported or dropped |
+| §4 Geography | 3 Scope, countries field | Ineligible locations reported |
+| §5 Strengths, §6 Gaps, §8 Calibration | 6 Fit rating | Fit ratings too high or too low |
+| §7 Mismatch signals | 3 Scope (drop without review) | Noise, or good roles dropped |
+| §9 Exclusions | 3 Scope | Old roles reported again |
+| §10 Sources, rotation, schedule | 2 Work order, 4 Gmail, 5 Sources | Sources never checked or browsed against your wish |
+
 ## What may be adjusted, but only in the profile
 - Employer schedule (default A daily, B Mon/Thu, C Fri).
 - Portal list and weekday rotation.
@@ -29,7 +40,7 @@ Safety rules (no applying, no messages, no sign-in, Gmail read-only), work order
 1. Edit only the profile, the employer list, Part A and documented tracker settings.
 2. Copy Part B verbatim. Do not shorten, translate or "improve" it.
 3. Never invent experience, skills or dates; mark anything unverified.
-4. Group names and country codes in the profile must exist in the tracker settings.
+4. Group names, country codes and the time zone in the profile and Part A must equal the tracker settings; `app/batch.schema.json` must accept them.
 5. Keep the profile in plain language; the agent rereads it every run.
 
 ## Changing things later — prompts that work
