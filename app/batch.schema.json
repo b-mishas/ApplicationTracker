@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "batch.schema.json",
+  "title": "JobTracker discovery batch (schemaVersion 1)",
+  "description": "Daily discoveries written by the Claude search task to incoming/YYYY-MM-DD-<runId>.json. Enforced by import-discoveries.mjs before any data is touched. User-owned fields (status, notes, shortlist, updatedAt, id, firstSeen, lastSeen) are forbidden here. Cross-field rules enforced by the importer: every sources[].file equals this batch's file name; availability Open/Closed requires assessmentBasis 'Posting reviewed' and linkType 'posting'.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "runId", "searchedAt", "jobs"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "runId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{5,63}$"},
+    "searchedAt": {"type": "string", "format": "date-time-utc"},
+    "jobs": {"type": "array", "maxItems": 500, "items": {"$ref": "#/$defs/job"}}
+  },
+  "$defs": {
+    "job": {
+      "type": "object",
+      "additionalProperties": false,
+      "$comment_forbidden": ["id", "status", "notes", "favorite", "favourite", "shortlisted", "shortlist", "updatedAt", "firstSeen", "lastSeen", "country", "applicationDate", "applicationStatusText", "applicationCity", "applicationSourceRow"],
+      "required": ["company", "title", "url", "linkType", "group", "countries", "city", "locationRaw", "workMode", "workModeRaw", "fit", "reasoning", "gaps", "seniority", "assessmentBasis", "postedDate", "observedAt", "availability", "sources"],
+      "properties": {
+        "company": {"type": "string", "minLength": 1, "maxLength": 200},
+        "title": {"type": "string", "minLength": 1, "maxLength": 300},
+        "matchesRecordId": {"type": "string", "minLength": 1, "maxLength": 100, "description": "Optional. Id of an existing jobs.json record that this discovery updates (renamed title, relocated city). Rejected if the id does not exist."},
+        "provider": {"type": "string", "minLength": 1, "maxLength": 60},
+        "providerJobId": {"type": "string", "minLength": 1, "maxLength": 200},
+        "url": {"type": "string", "format": "http-url", "maxLength": 2000},
+        "linkType": {"enum": ["posting", "search"]},
+        "group": {"enum": ["Protein discovery", "Computational", "ELN/LIMS", "Data steward", ""]},
+        "countries": {"type": "array", "uniqueItems": true, "maxItems": 7, "items": {"enum": ["DE", "CH", "AT", "NL", "BE", "UK", "ES"]}},
+        "city": {"type": "string", "maxLength": 200},
+        "locationRaw": {"type": "string", "maxLength": 1000},
+        "workMode": {"enum": ["On-site", "Hybrid", "Remote", "Unknown"]},
+        "workModeRaw": {"type": "string", "maxLength": 500},
+        "fit": {"type": ["integer", "null"], "minimum": 1, "maximum": 5},
+        "reasoning": {"type": "string", "maxLength": 3000},
+        "gaps": {"type": "string", "maxLength": 3000},
+        "seniority": {"type": "string", "maxLength": 300},
+        "assessmentBasis": {"enum": ["Title only", "Posting reviewed"]},
+        "postedDate": {"type": "string", "maxLength": 100},
+        "observedAt": {"type": "string", "format": "date-time-utc"},
+        "availability": {"enum": ["Unverified", "Open", "Closed"]},
+        "sources": {
+          "type": "array", "minItems": 1, "maxItems": 20,
+          "items": {
+            "type": "object", "additionalProperties": true,
+            "required": ["label", "url", "file"],
+            "properties": {
+              "label": {"type": "string", "minLength": 1, "maxLength": 200},
+              "url": {"type": "string", "format": "http-url", "maxLength": 2000},
+              "file": {"type": "string", "minLength": 1, "maxLength": 300}
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+# Personal runtime information stays outside Git.
+/data/
+/runtime/
+/dist/
+/*.zip
+node_modules/
+.DS_Store
+Thumbs.db
+# The supplied empty workbook/profile are templates. Do not commit customization.
+/profile/cv/*
+!/profile/cv/README.txt
