@@ -29,7 +29,7 @@ Work autonomously; nobody will answer questions. Never apply, send messages, sig
 Locate ROOT with the file tools you have. In Claude, files on the user's computer are reached through the computer/device tools (for example get_device_info and device_bash; connected folders are usually mounted under `$HOME/mnt/<folder name>`). In Codex, ROOT is the automation's project folder. Discover deferred tools through tool search; do not assume exact tool names or that a browser is connected. Verify real paths before running commands. If a folder is unavailable, report it and continue whatever searching is possible. Never claim access without checking. Never install software, packages or browser extensions; use only what the environment already has.
 
 Read, in this order:
-- `profile/candidate_profile.md` — the authoritative search rules: target roles, seniority, countries, remote rules, mismatch signals, confirmed gaps, calibration examples, alert sources, portals and their rotation, special exclusions.
+- `profile/candidate_profile.md` — the authoritative search rules: target roles, seniority, countries, work authorization, remote rules, mismatch signals, confirmed gaps, fit scale and calibration examples, alert sources, portals and their rotation, special exclusions.
 - `app/SEARCH_WORKFLOW.md` and the files it names — storage, the exact import command, validation, failure handling, and the tracker settings (supported countries, groups, time zone).
 - `app/batch.schema.json` — the exact accepted batch fields and values. The schema and tracker settings decide which country codes and group names are valid; never hardcode them.
 - `profile/companies.xlsx` — employers to check, with priorities. Use the bundled employer-workbook.mjs read helper as documented in SEARCH_WORKFLOW.md. Do not assume Python or install anything. Combine its "Last checked" and "Careers page" values with the `employers` entries in coverage.json, taking the newer date.
@@ -51,7 +51,7 @@ This prompt's search, duplicate-handling, coverage and summary rules supersede c
 
 Use about 25 full posting reviews as a soft budget. Career-page searches and full posting reviews are different activities; count them separately. Deduplicate and screen candidates before spending review effort. Prioritize approaching deadlines of shortlisted roles, the strongest new candidates and overdue checks. Reserve effort for scheduled employer checks; do not let alerts consume the whole run. If coverage stays unfinished, record it and catch up next run. Do not repeatedly skip the same employers or sources.
 
-Before opening a posting, compare it with jobs.json: provider job ID, direct URL, then company/title/location as clues. Do not reopen unchanged, already-reviewed records because they recur in alerts. Refresh New/Shortlisted records when assessment or availability is uncertain, a deadline approaches or the posting changed materially.
+Before opening a posting, compare it with jobs.json: provider job ID, direct URL, then company/title/location as clues. Do not reopen unchanged, already-reviewed records because they recur in alerts. Refresh New/Shortlisted records when assessment or availability is uncertain, a deadline approaches or the posting changed materially. Other statuses need reopening only for a material update.
 
 ### 3. Scope
 
@@ -59,13 +59,15 @@ Apply the profile's countries, remote rules, role families, seniority rules and 
 
 Drop and count clear mismatches using the profile's mismatch signals. Drop without opening only when the available evidence establishes the mismatch; otherwise read the description. Do not reject on a keyword alone; judge whether the missing experience is essential and central.
 
+Work authorization: profile §1 says where the candidate may already work. For an in-scope role in any other country (including remote roles restricted to it), read the posting for terms such as "right to work in …", "must be eligible to work in …" or "no visa sponsorship". Drop roles that require existing authorization or exclude sponsorship, and count them separately under Coverage. If sponsorship is offered, keep the role and note "visa sponsorship offered" in gaps; if the posting is silent, keep it and note "work authorization not stated". Never drop on this ground without reading the posting text. Leave existing New/Shortlisted records unchanged and report them under Flags.
+
 Do not re-report roles the user already applied to, rejected, withdrawn or dismissed (see jobs.json and the profile's special exclusions). Different vacancies at the same employer may qualify; mention the existing application.
 
 ### 4. Gmail alerts
 
 Load the Gmail tools through tool search (Claude: Gmail connector; Codex: Gmail plugin) before declaring them missing. If unavailable or failing, report the actual error and continue.
 
-Read the label from Part A starting at `gmailCheckedThrough` in coverage.json minus one day; without a checkpoint, the last seven days; for a known gap, up to fourteen days, and report any longer uncovered interval. Use a fixed upper bound (the run's start time). Process older alerts first and retrieve all result pages. Advance the checkpoint only when the interval is fully processed; a successful empty scan advances it to the upper bound.
+Read the label from Part A starting at `gmailCheckedThrough` in coverage.json minus one day; without a checkpoint, the last seven days; for a known gap, up to fourteen days, and report any longer uncovered interval. Use a fixed upper bound (the run's start time). Process older alerts first and retrieve all result pages. Advance the checkpoint only when the interval is fully processed (all result pages read, every candidate assessed or saved in a batch; opening the newest email is not enough); a successful empty scan advances it to the upper bound.
 
 Extract title, company, location and URL; deduplicate across emails and against jobs.json before opening; prefer the employer's own posting. Label sources by alert service as listed in the profile (e.g. "LinkedIn alert"). Distinguish an empty result from a failed connector. Search the coverage gaps named in the profile when the budget allows.
 
@@ -88,24 +90,17 @@ Portals: cover postings since each source's `lastSuccessfulCheckedThrough` with 
 - "Open"/"Closed": needs actual posting evidence and a direct posting URL. "No longer accepting applications" is closure evidence. If only a closure banner is visible (no description), keep availability Unverified and report the closure under Flags.
 - "Unverified": availability not established. Absence from search results never proves closure.
 
-Assessment basis and availability are separate fields; obey the importer's evidence rules. Keep relevant Unverified candidates in the import and show their status in the summary. Do not add clearly closed vacancies as new; update existing records when closure is evidenced and the schema allows it.
+Assessment basis and availability are separate fields; obey the importer's evidence rules. Never label a record "Posting reviewed" when you saw only a title or a closure banner. Keep relevant Unverified candidates in the import and show their status in the summary. Do not add clearly closed vacancies as new; update existing records when closure is evidenced and the schema allows it.
 
-Fit scale, against the profile:
-- 5: strong core match at the right level; remaining gaps are bridgeable.
-- 4: strong core match with a meaningful but manageable gap.
-- 3: credible transition, or one material essential requirement missing.
-- 2: substantial mismatch across essential requirements.
-- 1: marginal relevance.
+Fit: rate with the fit scale and bridgeable-gap rule in profile §8. Fixed frame: integers 1–5, 5 is best, null when not assessable; 3 or higher means worth the candidate's attention and counts as relevant. Use the profile's strengths, confirmed gaps and calibration examples as reference points, not mechanical scoring rules. Never present literature familiarity as hands-on experience.
 
-A gap is bridgeable when it is adjacent to the candidate's demonstrated core. Bridgeable gaps go into gaps but do not lower the rating; lower it only for missing essential requirements that are not bridgeable, in proportion to their centrality. Never present literature familiarity as hands-on experience. Use the profile's confirmed gaps and calibration examples as reference points.
-
-Reasoning: at most two sentences of specific matching evidence. Gaps: missing requirements marked essential or desirable, plus practical constraints (relocation, on-site days, contract length), kept distinct from skill gaps. Preserve advertised titles, location restrictions and evidence. Never invent dates, eligibility or experience.
+Reasoning: at most two sentences of specific matching evidence. Gaps: missing requirements marked essential or desirable, plus practical constraints (relocation, on-site days, contract length), kept distinct from skill gaps; do not repeat the reasoning. Preserve advertised titles, location restrictions and evidence. Never invent dates, eligibility or experience.
 
 ### 7. Deadlines
 
-Look for explicit application deadlines in reviewed postings. For New or Shortlisted vacancies, a verified deadline from today through seven calendar days ahead (Part A time zone, inclusive) is urgent. Do not infer deadlines from posting age; "open until filled" is not a deadline; a passed deadline alone does not prove closure.
+Look for explicit application deadlines in reviewed postings. For New or Shortlisted vacancies, a verified deadline from today through seven calendar days ahead (Part A time zone, inclusive) is urgent; account for any stated deadline time and time zone, and never flag a passed deadline as upcoming. Do not infer deadlines from posting age; "open until filled" is not a deadline; a passed deadline alone does not prove closure.
 
-If the installed schema has deadline/urgency fields, fill them as SEARCH_WORKFLOW.md describes and never overwrite the user's manual urgency. Otherwise do not invent fields; report under Flags:
+If the installed schema has deadline/urgency fields, fill them as SEARCH_WORKFLOW.md describes and never overwrite the user's manual urgency. Otherwise do not invent fields, call the tracker's web API or edit jobs.json; report under Flags:
 - **URGENT — YYYY-MM-DD:** Company | Title | URL
 - **Deadline passed — YYYY-MM-DD:** Company | Title | URL (existing Shortlisted records only; do not close them)
 
@@ -119,9 +114,9 @@ Do not delete records or replace reviewed information with guesses.
 
 ### 9. Batches and import
 
-A top-level batch in `data/incoming/` without a matching `data/reports/<batch filename with final .json removed>.report.json` is pending; ignore `data/incoming/imported/`. Use the report path returned by RESULT after import; for example batch 2026-11-05-example.json creates 2026-11-05-example.report.json. Also inspect reports for unresolved rejected or ambiguous outcomes from any earlier run. Fix only errors you can establish confidently.
+A top-level batch in `data/incoming/` without a matching `data/reports/<batch filename with final .json removed>.report.json` is pending; ignore `data/incoming/imported/`. Use the report path returned by RESULT after import; for example batch 2026-11-05-example.json creates 2026-11-05-example.report.json. Also inspect reports for unresolved rejected or ambiguous outcomes from any earlier run; a report's existence does not prove complete success. Fix only errors you can establish confidently.
 
-Write one new UTF-8 batch `data/incoming/YYYY-MM-DD-<runId>.json` (local run date; unique runId equal to the envelope's runId; UTC timestamps ending Z). Follow batch.schema.json exactly. Each `sources[].file` equals this batch's filename. Include provider and providerJobId together when known. For eligible remote roles outside the supported countries, use an empty countries array and keep the real location in locationRaw/workModeRaw. An empty jobs array is valid.
+Write one new UTF-8 batch `data/incoming/YYYY-MM-DD-<runId>.json` (local run date; unique runId equal to the envelope's runId; UTC timestamps ending Z). Follow batch.schema.json exactly. Each `sources[].file` equals this batch's filename. Include provider and providerJobId together when known. For eligible remote roles outside the supported countries, use an empty countries array and keep the real location in locationRaw/workModeRaw; never substitute an incorrect country code. An empty jobs array is valid.
 
 Run the importer exactly as `app/SEARCH_WORKFLOW.md` documents. Default, from `app/`:
 ```bash
@@ -133,11 +128,11 @@ If ROOT is mounted elsewhere (Claude), use the real mounted path for `--root`.
 
 Run validation and import separately; validation exit 5 must not stop the import of valid records. Exit codes: 0 processed (check ambiguous); 5 partial (repair rejected records); 2 nothing imported; 3 locked (wait one minute, retry once); 4 write failure. Read the RESULT line. Never remove locks, bypass validation, change content merely to evade an error, or edit jobs.json.
 
-Archive a batch into `data/incoming/imported/` (mv, never delete or overwrite) only after exit 0, an existing report and no unresolved outcomes. When repairing a batch, keep its filename and runId, revalidate and rerun. If import stays impossible: "IMPORT FAILED: <exact error>", keep the batch, list the findings anyway.
+Archive a batch into `data/incoming/imported/` (mv; create the folder if needed; never delete or overwrite) only after exit 0, an existing report and no unresolved outcomes. When repairing a batch, keep its filename and runId, revalidate and rerun; accepted records match idempotently, but never retry unresolved ambiguous records blindly. If import stays impossible: "IMPORT FAILED: <exact error>", keep the batch, list the findings anyway.
 
 ### 10. Coverage checkpoint
 
-At the end, update `data/reports/coverage.json`; keep entries and successful checkpoints for sources not completed this run.
+At the end, update `data/reports/coverage.json`; keep entries and successful checkpoints for sources not completed this run. Failed, skipped or partial scans never replace an earlier successful checkpoint. Remove `unfinished` entries only when completed.
 
 Permitted direct writes: batch creation/repair, the employer workbook's "Last checked"/career-URL cells, coverage.json and completed-batch moves. Temporary files go outside ROOT, or into a temp file next to the target that is renamed over it; never leave temp files in ROOT. The importer manages jobs.json, reports, backups and locks.
 
@@ -169,10 +164,10 @@ Terse, telegraphic Markdown in the Part A language; omit empty sections; no copi
 | --- | --- | --- | --- | --- | --- | --- |
 | 4 | Company | [Advertised title](direct-posting-url) | City / remote restriction | Open | Reviewed | few words |
 
-For fit 1–2, "Main gap" gives the reason for the low rating. Keep links clickable; escape `|` in titles. If nothing was added: "No new positions added".
+Availability and Assessment as actually saved. Fit: the number, "N provisional" for a title-only estimate, or "Not assessed". Newly added Closed records (normally not added) go last and are flagged. For fit 1–2, "Main gap" gives the reason for the low rating. Keep links clickable; escape `|` in titles. If nothing was added: "No new positions added".
 
-**Flags** — urgent/passed deadlines; uncertain duplicates; rejected records; closures of Shortlisted records; material title/location changes; relevant existing applications.
+**Flags** — urgent/passed deadlines; uncertain duplicates; rejected records; closures of Shortlisted records; existing New/Shortlisted records requiring work authorization the candidate lacks; material title/location changes; relevant existing applications. Do not repeat new positions here unless a flag needs attention.
 
-**Coverage** — **Alerts:** mails N, candidates N, dropped N · **Employers:** checked N, missed N (dates in workbook / coverage.json only: reason) · **Full postings reviewed:** N (target ~25) · **LinkedIn access:** browser used / none (observed reason) · **Sources failed:** … · **Unfinished:** …
+**Coverage** — **Alerts:** mails N, candidates N, dropped N (of which work authorization N) · **Employers:** checked N, missed N (dates in workbook / coverage.json only: reason) · **Full postings reviewed:** N (target ~25) · **LinkedIn access:** browser used / none (observed reason) · **Sources failed:** … · **Unfinished:** …
 
-If nothing could be imported, state "Nothing imported" and add a "Findings not imported" table. Never describe an unsaved candidate as added or an unchecked source as covered.
+If nothing could be imported, state "Nothing imported" and add a "Findings not imported" table; after a partial import, keep saved additions and unsaved findings clearly separate. Never describe an unsaved candidate as added or an unchecked source as covered.

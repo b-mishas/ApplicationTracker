@@ -8,7 +8,8 @@
 - Name: {{NAME}}
 - Current / last role: {{ROLE, EMPLOYER, YEARS}}
 - Total relevant experience: {{e.g. 8 years industry + PhD}}
-- Base location: {{CITY, COUNTRY}}; work permit / citizenship relevant for: {{COUNTRIES}}
+- Base location: {{CITY, COUNTRY}}
+- Work authorization: I can already work in {{COUNTRIES}}; I would need visa sponsorship for {{COUNTRIES, or "none"}}
 - Languages: {{e.g. English fluent, German C1}}
 
 ## 2. Target role families
@@ -48,8 +49,19 @@ Search keywords (used for portal searches and job alerts): {{e.g. data engineer,
 - {{e.g. roles requiring security clearance}}
 - Always drop: US-only or other ineligible geography; clearly junior roles; unrelated fields.
 
-## 8. Calibration examples (fit the agent should reproduce)
-Add 3–6 real postings you have already judged, from strong to weak. The setup assistant can collect them from you.
+## 8. Fit scale and calibration examples
+### Fit scale (default; adapt the wording to your search)
+Fixed frame, do not change: whole numbers 1–5, 5 is best, 3 or higher means "worth my attention".
+- 5: strong core match at the right level; remaining gaps are bridgeable.
+- 4: strong core match with a meaningful but manageable gap.
+- 3: credible transition, or one material essential requirement missing.
+- 2: substantial mismatch across essential requirements.
+- 1: marginal relevance.
+
+Bridgeable-gap rule: a gap is bridgeable when it is adjacent to my demonstrated core (§5). Bridgeable gaps are listed but do not lower the rating; the rating drops only for missing essential requirements that are not bridgeable, in proportion to how central they are.
+
+### Calibration examples (fit the agent should reproduce)
+Add 3–6 real postings you have already judged, from strong to weak. The setup assistant collects them and tests the scale against them.
 - Example: Company X, Lead Data Engineer (Munich) = 5: right level, core stack matches; new cloud provider is bridgeable.
 - Example: Company Y, Senior Analyst (Vienna) = 3: field fits, but one essential skill missing.
 - Example: Company Z, Sales Engineer (Zurich) = 1: quota-carrying sales role.
