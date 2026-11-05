@@ -1,21 +1,19 @@
-# JobTracker checkpoint
+# Application tracker checkpoint
 
-Updated: 2026-11-04 22:51 UTC. Last agent: Codex. Scope: standalone repository root. Branch: main; initial source snapshot, no upstream/remote configured. PR/CI: not configured.
-
-## Objective
-
-Create a portable, personal-data-free job-search tracker plus Claude's agent package for a nontechnical Windows/macOS recipient. See PORTABILITY.md for the agreed interface and remaining acceptance criteria. Creating this repository is complete; producing a finished downloadable release is not.
+Updated: 2026-11-05 00:17 UTC. Last agent: Codex. Scope: C:\Users\misha\Claude\ApplicationTracker. Branch main; implementation HEAD 45f07a3, followed by this documentation checkpoint. GitHub/origin: b-mishas/ApplicationTracker. Implementation commit pushed and remote main verified at 45f07a3 with ls-remote; this checkpoint will also be committed/pushed under the same user authorization. PR/CI not checked.
 
 ## Current state
 
-Tracker source is in app/. It includes current uncommitted improvements from the original installation, based on source commit 2aa2e67, without copying its personal Git history. Claude's supplied ZIP was unpacked into agent/, guides/ and profile/, preserving its interface document and instructions. The workbook is a template with one explicitly labelled example employer. The original ZIP remains locally, excluded from Git. Original source, running server and inventory were not modified.
+Portable tracker plus search-agent package for a nontechnical recipient. Settings, importer safeguards, Excel export/workbook helpers, self-check, bundled Windows/macOS runtimes and Start/Stop launchers are committed in 45f07a3. READ ME.html is the single recipient starting guide; START_HERE.md is removed. See PLAN.md, HISTORY.md and INTERFACE_FOR_TRACKER.md for durable scope and interfaces.
 
-config.mjs now defaults to this installation's data/; JOBTRACKER_DATA_DIR remains supported. initialize.mjs creates an empty inventory and folders using exclusive file creation, preserving existing data. Runtime data is excluded from Git. Personal documentation, temporary maintenance script and private-history Excel regression tests were omitted.
+Local folder rename is verified. At the user's request, retain JOBTRACKER_* environment-variable names independently of the ApplicationTracker repository name. Restored that prefix consistently in code, tests and documentation; no APPLICATIONTRACKER_* references remain in first-party source. Defaults remain installation-relative. Original personal tracker/data were not accessed.
 
 ## Verification
 
-Windows/Node: 54/54 importer tests passed; view-model and API/save checks passed. Repeat initialization preserved the inventory byte-for-byte. A separate server on port 18765 served the UI and empty default inventory successfully, then stopped. Text scan found no original user's name or private storage paths in the copied tree. Profile/workbook inspected as templates. Browser appearance, macOS and Excel export remain unverified.
+From the renamed checkout, npm test passed: 54/54 importer cases, view-model/API checks and 10 portable integration checks, including after restoring JOBTRACKER_*. Isolated Windows starter smoke test passed health, empty inventory, repeat launch, Excel export and shutdown. git diff --check passed. Existing ZIP was stale against nine source/package files, so rebuilt it. Build audit passed: 5,453 text/XML/SVG files, one workbook, no developer instruction files. Final rebuilt ZIP passed clean Windows extraction, starter without global Node, repeat launch, empty inventory/UI, self-check, Excel download, shutdown, neutral settings and macOS executable-permission checks. No fresh dependency audit or private-marker-file audit was performed this turn.
 
-## Next action
+## Ownership and next action
 
-Implement configurable settings and installation self-check, replace private Excel dependencies with portable export, then add bundled runtimes and platform launchers. Reconcile agent assumptions before building a clean distribution. Do not present the development snapshot as an end-user release.
+Keep agent/, guides/, profile/ and templates/ unstaged for Claude. Codex scope is app/, scripts/, package files, launchers and tracker/release documentation. Shared interface/integration edits need deliberate review when splitting commits; folder ownership alone does not establish authorship. Builder requires templates/, so coordinate both commits before treating a clean checkout as release-ready.
+
+Checks are complete; code was unchanged during the commit/push turn, so no test rerun was needed. No test server or build remains running. User authorized Codex commit/push; Claude will commit his files separately. Next: complete Claude commit, then verify a clean checkout has the required templates before release. Real macOS, Windows ARM64, personalized scheduled-agent/connector acceptance and recipient usability remain pending. Colour alternatives remain plans. This chat's sandbox still names the old folder; access to the renamed checkout required escalation. No release published.

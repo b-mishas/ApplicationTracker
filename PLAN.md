@@ -11,7 +11,7 @@ Remaining acceptance work:
 - Test Windows ARM64 on actual hardware; only Windows x64 execution has been verified here. All four runtime archives are checksummed and Mac executable ZIP permissions are verified.
 - Run the complete personalized agent setup and one scheduled search with each intended LLM environment. Packaging tests do not establish connector availability or unattended permissions.
 - Have a nontechnical recipient try the complete setup and correct any confusing instructions.
-- Commit/push and publish a release when explicitly requested.
+- Complete Claude's separate agent/template commit; Codex tracker changes are committed/pushed. Publish a release when explicitly requested.
 
 ## Tracks and colour design — follow-up
 

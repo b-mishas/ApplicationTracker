@@ -50,3 +50,9 @@ Only accomplished steps belong here. Upcoming work lives in PLAN.md; current ver
 - Passed npm test after restoration: 54 importer cases, view-model/API checks and 10 portable integration checks. Isolated renamed-folder Windows Start/repeat Start/export/Stop smoke test passed.
 - Refreshed the stale distribution ZIP; archive audit and final clean-extraction Windows acceptance passed, including bundled runtime launch without global Node, self-check, Excel export and shutdown.
 - Preserved Claude's agent/guide/profile/template files. No staging, commit or push; user put committing on hold. Real macOS, Windows ARM64 and scheduled-agent acceptance remain pending.
+
+## 2026-11-05 — Codex tracker commit and push
+
+- Committed tracker/settings/importer/Excel/launchers/packaging and related documentation as 45f07a3; pushed main to b-mishas/ApplicationTracker and verified the remote hash.
+- Kept agent/, guides/, profile/ and templates/ out of the commit for Claude. Pristine templates remain required by the builder; a clean-checkout release awaits Claude's separate commit.
+- No code changed during this commit/push step; retained the preceding passing regression and rebuilt-ZIP acceptance evidence. Updated the handoff and plan for the next agent.
