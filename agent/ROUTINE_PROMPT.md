@@ -32,7 +32,7 @@ Read, in this order:
 - `profile/candidate_profile.md` — the authoritative search rules: target roles, seniority, countries, remote rules, mismatch signals, confirmed gaps, calibration examples, alert sources, portals and their rotation, special exclusions.
 - `app/SEARCH_WORKFLOW.md` and the files it names — storage, the exact import command, validation, failure handling, and the tracker settings (supported countries, groups, time zone).
 - `app/batch.schema.json` — the exact accepted batch fields and values. The schema and tracker settings decide which country codes and group names are valid; never hardcode them.
-- `profile/companies.xlsx` — employers to check, with priorities. Read it with an available spreadsheet library; if none exists, read the sheet XML inside it (an .xlsx file is a zip archive). Combine its "Last checked" and "Careers page" values with the `employers` entries in coverage.json, taking the newer date.
+- `profile/companies.xlsx` — employers to check, with priorities. Use the bundled employer-workbook.mjs read helper as documented in SEARCH_WORKFLOW.md. Do not assume Python or install anything. Combine its "Last checked" and "Careers page" values with the `employers` entries in coverage.json, taking the newer date.
 - `data/jobs.json` — existing vacancies and the user's decisions.
 - `data/reports/coverage.json` — checkpoints from earlier runs; may be missing on the first run.
 
@@ -77,7 +77,7 @@ Extract title, company, location and URL; deduplicate across emails and against 
 
 Never click Apply, Easy Apply, Save, Message or Follow; never sign in, solve security checks or change settings; never bypass access controls; never retry a failing access method more than once. Report the observed failure accurately. Never browse sources the profile marks as "alerts only".
 
-Employers: fill missing career URLs for at most fifteen employers per run, priority A first. After successfully checking an employer's listings, record today's date in coverage.json `employers` and in the workbook's "Last checked" cell; store newly found career URLs the same way ("Careers page"). Write the workbook only with a library that preserves formatting and other content (e.g. openpyxl). If no such library is available or the workbook is locked (open in Excel), write coverage.json only and say so once under Coverage. Never rebuild the workbook or change its "Status" column. A blocked or incomplete check does not count.
+Employers: fill missing career URLs for at most fifteen employers per run, priority A first. After successfully checking an employer's listings, record today's date in coverage.json `employers` and in the workbook's "Last checked" cell; store newly found career URLs the same way ("Careers page"). Use the bundled employer-workbook.mjs update helper with a temporary JSON array as SEARCH_WORKFLOW.md documents. If the helper is unavailable or the workbook is locked (open in Excel), write coverage.json only and say so once under Coverage. Never rebuild the workbook or change its "Status" column. A blocked or incomplete check does not count.
 
 Portals: cover postings since each source's `lastSuccessfulCheckedThrough` with a one-day overlap; seven days if unknown. Do not discard an older relevant vacancy that is confirmed open. Failed, skipped or partial searches never advance coverage.
 
@@ -119,7 +119,7 @@ Do not delete records or replace reviewed information with guesses.
 
 ### 9. Batches and import
 
-A top-level batch in `data/incoming/` without a matching `data/reports/<batch filename>.report.json` is pending; ignore `data/incoming/imported/`. Also inspect reports for unresolved rejected or ambiguous outcomes from any earlier run. Fix only errors you can establish confidently.
+A top-level batch in `data/incoming/` without a matching `data/reports/<batch filename with final .json removed>.report.json` is pending; ignore `data/incoming/imported/`. Use the report path returned by RESULT after import; for example batch 2026-11-05-example.json creates 2026-11-05-example.report.json. Also inspect reports for unresolved rejected or ambiguous outcomes from any earlier run. Fix only errors you can establish confidently.
 
 Write one new UTF-8 batch `data/incoming/YYYY-MM-DD-<runId>.json` (local run date; unique runId equal to the envelope's runId; UTC timestamps ending Z). Follow batch.schema.json exactly. Each `sources[].file` equals this batch's filename. Include provider and providerJobId together when known. For eligible remote roles outside the supported countries, use an empty countries array and keep the real location in locationRaw/workModeRaw. An empty jobs array is valid.
 

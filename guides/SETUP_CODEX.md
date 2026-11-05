@@ -22,7 +22,7 @@
 
 ## Limits to expect
 - **LinkedIn:** LinkedIn job pages need a signed-in browser. If your Codex setup has no browser that can use your LinkedIn sign-in, LinkedIn roles stay "Unverified" unless the employer's own page is found. They are still listed in the summary.
-- **Keep it a plain folder:** do not turn the job-search folder into a Git repository. Codex may then run automations in a separate copy, and the results would never reach your tracker.
+- **Use local execution:** select the actual installation folder rather than an isolated worktree. A Git repository is allowed; verify that a test run writes into the data folder your browser tracker uses.
 - **Permissions:** with "ask before acting" modes, unattended runs pause. Prefer the narrowest mode that works unattended inside the project folder.
 
 Official overview: [Codex automations](https://openai.com/academy/codex-automations).
