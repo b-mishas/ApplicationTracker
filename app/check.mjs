@@ -4,14 +4,15 @@ import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {spawn} from 'node:child_process';
 import assert from 'node:assert/strict';
-import {fixtureData} from './test-fixtures.mjs';
+import {fixtureData,fixtureSettings} from './test-fixtures.mjs';
+import {fileURLToPath} from 'node:url';
 const fixtures=fixtureData();
 const dir=await mkdtemp(path.join(tmpdir(),'position-desk-'));
 let child;
 try{
- for(const name of ['server.mjs','store.mjs','config.mjs','view-model.mjs','export-applications.mjs'])await copyFile(new URL(name,import.meta.url),path.join(dir,name));
+ await writeFile(path.join(dir,'settings.json'),JSON.stringify(fixtureSettings));
  await writeFile(path.join(dir,'jobs.json'),JSON.stringify(fixtures));
- child=spawn(process.execPath,[path.join(dir,'server.mjs')],{env:{...process.env,PORT:'8766',JOBTRACKER_DATA_DIR:dir},stdio:['ignore','pipe','pipe']});
+ child=spawn(process.execPath,[fileURLToPath(new URL('server.mjs',import.meta.url))],{env:{...process.env,PORT:'8766',JOBTRACKER_DATA_DIR:dir,JOBTRACKER_SETTINGS_FILE:path.join(dir,'settings.json')},stdio:['ignore','pipe','pipe']});
  await new Promise((resolve,reject)=>{child.stdout.once('data',resolve);child.once('error',reject);child.stderr.once('data',d=>reject(Error(String(d))));});
  const base='http://127.0.0.1:8766';
  const initial=await (await fetch(base+'/api/jobs')).json();

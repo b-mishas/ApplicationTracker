@@ -7,15 +7,16 @@ import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 import {importBatch, deleteRecords, mergeBatch, normTitle, urlIdentity} from './import-discoveries.mjs';
 import {commit,withLock} from './store.mjs';
-import {fixtureData} from './test-fixtures.mjs';
+import {fixtureData,fixtureSettings} from './test-fixtures.mjs';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const live = fixtureData();
 let n = 0; const results = [];
 const test = async (name, fn) => { const dir = await mkdtemp(path.join(tmpdir(), 'imp-')); await mkdir(path.join(dir, 'incoming')); await writeFile(path.join(dir, 'jobs.json'), JSON.stringify(live));
+  await writeFile(path.join(dir,'settings.json'),JSON.stringify(fixtureSettings));process.env.JOBTRACKER_SETTINGS_FILE=path.join(dir,'settings.json');
   try { await fn(dir); results.push('ok   ' + name); } catch (e) { results.push('FAIL ' + name + ': ' + e.message); process.exitCode = 1; } finally { await rm(dir, {recursive: true, force: true}); } };
 const read = async dir => JSON.parse(await readFile(path.join(dir, 'jobs.json'), 'utf8'));
 let seq = 0;
-const mk = (over = {}) => ({company: 'Testco Biologics GmbH', title: 'Senior Scientist Antibody Discovery', url: 'https://careers.testco.example/jobs/' + (++seq), linkType: 'posting', group: 'Protein discovery', countries: ['DE'], city: 'Munich', locationRaw: 'Munich, Germany', workMode: 'Hybrid', workModeRaw: 'Hybrid', fit: 4, reasoning: 'Strong match.', gaps: 'None.', seniority: 'Senior', assessmentBasis: 'Posting reviewed', postedDate: '2026-11-01', observedAt: '2026-11-03T05:00:00Z', availability: 'Open', ...over});
+const mk = (over = {}) => ({company: 'Testco Biologics GmbH', title: 'Senior Scientist Antibody Discovery', url: 'https://careers.testco.example/jobs/' + (++seq), linkType: 'posting', group: 'Engineering', countries: ['DE'], city: 'Munich', locationRaw: 'Munich, Germany', workMode: 'Hybrid', workModeRaw: 'Hybrid', fit: 4, reasoning: 'Strong match.', gaps: 'None.', seniority: 'Senior', assessmentBasis: 'Posting reviewed', postedDate: '2026-11-01', observedAt: '2026-11-03T05:00:00Z', availability: 'Open', ...over});
 async function batch(dir, jobs, {runId = 'run-' + (++seq) + '-aaaa', day = '2026-11-03', searchedAt = '2026-11-03T05:10:00Z', mutate} = {}) {
   const name = `${day}-${runId}.json`;
   jobs.forEach(j => { if (!j.sources) j.sources = [{label: 'Company site', url: j.url, file: name}]; else j.sources.forEach(s => s.file ||= name); });
@@ -130,7 +131,7 @@ await test('concurrent importers: all batches applied exactly once, no lost upda
 await test('concurrent UI saves and imports (real server process): no lost update', async dir => {
   await copyFile(path.join(here, 'server.mjs'), path.join(dir, 'server.mjs')); await copyFile(path.join(here, 'store.mjs'), path.join(dir, 'store.mjs')); await copyFile(path.join(here, 'config.mjs'), path.join(dir, 'config.mjs'));
   const port = 8800 + Math.floor(Math.random() * 100), base = `http://127.0.0.1:${port}`;
-  const child = spawn(process.execPath, [path.join(dir, 'server.mjs')], {env: {...process.env, PORT: String(port), JOBTRACKER_DATA_DIR: dir}, stdio: ['ignore', 'pipe', 'pipe']});
+  const child = spawn(process.execPath, [path.join(here, 'server.mjs')], {env: {...process.env, PORT: String(port), JOBTRACKER_DATA_DIR: dir}, stdio: ['ignore', 'pipe', 'pipe']});
   try {
     await new Promise((res, rej) => { child.stdout.once('data', res); child.stderr.once('data', d => rej(Error(String(d)))); });
     const patch = (id, revision, notes) => fetch(base + '/api/jobs', {method: 'PATCH', headers: {'Content-Type': 'application/json', Origin: base}, body: JSON.stringify({id, revision, status: 'Shortlisted', notes})});

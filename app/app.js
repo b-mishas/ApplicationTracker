@@ -3,25 +3,15 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const statuses=['New','Shortlisted','Applied','Interview','Offer','Rejected','Withdrawn','Dismissed'];
 const fields=[['fit','Fit'],['company','Company'],['group','Group'],['title','Position'],['star','Actions'],['country','Country'],['city','City'],['workMode','Work mode'],['status','Status'],['seniority','Seniority'],['firstSeen','First found'],['postedDate','Posted'],['assessmentBasis','Assessment']];
+let settings={groups:[],countries:[],timezone:'',exportLanguage:'en'},settingsRevision;
 let data,revision,sort='star',direction=-1,open=null,filterKey=null,pendingSave=false;
 const defaultStatusFilter=()=>statuses.filter(status=>!['Rejected','Dismissed','Withdrawn'].includes(status));
 const filters={status:defaultStatusFilter()};
 const visible=new Set(fields.slice(0,9).map(x=>x[0]));
-const hues={'ELN/LIMS':165,'Computational':220,'Protein discovery':35,'Data steward':280};
-const hue=g=>hues[g]??[...g].reduce((n,c)=>n+c.charCodeAt(0),0)%360;
+const hue=g=>[...g].reduce((n,c)=>n+c.charCodeAt(0),0)%360;
 const safeUrl=url=>{try{const u=new URL(url);return ['https:','http:'].includes(u.protocol)?esc(u.href):'';}catch{return '';}};
-// Bundled SVG flags render consistently even without a flag-emoji font.
-const flags={
- DE:'<path fill="#111" d="M0 0h30v6H0z"/><path fill="#d00" d="M0 6h30v6H0z"/><path fill="#ffce00" d="M0 12h30v6H0z"/>',
- AT:'<path fill="#ed2939" d="M0 0h30v18H0z"/><path fill="#fff" d="M0 6h30v6H0z"/>',
- NL:'<path fill="#ae1c28" d="M0 0h30v6H0z"/><path fill="#fff" d="M0 6h30v6H0z"/><path fill="#21468b" d="M0 12h30v6H0z"/>',
- BE:'<path fill="#111" d="M0 0h10v18H0z"/><path fill="#fdda24" d="M10 0h10v18H10z"/><path fill="#ef3340" d="M20 0h10v18H20z"/>',
- CH:'<path fill="#da291c" d="M6 0h18v18H6z"/><path fill="#fff" d="M13 3h4v12h-4zM9 7h12v4H9z"/>',
- ES:'<path fill="#aa151b" d="M0 0h30v18H0z"/><path fill="#f1bf00" d="M0 4.5h30v9H0z"/><path fill="#aa151b" d="M7 7h4v5H7z"/><path fill="#e8c675" d="M7 6h4v2H7z"/>',
- GB:'<path fill="#012169" d="M0 0h30v18H0z"/><path stroke="#fff" stroke-width="4" d="m0 0 30 18M30 0 0 18"/><path stroke="#c8102e" stroke-width="1.5" d="m0 0 30 18M30 0 0 18"/><path stroke="#fff" stroke-width="6" d="M15 0v18M0 9h30"/><path stroke="#c8102e" stroke-width="3.5" d="M15 0v18M0 9h30"/>'
-};
-const flagNames={DE:'Germany',AT:'Austria',NL:'Netherlands',BE:'Belgium',CH:'Switzerland',ES:'Spain',GB:'United Kingdom'};
-function flagGraphic(code){const iso=code==='UK'?'GB':code;return flags[iso]?`<svg class="flag-icon" viewBox="0 0 30 18" role="img" aria-label="${flagNames[iso]}"><title>${flagNames[iso]}</title>${flags[iso]}</svg>`:'';}
+// Local SVG files also work without a flag-emoji font.
+function flagGraphic(code){const iso=code==='UK'?'GB':code;return /^[A-Z]{2}$/.test(iso)?'<img class="flag-icon" src="/flags/'+iso.toLowerCase()+'.svg" alt="'+esc(code)+'">':'';}
 function cell(j,key){
  if(key==='star'){const selected=j.status==='Shortlisted',allowed=['New','Shortlisted'].includes(j.status);return `<span class="quick-actions"><button class="quick-urgent ${j.urgent?'selected':''}" data-id="${esc(j.id)}" aria-pressed="${Boolean(j.urgent)}" aria-label="${j.urgent?'Remove urgency from':'Mark urgent'} ${esc(j.title)}" title="${j.urgent?'Remove urgent flag':'Mark as urgent'}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.2 2Q9.1 2 9.2 3.2L10.5 14.5h3l1.3-11.3Q14.9 2 13.8 2Q12 1.6 10.2 2Z"/><circle cx="12" cy="19" r="2.2"/></svg></button><button class="shortlist-star ${selected?'selected':''}" data-id="${esc(j.id)}" aria-pressed="${selected}" aria-label="${selected?'Remove from shortlist':'Shortlist'} ${esc(j.title)}" title="${allowed?(selected?'Remove from shortlist':'Shortlist'):'Shortlisting is available for new positions; current application stage is preserved.'}" ${allowed?'':'disabled'}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.3.9-4.55 4.45 1.07 6.28L12 17.36l-5.62 2.97 1.07-6.28L2.9 9.6l6.3-.9Z"/></svg></button><button class="quick-dismiss ${j.status==='Dismissed'?'selected':''}" data-id="${esc(j.id)}" aria-pressed="${j.status==='Dismissed'}" aria-label="${j.status==='Dismissed'?'Restore':'Dismiss'} ${esc(j.title)}" title="${j.status==='Dismissed'?'Restore previous status':'Dismiss position'}" ${allowed||j.status==='Dismissed'?'':'disabled'}><svg viewBox="0 0 24 24" aria-hidden="true">${j.status==='Dismissed'?'<path d="M8 7H4v-4M4 7a8 8 0 1 1-1 9"/>':'<circle cx="12" cy="12" r="8"/><path d="m9 9 6 6m0-6-6 6"/>'}</svg></button></span>`;}
  if(key==='fit')return `<span class="badge score ${['both','fit'].includes($('colour').value)?'fit'+j.fit:''}">${esc(j.fit??'—')}</span>${j.assessmentBasis==='Title only'?' <span title="Provisional: posting not reviewed">◌</span>':''}`;
@@ -51,7 +41,7 @@ function render(){
  $('since').value=filters.firstSeen||'';
  const dateActive=Boolean(filters.firstSeen);
  $('since-today').textContent=dateActive?'Clear':'Today';
- $('since-today').title=dateActive?'Clear the found-since date filter':'Found since today (Europe/Berlin)';
+ $('since-today').title=dateActive?'Clear the found-since date filter':'Found since today ('+(settings.timezone||'UTC')+')';
  const cols=fields.filter(([key])=>visible.has(key));
  // Allocate widths from the selected columns, independent of expanded content.
  const widths={fit:59.5,company:130.5,title:365,star:94,group:110,country:100,city:105,workMode:90.25,status:100,seniority:170,firstSeen:110,postedDate:110,assessmentBasis:130};
@@ -63,7 +53,7 @@ function render(){
  return `<th aria-sort="${sort===key?(direction===1?'ascending':'descending'):'none'}"><div class="column-heading"><button class="column-label ${active?'filtered':''}" data-filter="${key}" aria-label="Filter ${label}" aria-haspopup="dialog" aria-controls="column-filter" aria-expanded="${filterKey===key}">${label}${active?' •':''}</button><button class="sort-arrow" data-sort="${key}" aria-label="Sort by ${label}" title="Sort by ${label}">${sort===key?(direction===1?'↑':'↓'):'↕'}</button></div></th>`;
  }).join('');
  const rows=filtered();$('count').textContent=`${rows.length} of ${data.jobs.length} positions`;
- $('body').innerHTML=rows.length?rows.map((j,index)=>`<tr class="job ${index%2?'stripe':'plain'} ${open===j.id?'expanded':'collapsed'}" data-id="${esc(j.id)}"><td><button class="toggle" data-id="${esc(j.id)}" aria-expanded="${open===j.id}" aria-label="${open===j.id?'Collapse':'Expand'} ${esc(j.title)}">${open===j.id?'−':'+'}</button></td>${cols.map(([key])=>`<td class="${key}">${cell(j,key)}</td>`).join('')}</tr>${open===j.id?detail(j):''}`).join(''):`<tr><td colspan="${cols.length+1}" class="empty">No positions match these filters. Try Reset.</td></tr>`;
+ $('body').innerHTML=rows.length?rows.map((j,index)=>`<tr class="job ${index%2?'stripe':'plain'} ${open===j.id?'expanded':'collapsed'}" data-id="${esc(j.id)}"><td><button class="toggle" data-id="${esc(j.id)}" aria-expanded="${open===j.id}" aria-label="${open===j.id?'Collapse':'Expand'} ${esc(j.title)}">${open===j.id?'−':'+'}</button></td>${cols.map(([key])=>`<td class="${key}">${cell(j,key)}</td>`).join('')}</tr>${open===j.id?detail(j):''}`).join(''):`<tr><td colspan="${cols.length+1}" class="empty">${data.jobs.length?'No positions match these filters. Try Reset.':'No positions yet. Set up the search agent to add discoveries.'}</td></tr>`;
  if(filterKey)positionFilter();
  $('total').textContent=data.jobs.length;$('strong').textContent=data.jobs.filter(j=>j.fit>=4).length;$('shortlist').textContent=data.jobs.filter(j=>j.status==='Shortlisted').length;$('active').textContent=data.jobs.filter(j=>['Applied','Interview','Offer'].includes(j.status)).length;
 }
@@ -114,7 +104,7 @@ $('reset').onclick=()=>{if(!canChangeView())return;for(const key of Object.keys(
 $('columns').onchange=e=>{if(dirty()&&!confirm('Discard unsaved changes?')){e.target.checked=!e.target.checked;return;}e.target.checked?visible.add(e.target.value):visible.delete(e.target.value);render();};
 $('export').onclick=async e=>{e.preventDefault();try{const r=await fetch('/api/jobs');if(!r.ok)throw Error('Export failed');const {data:latest}=await r.json();const url=URL.createObjectURL(new Blob([JSON.stringify(latest,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`jobs-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(err){$('message').textContent=err.message;}};
 window.addEventListener('beforeunload',e=>{if(dirty()){e.preventDefault();e.returnValue='';}});
-async function init(){try{const r=await fetch('/api/jobs');if(!r.ok)throw Error('Could not load positions');({data,revision}=await r.json());$('columns').innerHTML=fields.map(([key,label])=>`<label><input type="checkbox" value="${key}" ${visible.has(key)?'checked':''}> ${label}</label>`).join('');$('imported').textContent=`Imported ${data.importedOn} · ${data.jobs.length} unique positions`;render();}catch(e){$('message').textContent=e.message+' — start the tracker using Start tracker.cmd.';}}
+async function init(){try{const r=await fetch('/api/jobs');if(!r.ok)throw Error('Could not load positions');({data,revision}=await r.json());const config=await fetch('/api/settings');if(!config.ok)throw Error('Could not load settings');const cfg=await config.json();settings=cfg.settings;settingsRevision=cfg.revision;if(!cfg.ready)$('message').textContent='Complete Settings to configure your groups, countries and timezone.';$('columns').innerHTML=fields.map(([key,label])=>`<label><input type="checkbox" value="${key}" ${visible.has(key)?'checked':''}> ${label}</label>`).join('');$('imported').textContent=`${data.jobs.length} unique positions`;render();}catch(e){$('message').textContent=e.message+' — open the Start file for your system.';}}
 init();
 function canChangeView(){return !dirty()||confirm('Discard unsaved changes?');}
 function closeFilter(){filterKey=null;$('column-filter').hidden=true;document.querySelectorAll('[data-filter]').forEach(b=>b.setAttribute('aria-expanded','false'));}
@@ -134,7 +124,7 @@ function populateFilter(){
   let values=[...new Set(data.jobs.flatMap(j=>choicesFor(j,key)))].sort((a,b)=>{
    // Missing values belong after the named options.
    if(a===EMPTY||b===EMPTY)return Number(a===EMPTY)-Number(b===EMPTY);
-   if(key==='group'&&(a==='Protein discovery'||b==='Protein discovery'))return Number(b==='Protein discovery')-Number(a==='Protein discovery');
+   if(key==='group')return (settings.groups.indexOf(a)<0?999:settings.groups.indexOf(a))-(settings.groups.indexOf(b)<0?999:settings.groups.indexOf(b))||a.localeCompare(b);
    return a.localeCompare(b,undefined,{numeric:true});
   });
   if(key==='status')values=statuses;
@@ -177,25 +167,42 @@ $('body').addEventListener('change',event=>{
  const section=event.target.closest('section');
  section.querySelector('.edit-application-status').value='';
  const date=section.querySelector('.edit-application-date');
- // Suggest today's Berlin date only for an undated application; save remains explicit.
- if(event.target.value==='Applied'&&!date.value)date.value=berlinToday();
+ // Suggest today's configured local date only for an undated application; save remains explicit.
+ if(event.target.value==='Applied'&&!date.value)date.value=localToday();
 });
 $('export-applications').onclick=async event=>{
  event.preventDefault();const button=event.currentTarget;if(button.dataset.busy)return;
  if(dirty()){$('message').textContent='Save your changes before exporting applications.';return;}
  button.dataset.busy='1';button.textContent='Exporting…';$('message').textContent='';
  try{const response=await fetch('/api/export/applications.xlsx');if(!response.ok){const error=await response.json();throw Error(error.error);}
- const href=URL.createObjectURL(await response.blob()),a=document.createElement('a');a.href=href;a.download='Bewerbungsuebersicht.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(href),1000);
+ const href=URL.createObjectURL(await response.blob()),a=document.createElement('a');a.href=href;a.download='applications.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(href),1000);
  }catch(error){$('message').textContent=error.message;}finally{delete button.dataset.busy;button.textContent='Export applications';}
 };
 
 // Both date controls use the same local calendar day, including around midnight.
-function berlinToday(){const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Berlin',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(p=>[p.type,p.value]));return `${p.year}-${p.month}-${p.day}`;}
+function localToday(){const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:settings.timezone||'UTC',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(p=>[p.type,p.value]));return `${p.year}-${p.month}-${p.day}`;}
 // Quick filters share the column-filter state and remain independent.
 $('since-today').onclick=()=>{
  if(!canChangeView())return;
  if(filters.firstSeen)delete filters.firstSeen;
- else filters.firstSeen=berlinToday();
+ else filters.firstSeen=localToday();
  render();refreshOpenFilter();
 };
 $('shortlist-filter').onclick=()=>{if(!canChangeView())return;const nextStatus=nextStatusShortcut();filters.status=nextStatus==='Clear'?defaultStatusFilter():[nextStatus];render();refreshOpenFilter();};
+
+$('settings-open').onclick=()=>{
+ if(!canChangeView())return;
+ $('settings-groups').value=settings.groups.join('\n');$('settings-countries').value=settings.countries.join(', ');$('settings-timezone').value=settings.timezone;$('settings-language').value=settings.exportLanguage;
+ $('settings-result').textContent='';$('settings-dialog').showModal();
+};
+$('settings-detect').onclick=()=>{$('settings-timezone').value=Intl.DateTimeFormat().resolvedOptions().timeZone;};
+$('settings-cancel').onclick=()=>$('settings-dialog').close();
+$('settings-form').onsubmit=async event=>{
+ event.preventDefault();const button=$('settings-save');button.disabled=true;
+ try{
+  const next={schemaVersion:1,groups:$('settings-groups').value.split(/\n/).map(v=>v.trim()).filter(Boolean),countries:$('settings-countries').value.toUpperCase().split(/[\s,]+/).filter(Boolean),timezone:$('settings-timezone').value.trim(),exportLanguage:$('settings-language').value};
+  const response=await fetch('/api/settings',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({settings:next,revision:settingsRevision})});
+  const result=await response.json();if(!response.ok)throw Error(result.error);
+  settings=result.settings;settingsRevision=result.revision;$('settings-dialog').close();$('message').textContent='Settings saved.';render();
+ }catch(error){$('settings-result').textContent=error.message;}finally{button.disabled=false;}
+};

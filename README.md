@@ -1,40 +1,39 @@
-# JobTracker
+# Application tracker
 
-Standalone development repository for a portable job tracker and daily search-agent package. This is the starting code, not a finished end-user release.
+A local job tracker and daily search-agent package. The GitHub/source repository is named ApplicationTracker.
 
-## Layout
+## Recipient
 
-- `app/`: tracker, schema, importer and synthetic tests.
-- `agent/`, `guides/`, `profile/`: Claude's supplied agent instructions and blank profile/employer templates.
-- `data/`: private local inventory, batches, reports, backups and exports; excluded from Git.
-- `INTERFACE_FOR_TRACKER.md`: agent-side integration assumptions supplied by Claude.
-- `PORTABILITY.md`: agreed target contract and remaining implementation work.
+Download the maintainer-built Application-tracker.zip, extract it into the folder you want to keep and open READ ME.html. Open Start Windows.cmd or Start macOS.command; the tracker opens in a browser and runs locally in the background. Node, flags and Excel support are included; no package installation is needed. Give your assistant this whole folder and follow agent/SETUP_PROMPT.md; it helps configure groups, countries and timezone after interviewing you.
 
-## Development start
+Runtime information lives in data/, settings/tracker.json, customized profile/ and agent/ROUTINE_PROMPT.filled.md. Back up those together. Do not share a customized installation as a distribution.
 
-With Node available, run these from the repository root:
+## Development
 
-```text
-node app/initialize.mjs
-node app/server.mjs
-```
+Use Node 22 or newer. From this repository root:
 
-The first command creates missing data folders and an empty inventory without overwriting existing records. The second starts the local tracker at http://127.0.0.1:8765. Open that address in a browser. The default data path is this installation's `data/` folder; `JOBTRACKER_DATA_DIR` overrides it.
+    npm ci --ignore-scripts
+    node app/initialize.mjs
+    npm test
+    node app/launch.mjs
 
-## Checks
+npm ci installs pinned dependencies for development; the final recipient ZIP already contains them. initialize creates missing settings and an empty inventory without overwriting existing files. launch starts a background server on a free local port and opens the browser; repeated launches reuse this installation's running server. Use the matching Stop file to stop it.
 
-```text
-node app/test-view-model.mjs
-node app/test-import.mjs
-node app/check.mjs
-```
+    node app/self-check.mjs
+    node app/self-check.mjs --require-configured
 
-These run synthetic tests in temporary folders. They do not change the local inventory. An installation self-check is still to be implemented.
+The first checks the installation, schema, inventory, temporary storage/backup, export round-trip and employer template. Empty unpersonalized settings produce an informational message. The second also requires groups, countries and timezone. Both return zero on success and nonzero on failure. Tests and probes never change actual job records.
 
-## Current limitations
+## Build
 
-Groups, countries and timezone still reflect the source tracker and need configurable replacements. Excel export still requires an external spreadsheet runtime and a private-format template; no template or personal application data was copied. Replace this dependency and create a neutral export before release. The source's two Excel regression tests were intentionally omitted because they depend on private application history; add portable export tests with synthetic fixtures instead.
+    npm run build
 
-The original installation remains separate. This repository starts a new Git history from its current working source snapshot, rather than importing personal historical Git commits. No remote is configured.
+The builder downloads four official pinned Node archives (Windows x64/ARM64 and macOS Intel/Apple silicon), checks SHA-256 hashes, bundles dependencies and licenses, and produces dist/Application-tracker.zip plus its checksum. Initial build needs internet and the system tar utility. It uses templates/ for agent, guide and profile files, never data/ or a customized profile. Runtime downloads are cached in .build-cache/; runtime/, dist/ and the cache stay outside Git. Refresh pristine templates deliberately when maintaining the source docs.
 
-Do not share a customized working folder as a release: generate a clean distribution that excludes personal profile, CV, workbook and data contents.
+## Maintenance
+
+Read CLAUDE.md, HANDOFF.md, PLAN.md, HISTORY.md and INTERFACE_FOR_TRACKER.md before changing the contract. Settings schema and commands are documented in app/SEARCH_WORKFLOW.md. See THIRD_PARTY_NOTICES.md for bundled software.
+
+Windows verification and macOS acceptance are distinct. See the latest handoff for actual test results. The project does not upload data automatically. Repository commits/pushes are explicit developer actions.
+
+Release audit: node scripts/audit-release.mjs checks the actual archive, including workbook XML. For private-source checks, pass --deny-terms PATH to an external JSON array of forbidden strings. The builder accepts JOBTRACKER_RELEASE_DENY_TERMS_FILE for the same check. Keep private markers outside the source repository. JOBTRACKER_BUILD_CACHE can select an existing official-runtime archive cache.

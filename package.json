@@ -1,0 +1,23 @@
+{
+  "name": "applicationtracker-portable",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node app/launch.mjs",
+    "test": "node app/test-import.mjs && node app/test-view-model.mjs && node app/check.mjs && node app/test-portable.mjs",
+    "check": "node app/self-check.mjs",
+    "build": "node scripts/build-release.mjs"
+  },
+  "dependencies": {
+    "exceljs": "4.4.0",
+    "flag-icons": "7.5.0",
+    "jszip": "3.10.1"
+  },
+  "overrides": {
+    "uuid": "11.1.1"
+  }
+}

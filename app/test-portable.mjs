@@ -1,0 +1,52 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
+import {fork,spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+import ExcelJS from 'exceljs';
+import {exportApplications} from './export-applications.mjs';
+import {employerWorkbook} from './employer-workbook.mjs';
+import {validateSettings,calendarDate} from './settings.mjs';
+import {selfCheck} from './self-check.mjs';
+import {importBatch} from './import-discoveries.mjs';
+const temp=await fs.mkdtemp(path.join(os.tmpdir(),'application-desk-'));
+const root=path.join(temp,'data'),config=path.join(temp,'tracker.json');
+const settings={schemaVersion:1,groups:['Design','Customer success'],countries:['US','JP','GB'],timezone:'Pacific/Auckland',exportLanguage:'en'};
+let server;let checks=0;const ok=name=>{checks++;console.log('PASS: '+name);};
+try{
+ await fs.writeFile(config,JSON.stringify(settings));process.env.JOBTRACKER_SETTINGS_FILE=config;
+ const init=()=>spawnSync(process.execPath,[fileURLToPath(new URL('initialize.mjs',import.meta.url))],{env:{...process.env,JOBTRACKER_DATA_DIR:root,JOBTRACKER_SETTINGS_FILE:config},encoding:'utf8'});
+ assert.equal(init().status,0);const original=await fs.readFile(path.join(root,'jobs.json'),'utf8');assert.equal(init().status,0);assert.equal(await fs.readFile(path.join(root,'jobs.json'),'utf8'),original);ok('Repeat initialization preserves inventory and settings');
+ assert.throws(()=>validateSettings({...settings,groups:['Design','Design']}));assert.throws(()=>validateSettings({...settings,timezone:'fake/zone'}));assert.throws(()=>validateSettings({...settings,countries:['ZZ']}));ok('Invalid settings are rejected');
+ assert.equal(calendarDate('2026-11-05T23:30:00Z','Pacific/Auckland'),'2026-11-06');assert.equal(calendarDate('2026-11-05T00:30:00Z','America/Los_Angeles'),'2026-11-04');ok('Calendar dates respect configured timezone across midnight');
+ const filename='2026-11-05-portable-test.json',file=path.join(temp,filename);
+ const job={company:'Example',title:'Product designer',url:'https://example.com/jobs/one',linkType:'posting',group:'Design',countries:['JP'],city:'Tokyo',locationRaw:'Tokyo',workMode:'Hybrid',workModeRaw:'Hybrid',fit:4,reasoning:'Synthetic fixture',gaps:'',seniority:'',assessmentBasis:'Posting reviewed',postedDate:'',observedAt:'2026-11-05T23:30:00Z',availability:'Open',sources:[{label:'Employer',url:'https://example.com/jobs/one',file:filename}]};
+ const batch={schemaVersion:1,runId:'portable-test',searchedAt:'2026-11-05T23:30:00Z',jobs:[job]};
+ await fs.writeFile(file,JSON.stringify(batch));assert.equal((await importBatch({root,batchPath:file,validateOnly:true})).exitCode,0);
+ assert.deepEqual(await fs.readdir(path.join(root,'reports')),[]);
+ await fs.writeFile(file,'bad json');assert.equal((await importBatch({root,batchPath:file,validateOnly:true})).exitCode,2);assert.deepEqual(await fs.readdir(path.join(root,'reports')),[]);ok('Validation writes no reports even for malformed input');
+ await fs.writeFile(file,JSON.stringify(batch));const imported=await importBatch({root,batchPath:file});assert.equal(imported.exitCode,0);assert.equal(path.basename(imported.report),'2026-11-05-portable-test.report.json');
+ const saved=JSON.parse(await fs.readFile(path.join(root,'jobs.json'),'utf8'));assert.equal(saved.jobs[0].firstSeen,'2026-11-06');assert.equal(saved.jobs[0].countries[0],'JP');ok('Custom groups, extended geography, timezone and report naming work together');
+ await fs.writeFile(file,JSON.stringify({...batch,jobs:[{...job,group:'Unconfigured'}]}));assert.equal((await importBatch({root,batchPath:file,validateOnly:true})).exitCode,2);ok('Importer enforces configured groups beyond structural JSON schema');
+ for(const language of ['en','de']){
+  const empty=await exportApplications({jobs:[],settings:{...settings,exportLanguage:language}});const wb=new ExcelJS.Workbook();await wb.xlsx.load(empty.buffer);assert.equal(wb.worksheets[0].rowCount,1);assert.equal(wb.worksheets[0].getCell('A1').value,language==='en'?'Application date':'Datum');
+ }
+ const applications=[{...saved.jobs[0],status:'Rejected',applicationDate:'2026-11-04',title:'=HYPERLINK("bad")',applicationStatusText:'A custom note'},{...saved.jobs[0],id:'second',title:'Other',status:'Applied',applicationDate:'2026-11-03'}];
+ const exported=await exportApplications({jobs:applications,settings});const wb=new ExcelJS.Workbook();await wb.xlsx.load(exported.buffer);const sheet=wb.worksheets[0];assert.equal(sheet.rowCount,3);assert.equal(sheet.getCell('A2').value.toISOString().slice(0,10),'2026-11-03');assert.equal(sheet.getCell('D3').value,'=HYPERLINK("bad")');assert.equal(sheet.getCell('D3').type,ExcelJS.ValueType.String);assert.equal(sheet.getCell('E3').value,'A custom note');assert.equal(sheet.getCell('D3').font.color.argb,'FF808080');
+ await assert.rejects(()=>exportApplications({jobs:[{...applications[0],applicationDate:''}],settings}),/actual application date/);await assert.rejects(()=>exportApplications({jobs:[applications[0],applications[0]],settings}),/duplicate/);ok('Excel exports empty and dated inventories, literal formula-like text, styles and actionable errors');
+ const employers=path.join(temp,'companies.xlsx');await fs.copyFile(new URL('../profile/companies.xlsx',import.meta.url),employers);
+ const before=new ExcelJS.Workbook();await before.xlsx.readFile(employers);const originalHeader=JSON.stringify(before.getWorksheet('Companies').getCell('B1').style),originalHelp=before.worksheets.length;
+ await employerWorkbook({file:employers,action:'replace',records:[{Company:'New Employer',Group:'Design',Priority:'A','Careers page':'','Status':'Keep me'}]});
+ await employerWorkbook({file:employers,action:'update',records:[{Company:'New Employer','Last checked':'2026-11-05','Careers page':'https://example.com/careers'}]});
+ const after=new ExcelJS.Workbook();await after.xlsx.readFile(employers);assert.equal(after.worksheets.length,originalHelp);assert.equal(JSON.stringify(after.getWorksheet('Companies').getCell('B1').style),originalHeader);const rows=(await employerWorkbook({file:employers})).employers;assert.equal(rows.length,1);assert.equal(rows[0].Status,'Keep me');assert.equal(rows[0]['Last checked'],'2026-11-05');await assert.rejects(()=>employerWorkbook({file:employers,action:'update',records:[{Company:'New Employer',Status:'overwrite'}]}),/Invalid employer field/);ok('Workbook helper fills templates, preserves header styles/help sheets and protects application status');
+ const installationCheck=await selfCheck({root,settings,employers});assert.equal(installationCheck.ok,true,JSON.stringify(installationCheck));assert.equal((await selfCheck({root:path.join(temp,'missing'),settings,employers})).ok,false);ok('Installation self-check distinguishes working and missing storage');
+ server=fork(fileURLToPath(new URL('server.mjs',import.meta.url)),[],{env:{...process.env,PORT:'0',JOBTRACKER_DATA_DIR:root,JOBTRACKER_SETTINGS_FILE:config},silent:true});
+ const started=await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('Server startup timeout')),10000);server.once('message',m=>{clearTimeout(t);resolve(m);});server.once('error',e=>{clearTimeout(t);reject(e);});});
+ const base=started.url;const cfg=await (await fetch(base+'/api/settings')).json();assert.equal(cfg.ready,true);
+ const patch=(body,origin=base)=>fetch(base+'/api/settings',{method:'PATCH',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify(body)});
+ assert.equal((await patch({settings,revision:cfg.revision},'http://other.example')).status,403);
+ assert.equal((await patch({settings:{...settings,groups:['Design','Support','Finance']},revision:cfg.revision})).status,200);assert.equal((await patch({settings,revision:cfg.revision})).status,400);
+ assert.equal((await fetch(base+'/flags/jp.svg')).status,200);assert.equal((await fetch(base+'/api/export/applications.xlsx')).status,200);assert.match(await (await fetch(base+'/')).text(),/Application tracker/);assert.equal((await fs.readdir(path.join(temp,'backups'))).length>0,true);ok('Settings API rejects foreign origins/stale revisions, backs up changes and serves extended flags/export');
+ console.log(`${checks} portable integration checks passed.`);
+}finally{if(server){server.kill();await new Promise(resolve=>server.once('exit',resolve));}await fs.rm(temp,{recursive:true,force:true});}

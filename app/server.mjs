@@ -5,19 +5,33 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {commit, revision, STATUSES, ConflictError, BusyError} from './store.mjs';
 import {dataRoot} from './config.mjs';
+import {readSettings,settingsFile,saveSettings,ready} from './settings.mjs';
+import crypto from 'node:crypto';
 const root=path.dirname(fileURLToPath(import.meta.url));
-const port=Number(process.env.PORT||8765), origin=`http://127.0.0.1:${port}`;
+let port=Number(process.env.PORT??8765), origin=`http://127.0.0.1:${port}`;
+const installation=crypto.createHash('sha256').update(root+'\0'+dataRoot).digest('hex');
 class NotFound extends Error{}
 const server=http.createServer(async(req,res)=>{
  const reply=(code,value,type='application/json')=>{res.writeHead(code,{'Content-Type':type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(type==='application/json'?JSON.stringify(value):value);};
  try {
   if(req.headers.host!==`127.0.0.1:${port}`) return reply(403,{error:'Use the local address printed by the launcher.'});
   const url=new URL(req.url,origin);
+  if(url.pathname==='/api/health'&&req.method==='GET')return reply(200,{app:'ApplicationTracker',installation});
+  if(url.pathname==='/api/stop'&&req.method==='POST'){
+   if(req.headers.origin!==origin)return reply(403,{error:'Stop from the local launcher.'});
+   reply(200,{stopping:true});server.close();return;
+  }
+  if(url.pathname==='/api/settings'&&req.method==='GET'){const settings=await readSettings();return reply(200,{settings,revision:revision(await readFile(settingsFile,'utf8')),ready:ready(settings)});}
+  if(url.pathname==='/api/settings'&&req.method==='PATCH'){
+   if(req.headers.origin!==origin||!req.headers['content-type']?.startsWith('application/json'))return reply(403,{error:'Save from the tracker page.'});
+   let body='';for await(const chunk of req){body+=chunk;if(body.length>100000)return reply(413,{error:'Settings too large.'});}
+   try{const input=JSON.parse(body);return reply(200,await saveSettings(input.settings,input.revision));}catch(error){return reply(400,{error:error.message});}
+  }
   if(url.pathname==='/api/export/applications.xlsx' && req.method==='GET'){
    const {exportApplications}=await import('./export-applications.mjs');
    try{
     const result=await exportApplications({root:dataRoot});
-    res.writeHead(200,{'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','Content-Disposition':'attachment; filename="Bewerbungsuebersicht.xlsx"','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+    res.writeHead(200,{'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','Content-Disposition':'attachment; filename="applications.xlsx"','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
     res.end(result.buffer);return;
    }catch(error){return reply(error.code==='EXPORT_INPUT'?422:503,{error:error.message});}
   }
@@ -65,10 +79,13 @@ const server=http.createServer(async(req,res)=>{
    }
   }
   const files={'/':'index.html','/index.html':'index.html','/app.js':'app.js','/view-model.mjs':'view-model.mjs','/style.css':'style.css'};
+  if(req.method==='GET'&&/^\/flags\/[a-z]{2}\.svg$/.test(url.pathname)){
+   try{return reply(200,await readFile(path.join(root,'../node_modules/flag-icons/flags/4x3',path.basename(url.pathname))),'image/svg+xml');}catch{return reply(404,{error:'Unknown flag'});}
+  }
   if(req.method!=='GET'||!files[url.pathname])return reply(404,{error:'Not found'});
   const type=/\.m?js$/.test(url.pathname)?'text/javascript':url.pathname.endsWith('.css')?'text/css':'text/html';
   reply(200,await readFile(path.join(root,files[url.pathname]),'utf8'),type+'; charset=utf-8');
  }catch(e){console.error(e.message);reply(500,{error:'Could not read or save the data. See the server window.'});}
 });
-server.listen(port,'127.0.0.1',()=>console.log(`Job tracker: ${origin}\nData: ${dataRoot}\nKeep this window open. Ctrl+C stops the server.`));
+server.listen(port,'127.0.0.1',()=>{port=server.address().port;origin=`http://127.0.0.1:${port}`;console.log(`Application tracker: ${origin}\nData: ${dataRoot}\nKeep this window open. Ctrl+C stops the server.`);if(process.send)process.send({url:origin,installation});});
 server.on('error',e=>{console.error(e.message);process.exitCode=1;});

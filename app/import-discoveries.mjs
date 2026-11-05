@@ -11,10 +11,10 @@ import crypto from 'node:crypto';
 import {commit, readState, writeJsonAtomic, ConflictError, BusyError, DataError} from './store.mjs';
 import {validate} from './jsonschema.mjs';
 import {dataRoot} from './config.mjs';
+import {readSettings,ready,calendarDate} from './settings.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const schema = JSON.parse(await readFile(path.join(here, 'batch.schema.json'), 'utf8'));
-const berlinDate = iso => new Intl.DateTimeFormat('en-CA', {timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date(iso));
 
 // ---------- normalisation ----------
 const fold = s => String(s ?? '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -47,7 +47,7 @@ export function strongKeys(job) {
 }
 
 // ---------- validation ----------
-export function inspectBatch(batch, batchName) {
+export function inspectBatch(batch, batchName, settings) {
   // Validate the envelope without descending into individual records first.
   const envelope = {...schema, properties: {...schema.properties, jobs: {...schema.properties.jobs, items: undefined}}};
   const errors = validate(envelope, batch);
@@ -62,6 +62,10 @@ export function inspectBatch(batch, batchName) {
     const issues = validate(schema.$defs.job, j, schema, at);
     // Run cross-field checks only after structure validation, including null records.
     if (!issues.length) {
+      if(settings){
+        if(j.group&&!settings.groups.includes(j.group))issues.push(`${at}.group: not configured in settings/tracker.json`);
+        for(const country of j.countries)if(!settings.countries.includes(country))issues.push(`${at}.countries: ${country} is not configured in settings/tracker.json`);
+      }
       j.sources.forEach((s, k) => { if (s.file !== batchName) issues.push(`${at}.sources[${k}].file must be "${batchName}" (the batch file name), got "${s.file}"`); });
       if (j.availability !== 'Unverified' && (j.assessmentBasis !== 'Posting reviewed' || j.linkType !== 'posting')) issues.push(`${at}: availability ${j.availability} requires assessmentBasis "Posting reviewed" and linkType "posting"`);
       if (!!j.provider !== !!j.providerJobId) issues.push(`${at}: provider and providerJobId must be given together`);
@@ -93,7 +97,7 @@ const locCompatible = (rec, j) => {
 };
 
 function newRecord(j, ctx) {
-  const day = berlinDate(j.observedAt);
+  const day = calendarDate(j.observedAt,ctx.timezone);
   const r = {
     id: crypto.randomUUID(), fit: j.fit, company: j.company, title: j.title, group: j.group, countries: [...j.countries], country: countryText(j.countries),
     city: j.city, locationRaw: j.locationRaw, workMode: j.workMode, workModeRaw: j.workModeRaw, seniority: j.seniority, postedDate: j.postedDate,
@@ -111,7 +115,7 @@ const dedupeSources = list => { const seen = new Set(), out = []; for (const s o
 function mergeInto(rec, j, ctx) {
   const before = JSON.stringify(rec), original = JSON.parse(before), changed = new Set();
   const set = (k, v) => { if (!same(rec[k], v)) { rec[k] = v; changed.add(k); } };
-  const day = berlinDate(j.observedAt);
+  const day = calendarDate(j.observedAt,ctx.timezone);
   // dates owned by the importer, derived from observation dates
   if (!rec.firstSeen) set('firstSeen', day);
   const last = [rec.lastSeen || rec.firstSeen, day].filter(Boolean).sort().pop(); set('lastSeen', last);
@@ -245,21 +249,24 @@ export async function importBatch({root = dataRoot, batchPath, dryRun = false, v
     const rep = {...base, status: kind, exitCode: code, errors, importedAt: now(), ...extra};
     // Failure reports get their own file so they can never overwrite the report of a successful import of the same batch.
     const failPath = reportPath.replace(/\.report\.json$/, `.failed-${Date.now()}.report.json`);
-    try { await writeJsonAtomic(failPath, rep); } catch { /* report is best effort for failures */ }
-    return {...rep, report: path.relative(root, failPath)};
+    if(!validateOnly){try { await writeJsonAtomic(failPath, rep); } catch { /* report is best effort for failures */ }}
+    return {...rep, report: validateOnly?null:path.relative(root, failPath)};
   };
   let text;
   try { text = await readFile(file, 'utf8'); } catch (e) { return fail(2, 'rejected', [`Cannot read batch file: ${e.message}`]); }
   let batch;
   try { batch = JSON.parse(text.replace(/^﻿/, '')); } catch (e) { return fail(2, 'rejected', [`Malformed JSON: ${e.message}`], {sha256: crypto.createHash('sha256').update(text).digest('hex')}); }
-  const validation = inspectBatch(batch, name);
+  let settings;
+  try{settings=await readSettings();if(batch?.jobs?.length&&!ready(settings))throw Error('Complete groups, countries and timezone in Settings before importing discoveries.');}
+  catch(e){return fail(2,'rejected',[e.message]);}
+  const validation = inspectBatch(batch, name, settings);
   const sha256 = crypto.createHash('sha256').update(text).digest('hex'), total = Array.isArray(batch?.jobs) ? batch.jobs.length : 0;
   if (validation.errors.length) return fail(2, 'rejected', validation.errors.slice(0, 50), {sha256, rejected: total});
   const rejected = validation.rejected.length;
   const recordErrors = validation.rejected.flatMap(r => r.errors);
   if (total && !validation.accepted.length) return fail(2, 'rejected', recordErrors, {sha256, rejected, outcomes: validation.rejected});
   if (validateOnly) return {...base, status: rejected ? 'partially-valid' : 'valid', exitCode: rejected ? 5 : 0, sha256, jobs: total, accepted: validation.accepted.length, rejected, errors: recordErrors, outcomes: validation.rejected};
-  const ctx = {now: now(), originalIndices: validation.accepted.map(r => r.index)};
+  const ctx = {now: now(), timezone:settings.timezone||'UTC', originalIndices: validation.accepted.map(r => r.index)};
   const validBatch = {...batch, jobs: validation.accepted.map(r => r.job)};
   try {
     const result = await commit(root, data => { const r = mergeBatch(data, validBatch, ctx); return {...r, skipWrite: dryRun || (r.counts.added + r.counts.updated === 0)}; }, {lock, beforeRename, tag: 'jobs-import'});

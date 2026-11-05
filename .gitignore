@@ -9,3 +9,14 @@ Thumbs.db
 # The supplied empty workbook/profile are templates. Do not commit customization.
 /profile/cv/*
 !/profile/cv/README.txt
+# Private customization and build products
+/agent/ROUTINE_PROMPT.filled.md
+/settings/backups/
+/settings/*.lock*
+/settings/*.tmp
+/.build-cache/
+/audit-result.json
+/profile/backups/
+/profile/*.lock*
+/profile/*.tmp
+/settings/tracker.json
