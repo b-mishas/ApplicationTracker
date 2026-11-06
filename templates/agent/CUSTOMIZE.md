@@ -17,7 +17,7 @@ Safety rules (no applying, no messages, no sign-in, Gmail read-only), work order
 - Part A: name, one-line description, folder path, Gmail label, time zone, summary language.
 - Profile §1–§10: everything. Pay most attention to §2 (role families and levels), §4 (countries), §6 (confirmed gaps and what is bridgeable) and §8 (fit scale and calibration examples) — these decide the fit ratings.
 - Employer list: your own 20–40 employers with priorities.
-- Tracker settings: groups, supported countries and time zone must match the profile (done by the setup assistant through the tracker's settings).
+- Tracker settings contain only Excel export language. Search groups/geography belong in the profile, not a second tracker list. Dates use local computer time; hosted imports use process TZ matching Part A.
 
 ## Where each profile section is used by the routine
 | Profile section | Routine step (Part B) | Effect if wrong or empty |
@@ -41,13 +41,13 @@ Safety rules (no applying, no messages, no sign-in, Gmail read-only), work order
 1. Edit only the profile, the employer list, Part A and documented tracker settings.
 2. Copy Part B verbatim. Do not shorten, translate or "improve" it.
 3. Never invent experience, skills or dates; mark anything unverified.
-4. Group names, country codes and the time zone in the profile and Part A must equal the tracker settings; `app/batch.schema.json` must accept them.
+4. Assign group names consistently with the profile and use country codes accepted by app/batch.schema.json and app/countries.json (UK is accepted for GB). Do not create tracker group/country/time settings. On a hosted import, process TZ must match Part A.
 5. Keep the profile in plain language; the agent rereads it every run.
 6. Whenever §8 or the strengths/gaps change, show the current fit scale first, then re-test it against the calibration examples as in setup step 4.
 
 ## Changing things later — prompts that work
 Open a conversation with access to the job-search folder and send, for example:
-- "Read `agent/CUSTOMIZE.md`. Add the role family '…' with levels '…' to my profile and to the tracker groups. Show me the change first."
+- "Read `agent/CUSTOMIZE.md`. Add the role family '…' with levels '…' to my profile. Use that family consistently in future position JSON. Show me the change first."
 - "Read `agent/CUSTOMIZE.md`. Add these employers to `profile/companies.xlsx` with priority B: … Verify each website."
 - "Read `agent/CUSTOMIZE.md`. In my profile, treat '…' as a bridgeable gap from now on, and add this posting as a calibration example with fit 4: …"
 - "Read `agent/CUSTOMIZE.md`. Show me my current fit definitions, then re-calibrate them with these postings and my own ratings: …"

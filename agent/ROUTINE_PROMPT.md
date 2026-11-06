@@ -15,7 +15,7 @@ All personal search rules live in profile/candidate_profile.md and profile/compa
 - Candidate profile: `profile/candidate_profile.md`
 - Employer list: `profile/companies.xlsx`
 - Gmail label with job alerts: `{{GMAIL_LABEL}}`
-- Time zone for dates and deadlines: {{TIMEZONE}}  (IANA name, e.g. Europe/Vienna; must equal the tracker's time-zone setting)
+- Time zone for dates and deadlines: {{TIMEZONE}}  (IANA name, e.g. Europe/Vienna; the importer must run in this time zone, see §9)
 - Summary language: {{SUMMARY_LANGUAGE}}
 
 ## Part B — Fixed core (identical for every user; do not edit)
@@ -30,8 +30,8 @@ Locate ROOT with the file tools you have. In Claude, files on the user's compute
 
 Read, in this order:
 - `profile/candidate_profile.md` — the authoritative search rules: target roles, seniority, countries, work authorization, remote rules, mismatch signals, confirmed gaps, fit scale and calibration examples, alert sources, portals and their rotation, special exclusions.
-- `app/SEARCH_WORKFLOW.md` and the files it names — storage, the exact import command, validation, failure handling, and the tracker settings (supported countries, groups, time zone).
-- `app/batch.schema.json` — the exact accepted batch fields and values. The schema and tracker settings decide which country codes and group names are valid; never hardcode them.
+- `app/SEARCH_WORKFLOW.md` and the files it names — storage, the exact import command, validation, failure handling, and recognized country codes, automatic local-date handling and optional Excel export preferences.
+- `app/batch.schema.json` — the exact accepted batch fields and values. Use recognized country codes from app/countries.json (UK is also accepted for GB); assign group names consistently with the profile. No tracker search whitelist is required.
 - `profile/companies.xlsx` — employers to check, with priorities. Use the bundled employer-workbook.mjs read helper as documented in SEARCH_WORKFLOW.md. Do not assume Python or install anything. Combine its "Last checked" and "Careers page" values with the `employers` entries in coverage.json, taking the newer date.
 - `data/jobs.json` — existing vacancies and the user's decisions.
 - `data/reports/coverage.json` — checkpoints from earlier runs; may be missing on the first run.
@@ -49,7 +49,7 @@ This prompt's search, duplicate-handling, coverage and summary rules supersede c
 5. Priority-B/C employers due today (schedule in the profile; default: A every run, B Monday and Thursday, C Friday).
 6. Portals due today (list and rotation in the profile).
 
-Use about 25 full posting reviews as a soft budget. Career-page searches and full posting reviews are different activities; count them separately. Deduplicate and screen candidates before spending review effort. Prioritize approaching deadlines of shortlisted roles, the strongest new candidates and overdue checks. Reserve effort for scheduled employer checks; do not let alerts consume the whole run. If coverage stays unfinished, record it and catch up next run. Do not repeatedly skip the same employers or sources.
+Use about 25 full posting reviews as a soft budget. Keep working through the work order until it is complete or the budget is used; never end early to save effort or output. Career-page searches and full posting reviews are different activities; count them separately. Deduplicate and screen candidates before spending review effort. Prioritize approaching deadlines of shortlisted roles, the strongest new candidates and overdue checks. Reserve effort for scheduled employer checks; do not let alerts consume the whole run. If coverage stays unfinished, record it and catch up next run. Do not repeatedly skip the same employers or sources.
 
 Before opening a posting, compare it with jobs.json: provider job ID, direct URL, then company/title/location as clues. Do not reopen unchanged, already-reviewed records because they recur in alerts. Refresh New/Shortlisted records when assessment or availability is uncertain, a deadline approaches or the posting changed materially. Other statuses need reopening only for a material update.
 
@@ -67,9 +67,9 @@ Do not re-report roles the user already applied to, rejected, withdrawn or dismi
 
 Load the Gmail tools through tool search (Claude: Gmail connector; Codex: Gmail plugin) before declaring them missing. If unavailable or failing, report the actual error and continue.
 
-Read the label from Part A starting at `gmailCheckedThrough` in coverage.json minus one day; without a checkpoint, the last seven days; for a known gap, up to fourteen days, and report any longer uncovered interval. Use a fixed upper bound (the run's start time). Process older alerts first and retrieve all result pages. Advance the checkpoint only when the interval is fully processed (all result pages read, every candidate assessed or saved in a batch; opening the newest email is not enough); a successful empty scan advances it to the upper bound.
+Read the label from Part A starting at `gmailCheckedThrough` in coverage.json minus one day; without a checkpoint, the last seven days; for a known gap, up to fourteen days, and report any longer uncovered interval. Use a fixed upper bound (the run's start time). Process older alerts first and retrieve all result pages. Advance the checkpoint only when the interval is fully processed (all result pages read, every candidate assessed or saved in a batch; opening the newest email is not enough); a successful empty scan advances it to the upper bound. A candidate you cannot review this run is saved as "Title only" (fit provisional or null, availability Unverified, linkType "search" when no direct posting URL exists); it then counts as processed and is reviewed in a later run. Never leave candidates only in `unfinished`.
 
-Extract title, company, location and URL; deduplicate across emails and against jobs.json before opening; prefer the employer's own posting. Label sources by alert service as listed in the profile (e.g. "LinkedIn alert"). Distinguish an empty result from a failed connector. Search the coverage gaps named in the profile when the budget allows.
+Read each alert's full message body, one thread at a time to keep output small, and extract title, company, location and the posting link (alert links usually wrap a job ID, e.g. LinkedIn `/jobs/view/<id>`). Deduplicate across emails and against jobs.json before opening; prefer the employer's own posting. Label sources by alert service as listed in the profile (e.g. "LinkedIn alert"). Process alerts from services the profile does not list too, and name those services under Coverage so the user can add them. Distinguish an empty result from a failed connector. Search the coverage gaps named in the profile when the budget allows.
 
 ### 5. Reading postings and checking sources
 
@@ -79,7 +79,7 @@ Extract title, company, location and URL; deduplicate across emails and against 
 
 Never click Apply, Easy Apply, Save, Message or Follow; never sign in, solve security checks or change settings; never bypass access controls; never retry a failing access method more than once. Report the observed failure accurately. Never browse sources the profile marks as "alerts only".
 
-Employers: fill missing career URLs for at most fifteen employers per run, priority A first. After successfully checking an employer's listings, record today's date in coverage.json `employers` and in the workbook's "Last checked" cell; store newly found career URLs the same way ("Careers page"). Use the bundled employer-workbook.mjs update helper with a temporary JSON array as SEARCH_WORKFLOW.md documents. If the helper is unavailable or the workbook is locked (open in Excel), write coverage.json only and say so once under Coverage. Never rebuild the workbook or change its "Status" column. A blocked or incomplete check does not count.
+Employers: fill missing career URLs for at most fifteen employers per run, priority A first; find them by web search, never by guessing URL paths. After successfully checking an employer's listings, record today's date in coverage.json `employers` and in the workbook's "Last checked" cell; store newly found career URLs the same way ("Careers page"). Use the bundled employer-workbook.mjs update helper with a temporary JSON array as SEARCH_WORKFLOW.md documents; include only the fields you change, because an empty value clears that cell. If the helper is unavailable or the workbook is locked (open in Excel), write coverage.json only and say so once under Coverage. Never rebuild the workbook or change its "Status" column. A blocked or incomplete check does not count.
 
 Portals: cover postings since each source's `lastSuccessfulCheckedThrough` with a one-day overlap; seven days if unknown. Do not discard an older relevant vacancy that is confirmed open. Failed, skipped or partial searches never advance coverage.
 
@@ -116,9 +116,9 @@ Do not delete records or replace reviewed information with guesses.
 
 A top-level batch in `data/incoming/` without a matching `data/reports/<batch filename with final .json removed>.report.json` is pending; ignore `data/incoming/imported/`. Use the report path returned by RESULT after import; for example batch 2026-11-05-example.json creates 2026-11-05-example.report.json. Also inspect reports for unresolved rejected or ambiguous outcomes from any earlier run; a report's existence does not prove complete success. Fix only errors you can establish confidently.
 
-Write one new UTF-8 batch `data/incoming/YYYY-MM-DD-<runId>.json` (local run date; unique runId equal to the envelope's runId; UTC timestamps ending Z). Follow batch.schema.json exactly. Each `sources[].file` equals this batch's filename. Include provider and providerJobId together when known. For eligible remote roles outside the supported countries, use an empty countries array and keep the real location in locationRaw/workModeRaw; never substitute an incorrect country code. An empty jobs array is valid.
+Write one new UTF-8 batch `data/incoming/YYYY-MM-DD-<runId>.json` (local run date; unique runId equal to the envelope's runId; UTC timestamps ending Z, read from the system clock, never estimated). Follow batch.schema.json exactly. Each `sources[].file` equals this batch's filename. Include provider and providerJobId together when known. Use recognized codes for the actual advertised countries, including eligible remote roles outside the profile’s usual geography. Use an empty countries array only when the country is genuinely unspecified; preserve the real location in locationRaw/workModeRaw and never substitute an incorrect code. An empty jobs array is valid.
 
-Run the importer exactly as `app/SEARCH_WORKFLOW.md` documents. Default, from `app/`:
+Run the importer exactly as `app/SEARCH_WORKFLOW.md` documents. If this scheduled environment uses another timezone, set standard process environment variable TZ to Part A’s IANA timezone for validation/import so calendar dates match the user’s local day; no tracker timezone setting exists. Verify it under the same TZ with `node -e "console.log(Intl.DateTimeFormat().resolvedOptions().timeZone)"`. Default, from `app/`:
 ```bash
 # --validate-only checks the batch without importing; --root points to the data folder
 node import-discoveries.mjs incoming/<file>.json --root ../data --validate-only

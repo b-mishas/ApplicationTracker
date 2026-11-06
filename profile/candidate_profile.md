@@ -20,20 +20,21 @@ List 2–6 families. For each: typical titles, and the level that fits.
 | {{e.g. Data engineering in life sciences}} | {{Data Engineer, Senior Data Engineer, Lead}} | {{Senior or Lead}} |
 | {{…}} | {{…}} | {{…}} |
 
-Group names here must match the groups configured in the tracker settings.
+Use these family names consistently in each position’s group field. The tracker derives groups from position JSON; there is no separate configured list.
 
 Search keywords (used for portal searches and job alerts): {{e.g. data engineer, data platform, bioinformatics, LIMS}}
 
 ## 3. Seniority rules
 - Below my level (keep, but mark seniority "Below level"): {{e.g. Junior, Associate}}
 - Above my level (keep only if…): {{e.g. Director only at small companies}}
+- No level stated in the posting: {{e.g. judge from required years and responsibilities; note "level not stated" in gaps}}
 
 ## 4. Geography
-- Countries in scope: {{e.g. Germany, Austria, Switzerland}} (must match the tracker's supported countries)
+- Countries in scope: {{e.g. Germany, Austria, Switzerland}} (the agent writes recognized country codes into each position; no tracker search-country list is required). Countries where you need sponsorship (§1) may be in scope; the agent then checks each posting for sponsorship.
 - Remote roles outside these countries: {{e.g. allowed if open to my country and within UTC±2}}
 - Preferred regions (weighted higher when otherwise equal): {{e.g. within 50 km of my city}}
 - Relocation: {{e.g. open to relocation within the DACH region / not open}}
-- On-site limits: {{e.g. max 3 office days per week}}
+- On-site limits: {{e.g. max 3 office days per week}}; hybrid with office days not stated: {{e.g. keep and note "office days not stated"}}
 
 ## 5. Strengths (what the agent can count as hands-on evidence)
 - {{skill or achievement, with where/when}}
