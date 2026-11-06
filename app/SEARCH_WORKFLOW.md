@@ -6,29 +6,38 @@ All paths are relative to the installation ROOT. app/ holds code; data/ holds jo
 
 Default data is installation-relative. JOBTRACKER_DATA_DIR and importer --root select another actual data folder. JOBTRACKER_SETTINGS_FILE overrides the default installation-relative settings/tracker.json; changing --root alone does not select different settings. In mounted environments, use real mounted paths rather than Windows paths.
 
-## Settings — implemented
+## Settings and record labels
 
-settings/tracker.json contains:
+settings/tracker.json contains only export preferences:
 
-    {"schemaVersion":1,"groups":[],"countries":[],"timezone":"","exportLanguage":"en"}
+    {"schemaVersion":1,"exportLanguage":"en"}
 
-Groups are unique nonempty strings (their order controls the group-filter order). Countries are unique uppercase two-letter codes in app/countries.json; GB is preferred for the UK, and legacy UK is accepted when explicitly configured. timezone is an IANA name; exportLanguage is en or de. Neutral defaults deliberately require personalization.
+exportLanguage is en or de. Optional exportName is a single-line name of up to 100 characters. The Name field in Settings adds it to the report title in both formats, for example Applications - Name Surname. Clearing the field removes exportName. Defaults are valid immediately; no tracker personalization is required before importing. Older settings files containing groups, countries or timezone are accepted; those retired fields are ignored and removed on the next explicit settings save, with a backup.
 
-Users edit these through Settings in the header. Agents should write a proposed complete settings object to a temporary JSON file, then from ROOT run:
+The candidate profile owns target role families and geography. The agent assigns each job's group and countries; the tracker derives filter options from existing records. A group is a string of at most 100 characters. Countries must be recognized uppercase two-letter codes in app/countries.json; UK is also accepted as an alias for GB. Unknown codes are rejected without changing the inventory. Existing records remain displayable, including legacy unknown codes shown as text without a broken flag. Flags are bundled locally for every supported code, independently of the countries currently present.
+
+Group colours are assigned automatically. The first four pastel hues match the original palette; later colours maximize perceptual separation in Oklab while keeping the same saturation/lightness. Automatic groupColours metadata is retained in jobs.json on normal writes so new, reordered or removed groups do not reshuffle existing assignments. It is not a search-setting list, and agents must not edit it. Fit remains coloured; no colour-mode setting is needed.
+
+Users choose Excel language through Settings. For a proposed export preference, agents may use:
 
     node app/settings-cli.mjs --check ABSOLUTE_TEMP_FILE
     node app/settings-cli.mjs --apply ABSOLUTE_TEMP_FILE
-    node app/self-check.mjs --require-configured
 
---check only validates; --apply validates, backs up previous settings and atomically saves. Without flags the settings command prints current settings and readiness. Never edit code or batch.schema.json to personalize. Reload the tracker after an agent-side settings change. Changing settings keeps existing records intact; older records remain displayable even when their group/country is no longer selected for new searches.
+--check validates; --apply validates, backs up previous settings and atomically saves. Without flags the command prints current preferences. Never edit code or batch.schema.json to personalize. Search criteria belong only in the profile.
 
-batch.schema.json describes structural types and evidence rules. Groups/countries are intentionally not static enums: the importer ALSO checks them against the current settings. Read both files. Nonempty discovery batches require configured groups, countries and timezone; an empty batch is allowed before personalization. Empty group and countries are allowed for genuinely unspecified/unclassified discoveries; preserve advertised geography in locationRaw/workModeRaw.
+batch.schema.json describes structural types and evidence rules. The importer accepts new profile-assigned groups and recognized countries without a settings whitelist or readiness gate. It does not need settings/tracker.json to import. Empty group/countries remain valid for genuinely unspecified data; preserve advertised geography in locationRaw/workModeRaw.
+
+## Dates — automatic local time
+
+Instants use UTC timestamps ending Z. The importer converts observedAt to firstSeen/lastSeen using its execution computer's local timezone; the browser uses its computer's local date for Today and suggested application dates. There is no tracker timezone setting. Previously saved date-only fields are not reinterpreted.
+
+A scheduled agent running on another host must run the importer with standard process environment variable TZ set to Part A's IANA timezone (for example Europe/Berlin), then verify the execution timezone. This configures that import process, not tracker settings. On a local desktop with the same timezone, no override is needed. This avoids calendar-day differences around midnight. Never rewrite date-only records to compensate for a mismatched environment.
 
 ## Node and installation self-check
 
 Use Node 22 or newer in the actual execution environment. Host runtimes bundled with the release are runtime/win-x64/node.exe, runtime/win-arm64/node.exe, runtime/darwin-x64/node and runtime/darwin-arm64/node (relative to ROOT). Use the executable matching that OS and processor. Linux scheduled-agent environments must verify their own Linux Node with node --version; never attempt a Windows/Mac executable there. Do not install software during scheduled searches.
 
-From ROOT run node app/self-check.mjs, adding --require-configured after personalization. It checks schema, settings, valid inventory, required folders, writes/backups in a temporary data subfolder, Excel export/readback and the employer workbook. Temporary files are removed; actual jobs are not changed. Exit 0 means checks passed, exit 1 means setup needs attention. This is the installation test. An empty-batch --validate-only test checks batch parsing, not inventory access, saving or export.
+From ROOT run node app/self-check.mjs. The legacy --require-configured option is accepted for compatibility and adds no search-configuration requirement. It checks schema, settings, valid inventory, required folders, writes/backups in a temporary data subfolder, Excel export/readback and the employer workbook. Temporary files are removed; actual jobs are not changed. Exit 0 means checks passed, exit 1 means setup needs attention. This is the installation test. An empty-batch --validate-only test checks batch parsing, not inventory access, saving or export.
 
 ## Discovery commands
 
@@ -42,7 +51,7 @@ Relative batch paths resolve within --root, not app/. Absolute batch paths outsi
 
 Exit codes: 0 processed (check ambiguous count); 2 invalid envelope/all rejected; 3 lock/conflict; 4 write failure; 5 partial success. Every call prints a final RESULT JSON line. Success report for batch 2026-11-05-example.json is reports/2026-11-05-example.report.json: remove the final .json before adding .report.json. Prefer the report path returned by RESULT. Failure diagnostics use a separate .failed-<timestamp>.report.json name. Normalize path separators in mounted environments. Inspect unresolved outcomes before archiving; report-writing failure is not a successful archive condition.
 
-Filename runId must match the envelope. Every sources[].file equals the batch filename. Use UTC Z timestamps for instants and the configured timezone for calendar dates/firstSeen. User-owned status, notes, IDs, firstSeen, manual urgency and application information are preserved. Absence from a search never closes a job. Deadline/agent urgency fields are not implemented; report deadlines in summary Flags without adding unsupported fields or overwriting manual urgency.
+Filename runId must match the envelope. Every sources[].file equals the batch filename. Use UTC Z timestamps for instants; calendar dates/firstSeen follow the importer process local time as documented above. User-owned status, notes, IDs, firstSeen, manual urgency and application information are preserved. Absence from a search never closes a job. Deadline/agent urgency fields are not implemented; report deadlines in summary Flags without adding unsupported fields or overwriting manual urgency.
 
 ## Employer workbook helper — no Python
 
@@ -56,9 +65,13 @@ From ROOT:
 
 If the workbook cannot be updated, record employer check dates/career URLs in data/reports/coverage.json and report the fallback. The agent owns that file.
 
-## Excel export
+## Application exports
 
-The browser Export applications button downloads applications.xlsx using only saved jobs.json. A blank inventory exports a valid header-only workbook. Included records have an applicationDate or Applied/Interview/Offer/Rejected/Withdrawn status. Every included record needs a valid actual application date; no firstSeen substitution. Rows sort oldest first. Optional applicationStatusText overrides the English/German stage label. Titles/company/location are not translated. Excel strings remain literal even when starting with '='.
+The saved inventory keeps the primary status and optional interviewDate, interviewOutcome, interviewOutcomeDate and offerDate fields. Dates use YYYY-MM-DD in JSON. The interview outcome can be Rejected, Offer or Withdrawn. Rejected and Withdrawn use interviewOutcomeDate, while Offer uses offerDate. Selecting an interview outcome saves the matching primary status in the same update. Pending returns the status to Interview. Older records saved with status Interview and an outcome display and filter by that outcome. These fields are user-owned and cannot be submitted in discovery batches.
+
+In the browser's Export applications as box, Excel downloads applications.xlsx using only saved jobs.json. A blank inventory exports a valid header-only workbook. Included records have an applicationDate or an effective stage of Applied, Interview, Offer, Rejected or Withdrawn. Every included record needs its actual application date. Rows sort oldest first. For an interview with an outcome, Status shows a dated sequence such as Interview 05.11.2026 -> Rejected 12.11.2026. The editor prefills Application status text with the generated milestone sequence. Optional applicationStatusText stores typed detail and follows the sequence in the editor and Excel. Without milestones, the detail supplies the stage label in Excel. Titles/company/location are not translated. Excel strings remain literal even when starting with '='.
+
+The PDF button opens a printable report in a new tab. Choose Save as PDF in the browser's print dialog. The report uses A4 landscape and shares the Excel export's saved rows, language, date validation and status history. The Print / Save as PDF button in the report reopens the dialog.
 
     node app/export-applications.mjs --output PATH
 

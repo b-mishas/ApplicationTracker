@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node app/launch.mjs",
-    "test": "node app/test-import.mjs && node app/test-view-model.mjs && node app/check.mjs && node app/test-portable.mjs",
+    "test": "node app/test-import.mjs && node app/test-view-model.mjs && node app/test-group-colours.mjs && node app/check.mjs && node app/test-portable.mjs",
     "check": "node app/self-check.mjs",
     "build": "node scripts/build-release.mjs"
   },

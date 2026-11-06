@@ -3,14 +3,31 @@ import http from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
-import {commit, revision, STATUSES, ConflictError, BusyError} from './store.mjs';
+import {commit, revision, STATUSES, ConflictError, BusyError, writeJsonAtomic} from './store.mjs';
 import {dataRoot} from './config.mjs';
-import {readSettings,settingsFile,saveSettings,ready} from './settings.mjs';
+import {readSettings,settingsFile,saveSettings,ready,countryCodes,isCountryCode} from './settings.mjs';
 import crypto from 'node:crypto';
+import {calendarDate} from './settings.mjs';
+import {updateStage,validStageDate,validateMilestones,effectiveStatus,StatusHistoryError} from './status-history.mjs';
 const root=path.dirname(fileURLToPath(import.meta.url));
 let port=Number(process.env.PORT??8765), origin=`http://127.0.0.1:${port}`;
 const installation=crypto.createHash('sha256').update(root+'\0'+dataRoot).digest('hex');
 class NotFound extends Error{}
+const viewStateFile=path.join(dataRoot,'view-state.json');
+const filterKeys=new Set(['fit','company','group','title','star','country','city','workMode','status','seniority','firstSeen','postedDate','assessmentBasis']);
+let viewStateWrite=Promise.resolve();
+async function readViewState(){
+ try{
+  const state=JSON.parse(await readFile(viewStateFile,'utf8'));
+  return validViewState(state)?state:null;
+ }
+ catch(error){if(error.code==='ENOENT'||error instanceof SyntaxError)return null;throw error;}
+}
+function validViewState(state){
+ if(!state||typeof state.search!=='string'||state.search.length>2000||!Number.isSafeInteger(state.updatedAt)||state.updatedAt<0||!state.filters||typeof state.filters!=='object'||Array.isArray(state.filters))return false;
+ const shortText=value=>typeof value==='string'&&value.length<=2000;
+ return Object.entries(state.filters).every(([key,value])=>filterKeys.has(key)&&(shortText(value)||Array.isArray(value)&&value.length<=1000&&value.every(shortText)));
+}
 const server=http.createServer(async(req,res)=>{
  const reply=(code,value,type='application/json')=>{res.writeHead(code,{'Content-Type':type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(type==='application/json'?JSON.stringify(value):value);};
  try {
@@ -21,17 +38,46 @@ const server=http.createServer(async(req,res)=>{
    if(req.headers.origin!==origin)return reply(403,{error:'Stop from the local launcher.'});
    reply(200,{stopping:true});server.close();return;
   }
+  if(url.pathname==='/api/view-state'&&req.method==='GET'){
+   await viewStateWrite;
+   return reply(200,await readViewState());
+  }
+  if(url.pathname==='/api/view-state'&&req.method==='POST'){
+   if(req.headers.origin!==origin||!req.headers['content-type']?.startsWith('application/json'))return reply(403,{error:'Save from the tracker page.'});
+   let body='';for await(const chunk of req){body+=chunk;if(body.length>50000)return reply(413,{error:'Filter state too large.'});}
+   let state;
+   try{state=JSON.parse(body);}catch{return reply(400,{error:'Invalid filter state.'});}
+   if(!validViewState(state))return reply(400,{error:'Invalid filter state.'});
+   const write=viewStateWrite.then(async()=>{
+    const previous=await readViewState();
+    if(!previous||state.updatedAt>=previous.updatedAt)await writeJsonAtomic(viewStateFile,state);
+   });
+   viewStateWrite=write.catch(()=>{});
+   await write;
+   return reply(200,{saved:true});
+  }
+  if(url.pathname==='/api/countries'&&req.method==='GET')return reply(200,countryCodes.filter(isCountryCode));
   if(url.pathname==='/api/settings'&&req.method==='GET'){const settings=await readSettings();return reply(200,{settings,revision:revision(await readFile(settingsFile,'utf8')),ready:ready(settings)});}
   if(url.pathname==='/api/settings'&&req.method==='PATCH'){
    if(req.headers.origin!==origin||!req.headers['content-type']?.startsWith('application/json'))return reply(403,{error:'Save from the tracker page.'});
    let body='';for await(const chunk of req){body+=chunk;if(body.length>100000)return reply(413,{error:'Settings too large.'});}
    try{const input=JSON.parse(body);return reply(200,await saveSettings(input.settings,input.revision));}catch(error){return reply(400,{error:error.message});}
   }
+  if(url.pathname==='/export/applications/print' && req.method==='GET'){
+   const {applicationExportData}=await import('./export-applications.mjs');
+   const {applicationPrintPage}=await import('./print-applications.mjs');
+   try{
+    return reply(200,applicationPrintPage(await applicationExportData({root:dataRoot})),'text/html; charset=utf-8');
+   }catch(error){
+    if(error.code!=='EXPORT_INPUT')throw error;
+    return reply(422,applicationPrintPage({error:error.message}),'text/html; charset=utf-8');
+   }
+  }
   if(url.pathname==='/api/export/applications.xlsx' && req.method==='GET'){
    const {exportApplications}=await import('./export-applications.mjs');
    try{
     const result=await exportApplications({root:dataRoot});
-    res.writeHead(200,{'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','Content-Disposition':'attachment; filename="applications.xlsx"','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+    res.writeHead(200,{'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','Content-Disposition':`attachment; filename="applications_${calendarDate(new Date())}.xlsx"`,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
     res.end(result.buffer);return;
    }catch(error){return reply(error.code==='EXPORT_INPUT'?422:503,{error:error.message});}
   }
@@ -40,6 +86,8 @@ const server=http.createServer(async(req,res)=>{
    if(req.headers.origin!==origin || !req.headers['content-type']?.startsWith('application/json')) return reply(403,{error:'Save from the tracker page.'});
    let body='';for await(const chunk of req){body+=chunk;if(body.length>100000)return reply(413,{error:'Notes too large.'});}
    const input=JSON.parse(body);
+   try{if(input.statusDate!==undefined&&!validStageDate(input.statusDate,{allowEmpty:false}))throw new StatusHistoryError('Enter a valid stage date.');validateMilestones(input);}catch(error){return reply(400,{error:error.message});}
+   const stageDate=input.statusDate||calendarDate(new Date().toISOString());
    const quickAction=input.quickAction;
    if(quickAction!==undefined&&!['dismiss','restore','urgent'].includes(quickAction))return reply(400,{error:'Invalid quick action.'});
    if(quickAction==='urgent'&&typeof input.urgent!=='boolean')return reply(400,{error:'Urgent must be true or false.'});
@@ -62,23 +110,24 @@ const server=http.createServer(async(req,res)=>{
       job.updatedAt=new Date().toISOString();
       return {job:structuredClone(job)};
      }
-     const previousStatus=job.status;
-     job.status=input.status;if(input.notes!==undefined)job.notes=input.notes;
+     const previousStatus=effectiveStatus(job);
+     updateStage(job,input,stageDate);if(input.notes!==undefined)job.notes=input.notes;
      if(input.applicationDate!==undefined)job.applicationDate=input.applicationDate;
      if(input.applicationStatusText!==undefined)job.applicationStatusText=input.applicationStatusText;
-     else if(previousStatus!==job.status)delete job.applicationStatusText;
+     else if(previousStatus!==effectiveStatus(job))delete job.applicationStatusText;
      job.updatedAt=new Date().toISOString();
      return {job:structuredClone(job)};
     },{expectedRevision:input.revision,tag:'jobs'});
     return reply(200,{revision:r.revision,job:r.job});
    } catch(e) {
+    if(e instanceof StatusHistoryError)return reply(400,{error:e.message});
     if(e instanceof NotFound)return reply(404,{error:'Position not found.'});
     if(e instanceof ConflictError)return reply(409,{error:e.message});
     if(e instanceof BusyError)return reply(409,{error:'Another save or import is running. Try again.'});
     throw e;
    }
   }
-  const files={'/':'index.html','/index.html':'index.html','/app.js':'app.js','/view-model.mjs':'view-model.mjs','/style.css':'style.css'};
+  const files={'/':'index.html','/index.html':'index.html','/app.js':'app.js','/view-model.mjs':'view-model.mjs','/group-colours.mjs':'group-colours.mjs','/status-history.mjs':'status-history.mjs','/style.css':'style.css'};
   if(req.method==='GET'&&/^\/flags\/[a-z]{2}\.svg$/.test(url.pathname)){
    try{return reply(200,await readFile(path.join(root,'../node_modules/flag-icons/flags/4x3',path.basename(url.pathname))),'image/svg+xml');}catch{return reply(404,{error:'Unknown flag'});}
   }

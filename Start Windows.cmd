@@ -14,5 +14,5 @@ if errorlevel 1 (
 )
 set "TRACKER_NODE=node"
 :run
-"%TRACKER_NODE%" "%~dp0app\launch.mjs"
+"%TRACKER_NODE%" "%~dp0app\launch.mjs" --restart
 if errorlevel 1 pause

@@ -11,4 +11,4 @@ export function fixtureData() {
   }))};
 }
 
-export const fixtureSettings={schemaVersion:1,groups:['Engineering','Analytics'],countries:['DE','CH','AT','NL','BE','UK','ES'],timezone:'Europe/Berlin',exportLanguage:'en'};
+export const fixtureSettings={schemaVersion:1,exportLanguage:'en'};

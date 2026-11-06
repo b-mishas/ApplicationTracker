@@ -1,19 +1,15 @@
 # Application tracker checkpoint
 
-Updated: 2026-11-05 UTC. Last agent: Claude. Scope: C:\Users\misha\Claude\ApplicationTracker. Branch main; Codex commits 45f07a3 (implementation) and b0d7288 (checkpoint), followed by Claude's agent-docs commit. GitHub/origin: b-mishas/ApplicationTracker. Claude's commit is local and not pushed; PR/CI not checked.
+Updated 2026-11-06 12:05 UTC by Codex for the tracker source commit on main. The commit is based on 4e13896, which matched GitHub origin/main before staging. CI is unverified. Claude's agent, profile and template edits are a separate follow-up.
 
-## Current state
+## Current scope
 
-Portable tracker plus search-agent package for a nontechnical recipient. Settings, importer safeguards, Excel export/workbook helpers, self-check, bundled Windows/macOS runtimes and Start/Stop launchers are in 45f07a3. READ ME.html is the single recipient starting guide. See PLAN.md, HISTORY.md and INTERFACE_FOR_TRACKER.md for durable scope and interfaces.
+The header groups Excel and PDF and places Settings at the far right. The JSON control has a descriptive tooltip. Settings adds an optional Name above the export language. The name is stored as exportName in local settings. Both exports append it after a hyphen to the localized title. Excel places the named title in a merged heading row above its column headers. PDF uses the existing A4 landscape report heading. Changes span the header and settings form, settings validation, both renderers, the Excel self-check, portable tests and project docs.
 
-Claude's commit adds templates/ (pristine agent/, guides/, profile/ copies the release builder requires; byte-identical to the working copies) and Codex's integration edits to agent/ROUTINE_PROMPT.md, agent/SETUP_PROMPT.md and guides/SETUP_CODEX.md: workbook access via app/employer-workbook.mjs (no Python), self-check and settings commands, report-filename rule, local execution instead of "no Git".
+The editor auto-saves stage and outcome changes, preserves drafts, and shows milestone controls by stage. Save changes and Cancel enable only when dirty. Rejected hides the stored Offer date. Primary Status and interview outcome synchronize in both directions, with a legacy effective-status fallback. New, Shortlisted, Active and All presets share the column filter. Search and filters persist across reload and local server restart. The overview shows Urgent next to Shortlisted. Settings keeps the Excel language label. JSON drives group colours and country flags. Row markers are 3 px. READ ME.html has four copyable prompt boxes. Start Windows.cmd restarts the server for the current installation.
 
-JOBTRACKER_* environment-variable names are kept at the user's request, consistently in code, tests and docs; no APPLICATIONTRACKER_* remain. Health app name, schema title and package name use ApplicationTracker.
+## Verification and next steps
 
-## Verification
+npm test passed 57 importer cases, view-model, palette and API checks, and 14 portable integration checks. Tests cover saving and clearing the name, literal text, workbook title, filtering and frozen headers, and rejection of personalized release settings. Headless Chrome verified Settings at the right edge at 320, 390, 800 and 1280 px, the JSON tooltip text, name persistence after reload, and the named Excel and PDF exports. Chrome rendered the PDF as six A4 landscape pages. The native print dialog and desktop Excel were untested.
 
-Codex: npm test passed (54/54 importer, view-model/API, 10 portable checks); release ZIP built, audited and smoke-tested on Windows. Claude: confirmed employer-workbook.mjs read works on templates/profile/companies.xlsx, and that self-check --require-configured and the documented settings/workbook commands exist. No test rerun by Claude (only Markdown and template files changed).
-
-## Next action
-
-Push when the user approves. Then: add the fit-calibration step to SETUP_PROMPT.md and templates/agent/ (agreed in principle, not started); review INTERFACE_FOR_TRACKER.md "Release blockers" against 45f07a3, which implemented several of them. Real macOS, Windows ARM64, personalized scheduled-agent/connector acceptance and recipient usability remain pending. Old "JobTracker" new-session preset in the Claude app still points at the deleted folder; the user must fix it in the app. No release published; no processes running.
+Keep Claude's agent/profile/template changes separate when staging. The existing ZIP predates source changes and is rebuilt only on request. Remove the five local dev mocks before shipping. The button tutorial and real macOS, Windows ARM64, scheduled-agent and recipient acceptance remain pending.

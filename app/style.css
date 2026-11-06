@@ -1,4 +1,4 @@
-:root{font-family:Segoe UI,system-ui,sans-serif;color:#253331;background:#f5f6f2;font-size:14px;--green:#177464}*{box-sizing:border-box}body{margin:0}main{max-width:1660px;margin:auto;padding:36px 38px}header{display:flex;justify-content:space-between;align-items:center}h1{font-size:38px;letter-spacing:-1.8px;margin:5px 0}h1 span{color:var(--green)}.subtitle{color:#718079;margin:8px 0 24px}.export{color:var(--green);text-decoration:none;border:1px solid #cbd9d1;padding:10px 14px;border-radius:8px;background:white}.overview{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #dce3dc;background:#fff;border-radius:12px;margin:8px 0 24px;padding:20px 0}.overview div{padding:0 24px;border-right:1px solid #e6eae4;display:flex;gap:12px;align-items:center}.overview div:last-child{border:0}.overview strong{font-size:27px;font-weight:600}.overview span{color:#738079;font-size:12px}.toolbar{display:flex;gap:8px;flex-wrap:wrap}input,select,button,textarea{font:inherit;border:1px solid #d8dfd7;border-radius:6px;background:white;color:inherit;padding:9px 10px}input[type=search]{flex:1;min-width:230px}button,summary{cursor:pointer}button:hover,.export:hover{background:#edf4ee}input:focus,select:focus,button:focus-visible,textarea:focus{outline:2px solid #5ca894;outline-offset:2px}.viewbar{display:flex;justify-content:space-between;align-items:center;gap:15px;margin:18px 0 10px;color:#6b7973;font-size:12px}.viewbar>div{display:flex;gap:12px;align-items:center}.viewbar select,.viewbar input{padding:5px;font-size:12px}.columns{position:relative}.columns>div{position:absolute;right:0;top:25px;z-index:4;width:180px;padding:10px;background:#fff;box-shadow:0 5px 25px #243c3226;border-radius:8px}.columns label{display:block;padding:4px}.table-wrap{overflow:auto;background:white;border:1px solid #dce3dc;border-radius:10px;max-height:66vh}table{width:100%;border-collapse:separate;border-spacing:0}th{position:sticky;top:0;z-index:2;background:#eef2ec;text-align:left;white-space:nowrap;border-bottom:1px solid #dbe3d9}th button{background:transparent;border:0;font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:650;width:100%;text-align:left;padding:13px 12px}td{padding:12px;border-bottom:1px solid #edf0eb;font-size:12px;vertical-align:middle}tr.job.stripe{background:#fafbf8}td.title{min-width:230px;max-width:360px}td.title a{display:inline;color:#244a40;text-decoration:none;font-weight:600;line-height:1.5}td.title a:hover{text-decoration:underline}.company{font-weight:650;white-space:nowrap}.badge{display:inline-block;border-radius:5px;padding:4px 7px;font-size:11px;white-space:nowrap}.score{font-size:13px;font-weight:700;min-width:34px;text-align:center;background:#e9ece8}.fit5{background:#ccebd8;color:#185d3b}.fit4{background:#e1eed2;color:#46652d}.fit3{background:#f5ebbf;color:#7d6322}.fit2,.fit1{background:#f4ddcf;color:#8e5130}.group{background:hsl(var(--hue) 32% 91%);color:hsl(var(--hue) 35% 29%)}.toggle{padding:3px 7px;border:0;background:transparent;font-size:18px}.detail td{background:#f3f6f0;padding:20px 30px}.detail-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px}.detail h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#65786a;margin:0 0 8px}.detail p{line-height:1.7;white-space:pre-wrap;margin:0 0 15px}.detail a{color:var(--green)}textarea{width:100%;min-height:90px;resize:vertical;margin:8px 0}.save{background:#1e7562;color:white;border:0}.save:hover{background:#175a4b}.save-state{margin-left:8px}.detail label{display:block}footer{display:flex;justify-content:space-between;gap:20px;font-size:11px;color:#718079;margin-top:14px}#message:not(:empty){padding:12px;background:#fff0d7;margin:10px 0;border-radius:6px}.empty{text-align:center;padding:50px;color:#728277}.muted{color:#829087;font-size:11px}.country{white-space:nowrap}.flag{font-family:'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif}@media(max-width:850px){main{padding:20px 14px}.overview{grid-template-columns:1fr 1fr;gap:18px}.overview div{border:0;padding:0 14px}.detail-grid{grid-template-columns:1fr}.viewbar{align-items:start;flex-direction:column}.viewbar>div{flex-wrap:wrap}h1{font-size:30px}header{gap:15px}footer{flex-direction:column}.export{white-space:nowrap;font-size:12px}}
+:root{font-family:Segoe UI,system-ui,sans-serif;color:#253331;background:#f5f6f2;font-size:14px;--green:#177464}*{box-sizing:border-box}body{margin:0}main{max-width:1660px;margin:auto;padding:36px 38px}header{display:flex;justify-content:space-between;align-items:center}h1{font-size:38px;letter-spacing:-1.8px;margin:5px 0}h1 span{color:var(--green)}.subtitle{color:#718079;margin:8px 0 24px}.export{color:var(--green);text-decoration:none;border:1px solid #cbd9d1;padding:10px 14px;border-radius:8px;background:white}.overview{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #dce3dc;background:#fff;border-radius:12px;margin:8px 0 24px;padding:20px 0}.overview div{padding:0 24px;border-right:1px solid #e6eae4;display:flex;gap:12px;align-items:center}.overview div:last-child{border:0}.overview strong{font-size:27px;font-weight:600}.overview span{color:#738079;font-size:12px}.toolbar{display:flex;gap:8px;flex-wrap:wrap}input,select,button,textarea{font:inherit;border:1px solid #d8dfd7;border-radius:6px;background:white;color:inherit;padding:9px 10px}input[type=search]{flex:1;min-width:230px}button,summary{cursor:pointer}button:where(:enabled):hover,.export:hover{background:#edf4ee}input:focus,select:focus,button:focus-visible,textarea:focus{outline:2px solid #5ca894;outline-offset:2px}.viewbar{display:flex;justify-content:space-between;align-items:center;gap:15px;margin:18px 0 10px;color:#6b7973;font-size:12px}.viewbar>div{display:flex;gap:12px;align-items:center}.viewbar select,.viewbar input{padding:5px;font-size:12px}.columns{position:relative}.columns>div{position:absolute;right:0;top:25px;z-index:4;width:180px;padding:10px;background:#fff;box-shadow:0 5px 25px #243c3226;border-radius:8px}.columns label{display:block;padding:4px}.table-wrap{--row-edge-width:3px;overflow:auto;background:white;border:1px solid #dce3dc;border-radius:10px;max-height:66vh}table{width:100%;border-collapse:separate;border-spacing:0}th{position:sticky;top:0;z-index:2;background:#eef2ec;text-align:left;white-space:nowrap;border-bottom:1px solid #dbe3d9}th button{background:transparent;border:0;font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:650;width:100%;text-align:left;padding:13px 12px}td{padding:12px;border-bottom:1px solid #edf0eb;font-size:12px;vertical-align:middle}tr.job.stripe{background:#fafbf8}td.title{min-width:230px;max-width:360px}td.title a{display:inline;color:#244a40;text-decoration:none;font-weight:600;line-height:1.5}td.title a:hover{text-decoration:underline}.company{font-weight:650;white-space:nowrap}.badge{display:inline-block;border-radius:5px;padding:4px 7px;font-size:11px;white-space:nowrap}.score{font-size:13px;font-weight:700;min-width:34px;text-align:center;background:#e9ece8}.fit5{background:#ccebd8;color:#185d3b}.fit4{background:#e1eed2;color:#46652d}.fit3{background:#f5ebbf;color:#7d6322}.fit2,.fit1{background:#f4ddcf;color:#8e5130}.badge.group{background:var(--group-fill,#eef0eb);color:var(--group-ink,#536052);white-space:normal;max-width:100%}.toggle{padding:3px 7px;border:0;background:transparent;font-size:18px}.detail td{background:#f3f6f0;padding:20px 30px}.detail-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px}.detail h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#65786a;margin:0 0 8px}.detail p{line-height:1.7;white-space:pre-wrap;margin:0 0 15px}.detail a{color:var(--green)}textarea{width:100%;min-height:90px;resize:vertical;margin:8px 0}.save{background:#1e7562;color:white;border:0}.save:enabled:hover{background:#175a4b}.save-state{margin-left:8px}.detail label{display:block}footer{display:flex;justify-content:space-between;gap:20px;font-size:11px;color:#718079;margin-top:14px}#message:not(:empty){padding:12px;background:#fff0d7;margin:10px 0;border-radius:6px}.empty{text-align:center;padding:50px;color:#728277}.muted{color:#829087;font-size:11px}.country{white-space:nowrap}.flag{font-family:'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif}@media(max-width:850px){main{padding:20px 14px}.overview{grid-template-columns:1fr 1fr;gap:18px}.overview div{border:0;padding:0 14px}.detail-grid{grid-template-columns:1fr}.viewbar{align-items:start;flex-direction:column}.viewbar>div{flex-wrap:wrap}h1{font-size:30px}header{gap:15px}footer{flex-direction:column}.export{white-space:nowrap;font-size:12px}}
 
 
 tr.job{cursor:pointer}
@@ -31,8 +31,8 @@ h1{font-size:29px}
 .toolbar input,.toolbar select,.toolbar button{padding:8px 11px}
 .viewbar{padding:2px 0}
 @media(max-width:850px){main{padding:14px 14px 10px;gap:10px}.overview div{padding:0 12px}.overview strong{font-size:19px}}
-/* Warm detail panel; original rows retain their normal stripe and hover colours. */
-.detail td{background:#f2ece2;box-shadow:inset 4px 0 #a28a65}.detail h3{color:#746044}
+/* Default warm detail panel; application stages override it below. */
+.detail td{background:#f2ece2;box-shadow:inset var(--row-edge-width) 0 #a28a65}.detail h3{color:#746044}
 
 main{padding-left:34px;padding-right:34px}@media(max-width:850px){main{padding-left:20px;padding-right:20px}}
 
@@ -47,17 +47,31 @@ th button{font-size:12px;padding:13px 12px}
 td.title .muted{font-size:11px;line-height:1.4}
 .detail h3{font-size:12px}.detail p{font-size:14px;line-height:1.65}
 
-.export-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.detail input[type=date],.detail input[type=text]{max-width:100%;margin:5px 0 10px}.detail input[type=text]{width:100%}
+.export-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-left:auto}
+#settings-open{margin-left:auto}
+header{flex-wrap:wrap;row-gap:8px}
+/* Share header control sizing between buttons and links. */
+.export-actions>.export,.application-export>.export{display:inline-flex;align-items:center;line-height:16px}
+.application-export{display:inline-flex;align-items:center;border:1px solid #cbd9d1;border-radius:8px;background:#edf4ee;white-space:nowrap}
+.application-export>span{padding:0 10px;font-size:12px}
+.application-export>.export{border:0;border-left:1px solid #cbd9d1;border-radius:0}
+.application-export>.export:last-child{border-radius:0 7px 7px 0}
+.application-export>.export:focus-visible{outline-offset:-3px}
+@media(max-width:480px){
+ .export-actions{gap:6px}
+ .export-actions .export,.application-export>span{padding-inline:7px}
+}
+.detail input[type=date],.detail input[type=text]{max-width:100%;margin:5px 0 10px}.detail input[type=text]{width:100%}
 
 .found-since-controls{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}#since-today{padding:5px 9px;font-size:12px}
 
-#shortlist-filter{padding:5px 9px;font-size:12px}#shortlist-filter[aria-pressed=true]{background:#e7eee4;border-color:#b6cbb1}
+
 
 /* Stable widths prevent filter controls shifting when their labels change. */
-#shortlist-filter{width:86px;min-width:86px;flex:0 0 86px;max-width:86px;white-space:nowrap}#since-today{width:58px;min-width:58px;flex:0 0 58px}
+#since-today{width:58px;min-width:58px;flex:0 0 58px}
 
 /* Header titles filter; the independent right-hand arrows sort. */
-.toolbar{align-items:center}.toolbar .colour-control{font-size:12px;white-space:nowrap}.toolbar .colour-control select,.toolbar #since{font-size:12px;padding:6px}.toolbar .columns{font-size:12px}/* Reserve count space so filtering cannot resize the adjacent search field. */
+.toolbar{align-items:center}.toolbar #since{font-size:12px;padding:6px}.toolbar .columns{font-size:12px}/* Reserve count space so filtering cannot resize the adjacent search field. */
 .result-count{font-size:12px;color:#6b7973;white-space:nowrap;width:21ch;flex:0 0 21ch;font-variant-numeric:tabular-nums}
 /* Keep the divider after the complete title-and-sort header. */
 th{padding:0}th:not(:last-child){border-right:1px solid #dde5da}
@@ -121,3 +135,41 @@ th .column-label[aria-expanded=true]{background:#d9e5d6}
 #settings-form input,#settings-form textarea,#settings-form select{box-sizing:border-box;width:100%;font:inherit;padding:7px;border:1px solid #cdd4c8;border-radius:6px;background:white}
 #settings-result{white-space:pre-line;color:#a3322e}
 .settings-actions{display:flex;justify-content:flex-end;gap:8px}
+
+/* Keep provisional assessment markers beside their Fit badge. */
+td.fit{padding-inline:6px;white-space:nowrap}
+
+/* Applied/Interview use text emphasis while keeping normal row striping. */
+tr.job.stage-applied{color:#8a5d16;font-weight:650}
+tr.job.stage-interview{color:#176342;font-weight:650}
+tr.job.stage-applied td.title a,tr.job.stage-interview td.title a{color:inherit;font-weight:inherit}
+tr.job.stage-applied .muted,tr.job.stage-interview .muted{color:inherit}
+tr.job.stage-interview>td:first-child,tr.detail.stage-interview>td{box-shadow:inset var(--row-edge-width) 0 var(--green)}
+/* Offer is the celebratory row: green fill, gold edge and dollar badge. */
+tr.stage-offer{--stage-fill:#e2f2e8;--stage-hover:#d6ecdf;--stage-accent:#b58a2c}
+tr.job.stage-offer{background:var(--stage-fill)}
+tr.job.stage-offer:hover{background:var(--stage-hover)}
+tr.job.stage-offer>td:first-child,tr.detail.stage-offer>td{box-shadow:inset var(--row-edge-width) 0 var(--stage-accent)}
+tr.detail.stage-offer>td{background:var(--stage-fill)}
+.offer-status{display:inline-flex;align-items:center;gap:5px;padding:4px 6px;border:1px solid #d6b665;border-radius:7px;background:#fff4d3;color:#66501c;font-size:12px;font-weight:700;white-space:nowrap}
+.offer-dollar{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#edc767;color:#62460d;font-size:13px;line-height:1}
+tr.job.stage-offer .company{font-weight:750}
+/* Rejected positions stay readable and interactive, with muted text/badges. */
+tr.job.stage-rejected,tr.detail.stage-rejected{color:#666666}
+tr.stage-rejected a,tr.stage-rejected .muted,tr.stage-rejected h3{color:#666666}
+tr.stage-rejected .badge{color:#666666;background:#eef0ec}
+
+/* Four fixed labels replace the cycling shortcut and share search-field space. */
+.status-presets{display:inline-flex;flex-shrink:0;border:1px solid #c6d5c7;border-radius:7px;overflow:hidden}
+.toolbar .status-presets button{min-width:40px;padding:6px 10px;border:0;border-right:1px solid #d8e2d5;border-radius:0;background:white;font-size:12px;font-weight:600;line-height:16px;white-space:nowrap}
+.toolbar .status-presets button:last-child{border-right:0}
+.toolbar .status-presets button:hover{background:#edf4ee}
+.toolbar .status-presets button[aria-pressed=true]{background:#e1ecde;color:#155c49;box-shadow:inset 0 -2px #177464}
+.toolbar .status-presets button:focus-visible{outline-offset:-3px}
+
+.detail label[hidden],.detail [data-interview-row][hidden]{display:none}
+.stage-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end;gap:8px}
+.stage-row label{min-width:0}
+.stage-row select,.detail input[type=date]{max-width:100%;height:32px;padding:4px 6px;font-size:12px}
+.stage-row select,.stage-row input[type=date]{width:100%;margin:0}
+.detail button:disabled{opacity:.55;cursor:default}

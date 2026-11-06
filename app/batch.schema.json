@@ -16,7 +16,7 @@
     "job": {
       "type": "object",
       "additionalProperties": false,
-      "$comment_forbidden": ["id", "status", "notes", "favorite", "favourite", "shortlisted", "shortlist", "updatedAt", "firstSeen", "lastSeen", "country", "applicationDate", "applicationStatusText", "applicationCity", "applicationSourceRow"],
+      "$comment_forbidden": ["id", "status", "notes", "favorite", "favourite", "shortlisted", "shortlist", "updatedAt", "firstSeen", "lastSeen", "country", "applicationDate", "applicationStatusText", "applicationCity", "applicationSourceRow", "statusHistory", "statusHistoryDates", "statusDate", "interviewOutcome", "interviewDate", "interviewOutcomeDate", "offerDate"],
       "required": ["company", "title", "url", "linkType", "group", "countries", "city", "locationRaw", "workMode", "workModeRaw", "fit", "reasoning", "gaps", "seniority", "assessmentBasis", "postedDate", "observedAt", "availability", "sources"],
       "properties": {
         "company": {"type": "string", "minLength": 1, "maxLength": 200},
@@ -26,8 +26,8 @@
         "providerJobId": {"type": "string", "minLength": 1, "maxLength": 200},
         "url": {"type": "string", "format": "http-url", "maxLength": 2000},
         "linkType": {"enum": ["posting", "search"]},
-        "group": {"type": "string", "maxLength": 100, "description": "Empty or one of settings/tracker.json groups; checked by importer."},
-        "countries": {"type": "array", "uniqueItems": true, "maxItems": 100, "items": {"type":"string","pattern":"^[A-Z]{2}$"}, "description":"Each code must appear in settings/tracker.json countries; checked by importer."},
+        "group": {"type": "string", "maxLength": 100, "description": "Group assigned by the agent from the candidate profile; no tracker group list."},
+        "countries": {"type": "array", "uniqueItems": true, "maxItems": 100, "items": {"type":"string","pattern":"^[A-Z]{2}$"}, "description": "Recognized uppercase two-letter country codes; UK accepted as an alias for GB. Checked by importer; no configured search whitelist."},
         "city": {"type": "string", "maxLength": 200},
         "locationRaw": {"type": "string", "maxLength": 1000},
         "workMode": {"enum": ["On-site", "Hybrid", "Remote", "Unknown"]},

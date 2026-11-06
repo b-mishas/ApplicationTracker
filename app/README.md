@@ -7,8 +7,7 @@ Open the operating-system Start file in the parent folder. It initializes missin
 From the installation root:
 
     node app/self-check.mjs
-    node app/self-check.mjs --require-configured
 
 Node here means an available compatible Node executable; the release includes runtime/win-x64/node.exe, runtime/win-arm64/node.exe, runtime/darwin-x64/node and runtime/darwin-arm64/node. Quote paths containing spaces. Linux agent environments need their own Linux Node; host executables cannot run there. No private Codex/Claude runtime, Python or package installation is needed.
 
-See SEARCH_WORKFLOW.md for exact settings, import, employer-workbook and export commands. On a new installation, Settings intentionally starts with no groups/countries and no timezone. Complete it before importing real discoveries. The installation self-check passes with a notice before personalization; --require-configured makes incomplete personalization a failure.
+See SEARCH_WORKFLOW.md for exact settings, import, employer-workbook and export commands. Settings contains only Excel export language. Groups/countries come from position JSON and dates use local computer time. No tracker search configuration is required before importing. The old --require-configured self-check option is accepted as a compatibility alias.

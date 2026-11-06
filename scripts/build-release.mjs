@@ -44,11 +44,11 @@ for(const item of manifest.artifacts){
  await fs.mkdir(path.join(root,runtime),{recursive:true});await fs.writeFile(path.join(root,runtime,name),executable,{mode:0o755});await fs.writeFile(path.join(root,runtime,'LICENSE'),license);
  console.log('Verified '+item.file);
 }
-for(const name of ['app.js','batch.schema.json','config.mjs','countries.json','employer-workbook.mjs','export-applications.mjs','import-discoveries.mjs','index.html','initialize.mjs','jsonschema.mjs','launch.mjs','README.md','SEARCH_WORKFLOW.md','self-check.mjs','settings-cli.mjs','server.mjs','settings.mjs','store.mjs','style.css','view-model.mjs'])add('app/'+name,await fs.readFile(path.join(root,'app',name)));
+for(const name of ['app.js','batch.schema.json','config.mjs','countries.json','employer-workbook.mjs','export-applications.mjs','group-colours.mjs','import-discoveries.mjs','index.html','inventory.schema.json','initialize.mjs','jsonschema.mjs','launch.mjs','print-applications.mjs','README.md','SEARCH_WORKFLOW.md','self-check.mjs','settings-cli.mjs','server.mjs','settings.mjs','status-history.mjs','store.mjs','style.css','view-model.mjs'])add('app/'+name,await fs.readFile(path.join(root,'app',name)));
 await tree(path.join(root,'node_modules'),'node_modules');
 for(const name of ['agent','guides','profile'])await tree(path.join(root,'templates',name),name);
 for(const name of ['Start Windows.cmd','Start macOS.command','Stop Windows.cmd','Stop macOS.command','READ ME.html','THIRD_PARTY_NOTICES.md','package.json','package-lock.json'])add(name,await fs.readFile(path.join(root,name)),name.endsWith('.command'));
-add('settings/tracker.json',JSON.stringify({schemaVersion:1,groups:[],countries:[],timezone:'',exportLanguage:'en'},null,2)+'\n');
+add('settings/tracker.json',JSON.stringify({schemaVersion:1,exportLanguage:'en'},null,2)+'\n');
 add('data/jobs.json',JSON.stringify({schemaVersion:1,jobs:[]},null,2)+'\n');
 for(const sub of ['incoming/imported','reports','backups','exports'])archive.folder('Application tracker/data/'+sub);
 add('RUNTIME_CHECKSUMS.json',JSON.stringify(manifest,null,2));

@@ -1,3 +1,4 @@
+import {effectiveStatus} from './status-history.mjs';
 // Keep filtering/sorting independent of the DOM so priority rules can be tested.
 export const EMPTY='__empty__';
 export function choicesFor(job,key){
@@ -7,7 +8,7 @@ export function choicesFor(job,key){
   if(job.urgent)choices.unshift('Urgent');
   return choices;
  }
- const v=job[key];return [v==null||v===''?EMPTY:String(v)];
+ const v=key==='status'?effectiveStatus(job):job[key];return [v==null||v===''?EMPTY:String(v)];
 }
 export function filterAndSort(jobs,{filters={},search='',sort='fit',direction=-1}={}){
  const query=search.toLocaleLowerCase();
@@ -23,7 +24,7 @@ export function filterAndSort(jobs,{filters={},search='',sort='fit',direction=-1
   // Dismissal has higher priority than the user's chosen column/direction.
   const group=Number(a.status==='Dismissed')-Number(b.status==='Dismissed');
   if(group)return group;
-  const value=j=>sort==='star'?2*Number(Boolean(j.urgent))+Number(j.status==='Shortlisted'):sort==='country'?(j.countries||[]).join(','):j[sort];
+  const value=j=>sort==='star'?2*Number(Boolean(j.urgent))+Number(j.status==='Shortlisted'):sort==='country'?(j.countries||[]).join(','):sort==='status'?effectiveStatus(j):j[sort];
   const av=value(a),bv=value(b),missing=v=>v==null||v==='';
   // Highest fit breaks ties regardless of the primary sort direction.
   const fitOrder=(b.fit??0)-(a.fit??0);

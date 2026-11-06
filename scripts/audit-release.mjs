@@ -24,7 +24,7 @@ export async function auditRelease(zip,{denyTerms=[]}={}){
  const data=zip.file('Application tracker/data/jobs.json');
  if(!data||JSON.stringify(JSON.parse(await data.async('string')))!==JSON.stringify({schemaVersion:1,jobs:[]}))failures.push('Inventory is not a pristine empty object.');
  const settings=zip.file('Application tracker/settings/tracker.json');
- if(!settings||JSON.stringify(JSON.parse(await settings.async('string')))!==JSON.stringify({schemaVersion:1,groups:[],countries:[],timezone:'',exportLanguage:'en'}))failures.push('Settings are not pristine neutral defaults.');
+ if(!settings||JSON.stringify(JSON.parse(await settings.async('string')))!==JSON.stringify({schemaVersion:1,exportLanguage:'en'}))failures.push('Settings are not pristine neutral defaults.');
  if(failures.length)throw Error('Release audit failed:\n'+failures.join('\n'));
  return {textFiles,workbooks,privateMarkers:denyTerms.length,developerInstructions:0,ok:true};
 }

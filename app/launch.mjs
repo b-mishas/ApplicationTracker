@@ -16,18 +16,25 @@ function browse(url){
  const args=process.platform==='win32'?['url.dll,FileProtocolHandler',url]:[url];
  const child=spawn(executable,args,{detached:true,stdio:'ignore',windowsHide:true});child.on('error',()=>console.log(`Open ${url} in your browser.`));child.unref();
 }
-try{
- const old=JSON.parse(await readFile(metadata,'utf8'));const url=new URL(old.url);
- if(url.hostname==='127.0.0.1'&&url.protocol==='http:'){
-  const response=await fetch(new URL('/api/health',url),{signal:AbortSignal.timeout(1000)});const health=await response.json();
-  if(health.installation===installation){
-   if(process.argv.includes('--stop')){await fetch(new URL('/api/stop',url),{method:'POST',headers:{Origin:url.origin},signal:AbortSignal.timeout(3000)});console.log('Application tracker stopped.');}
-   else{browse(url.href);console.log(`Application tracker: ${url.href}`);}
-   return;
-  }
- }
-}catch{}
-if(process.argv.includes('--stop')){console.log('Application tracker is not running for this folder.');return;}
+async function runningServer(){
+ try{
+  const old=JSON.parse(await readFile(metadata,'utf8'));
+  const url=new URL(old.url);
+  if(url.hostname!=='127.0.0.1'||url.protocol!=='http:')return;
+  const response=await fetch(new URL('/api/health',url),{signal:AbortSignal.timeout(1000)});
+  if(response.ok&&(await response.json()).installation===installation)return url;
+ }catch{ /* Missing or stale metadata. */ }
+}
+const stop=process.argv.includes('--stop'),restart=process.argv.includes('--restart');
+const running=await runningServer();
+if(running){
+ if(!stop&&!restart){browse(running.href);console.log('Application tracker: '+running.href);return;}
+ const response=await fetch(new URL('/api/stop',running),{method:'POST',headers:{Origin:running.origin},signal:AbortSignal.timeout(3000)});
+ if(!response.ok)throw new Error('The running Application tracker could not be stopped.');
+ await response.json();
+ console.log('Application tracker stopped.');
+}else if(stop)console.log('Application tracker is not running for this folder.');
+if(stop)return;
 // The OS chooses a free port, avoiding other tracker installations and services.
 const fs=await import('node:fs');const log=fs.openSync(path.join(logDir,'server.log'),'a');
 const server=fork(path.join(here,'server.mjs'),[],{env:{...process.env,PORT:'0'},detached:true,stdio:['ignore',log,log,'ipc'],windowsHide:true});
@@ -40,4 +47,4 @@ server.once('message',async message=>{
  server.disconnect();server.unref();console.log(`Application tracker: ${message.url}`);browse(message.url);
 });
 }
-await main();
+try{await main();}catch(error){console.error('Application tracker: '+error.message);process.exitCode=1;}

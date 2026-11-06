@@ -4,8 +4,10 @@
 import {readFile, rename, mkdir, copyFile, open, unlink, readdir} from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import {ensureGroupColours} from './group-colours.mjs';
+import {STATUS_VALUES,validateMilestones} from './status-history.mjs';
 
-export const STATUSES = ['New', 'Shortlisted', 'Applied', 'Interview', 'Offer', 'Rejected', 'Withdrawn', 'Dismissed'];
+export const STATUSES=STATUS_VALUES;
 export const revision = s => crypto.createHash('sha256').update(s).digest('hex');
 export class ConflictError extends Error { constructor(m) { super(m); this.code = 'CONFLICT'; } }
 export class BusyError extends Error { constructor(m) { super(m); this.code = 'BUSY'; } }
@@ -48,6 +50,7 @@ export function assertValidData(data) {
     if (ids.has(j.id)) throw new DataError(`Duplicate position id ${j.id}.`);
     ids.add(j.id);
     if (!STATUSES.includes(j.status)) throw new DataError(`Position ${j.id} has invalid status ${j.status}.`);
+    try{validateMilestones(j);}catch(error){throw new DataError(`Position ${j.id}: ${error.message}`);}
   }
 }
 
@@ -75,8 +78,10 @@ export async function commit(root, mutate, {expectedRevision, lock, beforeRename
     const file = path.join(root, 'jobs.json');
     const {raw, data, revision: current} = await readState(root);
     if (expectedRevision && expectedRevision !== current) throw new ConflictError('The file changed. Reload before saving; copy any unsaved notes first.');
+    ensureGroupColours(data);
     const result = (await mutate(data)) || {};
     if (result.skipWrite) return {...result, revision: current, written: false};
+    ensureGroupColours(data);
     assertValidData(data);
     const next = JSON.stringify(data, null, 2) + '\n';
     JSON.parse(next);

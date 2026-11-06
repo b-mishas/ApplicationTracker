@@ -55,6 +55,20 @@ try{
  const urgentState=await(await fetch(base+'/api/jobs')).json();
  assert.equal(urgentState.data.jobs[0].urgent,false);
  assert.equal((await patch({id:job.id,revision:urgentState.revision,quickAction:'urgent',urgent:'yes'})).status,400);
+ await update({status:'Interview',applicationStatusText:'Old stage wording'});const statusOnly=await update({status:'Offer'});assert.equal(statusOnly.job.notes,'Keep my note');assert.equal(statusOnly.job.applicationDate,'2026-11-03');assert.equal(statusOnly.job.applicationStatusText,undefined);
+ const interview=await update({status:'Interview',statusDate:'2026-11-05'});
+ const outcome=await update({status:'Interview',interviewDate:'2026-11-05',interviewOutcome:'Rejected',statusDate:'2026-11-12'});
+ assert.equal(outcome.job.status,'Rejected');assert.equal(outcome.job.interviewOutcome,'Rejected');assert.equal(outcome.job.interviewOutcomeDate,'2026-11-12');
+ assert.equal(outcome.job.notes,interview.job.notes);assert.equal(outcome.job.applicationDate,interview.job.applicationDate);
+ const {default:ExcelJS}=await import('exceljs');const workbook=new ExcelJS.Workbook();
+ const excel=await fetch(base+'/api/export/applications.xlsx');assert.equal(excel.status,200);await workbook.xlsx.load(Buffer.from(await excel.arrayBuffer()));
+ assert.equal(workbook.worksheets[0].getCell('E2').value,'Interview 05.11.2026 -> Rejected 12.11.2026');
+ const offer=await update({status:'Rejected',interviewOutcome:'Offer',offerDate:'2026-11-13'});assert.equal(offer.job.status,'Offer');assert.equal(offer.job.interviewOutcome,'Offer');assert.equal(offer.job.offerDate,'2026-11-13');assert.equal(offer.job.interviewDate,'2026-11-05');
+ assert.equal((await patch({id:job.id,revision:offer.revision,status:'Offer',offerDate:'2026-02-30'})).status,400);
+ const withdrawn=await update({status:'Offer',interviewOutcome:'Withdrawn',statusDate:'2026-11-14'});
+ assert.equal(withdrawn.job.status,'Withdrawn');assert.equal(withdrawn.job.interviewOutcomeDate,'2026-11-14');assert.equal(withdrawn.job.offerDate,'2026-11-13');
+ const pending=await update({status:'Withdrawn',interviewOutcome:''});
+ assert.equal(pending.job.status,'Interview');assert.equal(pending.job.interviewOutcome,'');assert.equal(pending.job.interviewDate,'2026-11-05');
  const module=await fetch(base+'/view-model.mjs');assert.equal(module.status,200);assert(module.headers.get('content-type').includes('javascript'));
  console.log('PASS: save/revision/origin checks; reversible and idempotent quick dismissal; notes/date/German detail preserved; frontend module served.');
 }finally{if(child){child.kill();await new Promise(resolve=>child.once('exit',resolve));}await rm(dir,{recursive:true,force:true});}
