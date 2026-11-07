@@ -13,7 +13,8 @@ const stageClasses=new Map([['Applied','stage-applied'],['Interview','stage-inte
 const rowStage=status=>stageClasses.get(status)||'';
 const defaultStatusFilter=()=>statuses.filter(status=>!['Rejected','Dismissed','Withdrawn'].includes(status));
 const filters={status:defaultStatusFilter()};
-const statusPresets={New:['New'],Shortlisted:['Shortlisted'],Active:defaultStatusFilter(),All:statuses};
+const inProgressStatuses=['Applied','Interview','Offer'];
+const statusPresets={New:['New'],Shortlisted:['Shortlisted'],Active:defaultStatusFilter(),Applied:inProgressStatuses,All:statuses};
 const visible=new Set(fields.slice(0,9).map(x=>x[0]));
 const safeUrl=url=>{try{const u=new URL(url);return ['https:','http:'].includes(u.protocol)?esc(u.href):'';}catch{return '';}};
 // Local SVG files also work without a flag-emoji font.
@@ -103,8 +104,9 @@ function refreshStatusPresets(){
 function refreshOverview(){
  $('total').textContent=data.jobs.length;
  $('shortlist').textContent=data.jobs.filter(j=>j.status==='Shortlisted').length;
+ $('new-count').textContent=data.jobs.filter(j=>j.status==='New').length;
  $('urgent').textContent=data.jobs.filter(j=>j.urgent).length;
- $('active').textContent=data.jobs.filter(j=>['Applied','Interview','Offer'].includes(effectiveStatus(j))).length;
+ $('active').textContent=data.jobs.filter(j=>inProgressStatuses.includes(effectiveStatus(j))).length;
 }
 const pendingViewKey='application-tracker.pending-view';
 let lastView='',viewUpdatedAt=0;

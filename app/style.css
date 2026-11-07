@@ -92,7 +92,7 @@ th .column-label[aria-expanded=true]{background:#d9e5d6}
 #message:empty{display:none}
 
 /* Reserve space for the clear button so entered text stays readable. */
-.search-control{position:relative;flex:1;min-width:230px}
+.search-control{position:relative;flex:1;min-width:170px}
 .toolbar .search-control input{width:100%;min-width:0;padding-right:34px}
 .search-control input::-webkit-search-cancel-button{-webkit-appearance:none}
 .toolbar #search-clear{position:absolute;right:5px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:26px;height:26px;padding:5px;border:0;background:transparent;color:#718079}
