@@ -14,7 +14,7 @@ const rowStage=status=>stageClasses.get(status)||'';
 const defaultStatusFilter=()=>statuses.filter(status=>!['Rejected','Dismissed','Withdrawn'].includes(status));
 const filters={status:defaultStatusFilter()};
 const inProgressStatuses=['Applied','Interview','Offer'];
-const statusPresets={New:['New'],Shortlisted:['Shortlisted'],Active:defaultStatusFilter(),Applied:inProgressStatuses,All:statuses};
+const statusPresets={New:['New'],Shortlisted:['Shortlisted'],'In progress':inProgressStatuses,All:statuses};
 const visible=new Set(fields.slice(0,9).map(x=>x[0]));
 const safeUrl=url=>{try{const u=new URL(url);return ['https:','http:'].includes(u.protocol)?esc(u.href):'';}catch{return '';}};
 // Local SVG files also work without a flag-emoji font.
