@@ -7,6 +7,7 @@ import {commit, revision, STATUSES, ConflictError, BusyError, writeJsonAtomic} f
 import {dataRoot} from './config.mjs';
 import {readSettings,settingsFile,saveSettings,ready,countryCodes,isCountryCode} from './settings.mjs';
 import crypto from 'node:crypto';
+import {isDeepStrictEqual} from 'node:util';
 import {calendarDate} from './settings.mjs';
 import {updateStage,validStageDate,validateMilestones,effectiveStatus,StatusHistoryError} from './status-history.mjs';
 const root=path.dirname(fileURLToPath(import.meta.url));
@@ -16,6 +17,8 @@ class NotFound extends Error{}
 const viewStateFile=path.join(dataRoot,'view-state.json');
 const filterKeys=new Set(['fit','company','group','title','star','country','city','workMode','status','seniority','firstSeen','postedDate','assessmentBasis']);
 let viewStateWrite=Promise.resolve();
+// Keep one successful position edit available to the tab that made it.
+let lastJobEdit;
 async function readViewState(){
  try{
   const state=JSON.parse(await readFile(viewStateFile,'utf8'));
@@ -89,7 +92,7 @@ const server=http.createServer(async(req,res)=>{
    try{if(input.statusDate!==undefined&&!validStageDate(input.statusDate,{allowEmpty:false}))throw new StatusHistoryError('Enter a valid stage date.');validateMilestones(input);}catch(error){return reply(400,{error:error.message});}
    const stageDate=input.statusDate||calendarDate(new Date().toISOString());
    const quickAction=input.quickAction;
-   if(quickAction!==undefined&&!['dismiss','restore','urgent'].includes(quickAction))return reply(400,{error:'Invalid quick action.'});
+   if(quickAction!==undefined&&!['dismiss','restore','urgent','undo'].includes(quickAction))return reply(400,{error:'Invalid quick action.'});
    if(quickAction==='urgent'&&typeof input.urgent!=='boolean')return reply(400,{error:'Urgent must be true or false.'});
    if(input.applicationDate!==undefined){
     const {validApplicationDate}=await import('./export-applications.mjs');
@@ -99,26 +102,45 @@ const server=http.createServer(async(req,res)=>{
    if((quickAction===undefined&&!STATUSES.includes(input.status))||(input.notes!==undefined&&(typeof input.notes!=='string'||input.notes.length>50000)))return reply(400,{error:'Invalid status or notes.'});
    if(typeof input.revision!=='string'||!input.revision)return reply(409,{error:'Reload before saving.'});
    try {
+    const edit=lastJobEdit;
+    if(quickAction==='undo'&&(!edit||edit.token!==input.undoToken||edit.before.id!==input.id||edit.revision!==input.revision)){
+     return reply(409,{error:'This change can no longer be undone.'});
+    }
     const r=await commit(dataRoot,data=>{
-     const job=data.jobs.find(j=>j.id===input.id);
-     if(!job)throw new NotFound();
+     const index=data.jobs.findIndex(j=>j.id===input.id);
+     if(index<0)throw new NotFound();
+     if(quickAction==='undo'){
+      const job={...edit.before,updatedAt:new Date().toISOString()};
+      data.jobs[index]=job;
+      return {job};
+     }
+     const job=data.jobs[index];
+     const before=structuredClone(job);
      if(quickAction){
       if(quickAction==='urgent')job.urgent=input.urgent;
       if(quickAction==='dismiss'&&!['New','Shortlisted','Dismissed'].includes(job.status))throw new ConflictError('Only new or shortlisted positions can be dismissed.');
       if(quickAction==='dismiss'&&job.status!=='Dismissed'){job.dismissedFromStatus=job.status;job.status='Dismissed';}
       else if(quickAction==='restore'&&job.status==='Dismissed'){job.status=STATUSES.includes(job.dismissedFromStatus)&&job.dismissedFromStatus!=='Dismissed'?job.dismissedFromStatus:'New';delete job.dismissedFromStatus;}
-      job.updatedAt=new Date().toISOString();
-      return {job:structuredClone(job)};
+     }else{
+      const previousStatus=effectiveStatus(job);
+      updateStage(job,input,stageDate);
+      if(input.notes!==undefined)job.notes=input.notes;
+      if(input.applicationDate!==undefined)job.applicationDate=input.applicationDate;
+      if(input.applicationStatusText!==undefined)job.applicationStatusText=input.applicationStatusText;
+      else if(previousStatus!==effectiveStatus(job))delete job.applicationStatusText;
      }
-     const previousStatus=effectiveStatus(job);
-     updateStage(job,input,stageDate);if(input.notes!==undefined)job.notes=input.notes;
-     if(input.applicationDate!==undefined)job.applicationDate=input.applicationDate;
-     if(input.applicationStatusText!==undefined)job.applicationStatusText=input.applicationStatusText;
-     else if(previousStatus!==effectiveStatus(job))delete job.applicationStatusText;
+     if(isDeepStrictEqual(job,before))return {skipWrite:true,job};
      job.updatedAt=new Date().toISOString();
-     return {job:structuredClone(job)};
+     return {job,before};
     },{expectedRevision:input.revision,tag:'jobs'});
-    return reply(200,{revision:r.revision,job:r.job});
+    if(quickAction==='undo'){
+     if(lastJobEdit===edit)lastJobEdit=undefined;
+     return reply(200,{revision:r.revision,job:r.job});
+    }
+    if(!r.written)return reply(200,{revision:r.revision,job:r.job});
+    const undoToken=crypto.randomUUID();
+    lastJobEdit={token:undoToken,before:r.before,revision:r.revision};
+    return reply(200,{revision:r.revision,job:r.job,undoToken});
    } catch(e) {
     if(e instanceof StatusHistoryError)return reply(400,{error:e.message});
     if(e instanceof NotFound)return reply(404,{error:'Position not found.'});

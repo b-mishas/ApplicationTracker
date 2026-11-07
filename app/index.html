@@ -1,6 +1,10 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Application tracker</title><link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2220%22%20fill%3D%22%23a77c2d%22%2F%3E%3Cpath%20d%3D%22m32%2010%206.8%2013.8%2015.2%202.2-11%2010.7%202.6%2015.1L32%2044.7l-13.6%207.1L21%2036.7%2010%2026l15.2-2.2Z%22%20fill%3D%22%23fff%22%2F%3E%3C%2Fsvg%3E"><link rel="stylesheet" href="style.css"></head>
 <body><main><header><div><h1>Application tracker<span>.</span></h1></div><div class="export-actions">
+<div class="undo-control">
+ <span id="undo-result" role="status"></span>
+ <button type="button" id="undo-edit" class="export" title="Undo the last saved position edit" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5-5 5 5 5M4 10h10a5 5 0 0 1 0 10h-3"/></svg>Undo</button>
+</div>
 <div class="application-export" role="group" aria-labelledby="application-export-label">
  <span id="application-export-label">Export applications as</span>
  <a class="export" href="/api/export/applications.xlsx" id="export-applications">Excel</a>

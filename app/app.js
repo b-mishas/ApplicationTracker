@@ -7,7 +7,7 @@ const statuses=STATUS_VALUES;
 const fields=[['fit','Fit'],['company','Company'],['group','Group'],['title','Position'],['star','Actions'],['country','Country'],['city','City'],['workMode','Work mode'],['status','Status'],['seniority','Seniority'],['firstSeen','First found'],['postedDate','Posted'],['assessmentBasis','Assessment']];
 let settings={exportLanguage:'en'},settingsRevision;
 let supportedCountries=new Set();
-let data,revision,sort='star',direction=-1,open=null,filterKey=null,pendingSave=false;
+let data,revision,sort='star',direction=-1,open=null,filterKey=null,pendingSave=false,lastUndo;
 // Fixed class names keep application-stage styling independent of sorting.
 const stageClasses=new Map([['Applied','stage-applied'],['Interview','stage-interview'],['Offer','stage-offer'],['Rejected','stage-rejected']]);
 const rowStage=status=>stageClasses.get(status)||'';
@@ -108,6 +108,36 @@ function refreshOverview(){
  $('urgent').textContent=data.jobs.filter(j=>j.urgent).length;
  $('active').textContent=data.jobs.filter(j=>inProgressStatuses.includes(effectiveStatus(j))).length;
 }
+function refreshUndoButton(){
+ const button=$('undo-edit');
+ button.disabled=pendingSave||!lastUndo;
+ button.hidden=!lastUndo&&!$('undo-result').textContent;
+}
+function setPendingSave(pending){
+ pendingSave=pending;
+ refreshUndoButton();
+}
+let undoResultTimer;
+function showUndoResult(text,details=''){
+ const result=$('undo-result');
+ clearTimeout(undoResultTimer);
+ result.textContent=text;
+ result.title=details;
+ undoResultTimer=setTimeout(()=>{
+  result.textContent='';
+  result.title='';
+  refreshUndoButton();
+ },1000);
+}
+async function saveJobEdit(payload){
+ const response=await fetch('/api/jobs',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,revision})});
+ const result=await response.json();
+ if(!response.ok)throw Error(result.error);
+ revision=result.revision;
+ data.jobs[data.jobs.findIndex(job=>job.id===result.job.id)]=result.job;
+ if(result.undoToken)lastUndo={id:result.job.id,undoToken:result.undoToken};
+ return result.job;
+}
 const pendingViewKey='application-tracker.pending-view';
 let lastView='',viewUpdatedAt=0;
 function saveViewState(){
@@ -174,12 +204,11 @@ $('body').onclick=async e=>{
   if(dirty()){$('message').textContent='Save your edits before using quick actions.';return;}
   const job=data.jobs.find(j=>j.id===action.dataset.id);
   const payload=action.matches('.quick-urgent')?{quickAction:'urgent',urgent:!job.urgent}:action.matches('.quick-dismiss')?{quickAction:job.status==='Dismissed'?'restore':'dismiss'}:{status:job.status==='Shortlisted'?'New':'Shortlisted'};
-  pendingSave=true;action.disabled=true;$('message').textContent='';
+  setPendingSave(true);action.disabled=true;$('message').textContent='';
   try{
-   const response=await fetch('/api/jobs',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:job.id,revision,...payload})});
-   const result=await response.json();if(!response.ok)throw Error(result.error);
-   revision=result.revision;data.jobs[data.jobs.findIndex(j=>j.id===job.id)]=result.job;render();
-  }catch(error){$('message').textContent=error.message;action.disabled=false;}finally{pendingSave=false;}
+   await saveJobEdit({id:job.id,...payload});
+   render();
+  }catch(error){$('message').textContent=error.message;action.disabled=false;}finally{setPendingSave(false);refreshEditorButtons();}
   return;
  }
  // Rebuild the editor from saved data, discarding edits without writing to disk.
@@ -191,8 +220,14 @@ $('body').onclick=async e=>{
  const milestones=milestoneDraft(section,job);
  const applicationFields=stageFields(job).application?{applicationDate,...(applicationStatusText!==applicationText(job)?{applicationStatusText:customApplicationText(job,applicationStatusText)}:{})}:{};
  const controls=[...section.querySelectorAll('button,input,select,textarea')];
- pendingSave=true;controls.forEach(control=>control.disabled=true);message.textContent='Saving…';
- try{const response=await fetch('/api/jobs',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:save.dataset.id,revision,status,notes,...applicationFields,...milestones})});const result=await response.json();if(!response.ok)throw Error(result.error);revision=result.revision;data.jobs[data.jobs.findIndex(item=>item.id===job.id)]=result.job;render();const indicator=document.querySelector('.save-state');if(indicator)indicator.textContent='Saved to file ✓';}catch(error){message.textContent=error.message;}finally{pendingSave=false;controls.forEach(control=>control.disabled=false);refreshEditorButtons();}
+ setPendingSave(true);controls.forEach(control=>control.disabled=true);message.textContent='Saving…';
+ try{
+  await saveJobEdit({id:job.id,status,notes,...applicationFields,...milestones});
+  render();
+  const indicator=document.querySelector('.save-state');
+  if(indicator)indicator.textContent='Saved to file ✓';
+ }catch(error){message.textContent=error.message;}
+ finally{setPendingSave(false);controls.forEach(control=>control.disabled=false);refreshEditorButtons();}
 };
 $('search').addEventListener('input',()=>{
  $('search-clear').hidden=!$('search').value;
@@ -277,32 +312,43 @@ async function saveStatus(select){
  const section=select.closest('section'),date=section.querySelector('.edit-application-date'),text=section.querySelector('.edit-application-status'),indicator=section.querySelector('.save-state');
  const dateBefore=date.value,oldText=applicationText(job);
  const autoDate=status==='Applied'&&!job.applicationDate&&!dateBefore&&!date.validity.badInput?localToday():undefined;
- const payload={id:job.id,revision,status,statusDate:localToday(),...(outcomeControl?{interviewOutcome:select.value}:{}),...(autoDate?{applicationDate:autoDate}:{})};
+ const payload={id:job.id,status,statusDate:localToday(),...(outcomeControl?{interviewOutcome:select.value}:{}),...(autoDate?{applicationDate:autoDate}:{})};
  // Keep the native calendar visible. The date filter's change handler guards pending saves.
  const controls=[...section.querySelectorAll('button,select'),...document.querySelectorAll('.toolbar input:not([type=date]),.toolbar button,.toolbar select,#head button,#settings-open')];
  const focused=document.activeElement;
  const disabled=controls.map(control=>({control,wasDisabled:control.disabled}));
- pendingSave=true;disabled.forEach(({control})=>control.disabled=true);indicator.textContent='Saving status…';$('message').textContent='';
+ setPendingSave(true);disabled.forEach(({control})=>control.disabled=true);indicator.textContent='Saving status…';$('message').textContent='';
  try{
-  const response=await fetch('/api/jobs',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-  const result=await response.json();if(!response.ok)throw Error(result.error);
-  revision=result.revision;data.jobs[data.jobs.findIndex(item=>item.id===job.id)]=result.job;
-  syncStageControls(section,result.job,milestoneDraft(section,job,{includeHidden:true}));
-  text.value=text.value===oldText?applicationText(result.job):applicationText({...result.job,applicationStatusText:customApplicationText(job,text.value)});
-  if(autoDate&&date.value===dateBefore)date.value=result.job.applicationDate||autoDate;
+  const saved=await saveJobEdit(payload);
+  syncStageControls(section,saved,milestoneDraft(section,job,{includeHidden:true}));
+  text.value=text.value===oldText?applicationText(saved):applicationText({...saved,applicationStatusText:customApplicationText(job,text.value)});
+  if(autoDate&&date.value===dateBefore)date.value=saved.applicationDate||autoDate;
   const row=section.closest('tr').previousElementSibling,detailRow=section.closest('tr');
-  for(const element of [row,detailRow]){element.classList.remove(...stageClasses.values());const stage=rowStage(effectiveStatus(result.job));if(stage)element.classList.add(stage);}
-  for(const key of ['status','star']){const cellElement=row.querySelector('td.'+key);if(cellElement)cellElement.innerHTML=cell(result.job,key);}
+  for(const element of [row,detailRow]){element.classList.remove(...stageClasses.values());const stage=rowStage(effectiveStatus(saved));if(stage)element.classList.add(stage);}
+  for(const key of ['status','star']){const cellElement=row.querySelector('td.'+key);if(cellElement)cellElement.innerHTML=cell(saved,key);}
   refreshOverview();
   // Keep the open editor visible even if its new stage is outside the current
   // filter. Filters apply again on collapse/navigation, after drafts are handled.
   indicator.textContent=dirty()?'Status saved ✓; other edits are unsaved.':'Status saved ✓';
   $('message').textContent='';
  }catch(error){select.value=previous;indicator.textContent='Status not saved: '+error.message;}
- finally{pendingSave=false;disabled.forEach(({control,wasDisabled})=>control.disabled=wasDisabled);refreshEditorButtons();if(focused===select&&document.activeElement===document.body)select.focus();}
+ finally{setPendingSave(false);disabled.forEach(({control,wasDisabled})=>control.disabled=wasDisabled);refreshEditorButtons();if(focused===select&&document.activeElement===document.body)select.focus();}
 }
 $('body').addEventListener('change',event=>{if(event.target.matches('.edit-status,.edit-interview-outcome'))saveStatus(event.target);else if(event.target.closest('.detail'))refreshEditorButtons();});
 $('body').addEventListener('input',event=>{if(event.target.closest('.detail'))refreshEditorButtons();});
+$('undo-edit').onclick=async()=>{
+ if(!lastUndo||pendingSave)return;
+ if(dirty()){showUndoResult('Save or cancel','Save or cancel your unsaved edits before undoing the last save.');return;}
+ setPendingSave(true);
+ $('body').inert=true;
+ try{
+  await saveJobEdit({...lastUndo,quickAction:'undo'});
+  lastUndo=undefined;
+  render();
+  showUndoResult('Undone');
+ }catch(error){showUndoResult('Undo failed',error.message);}
+ finally{$('body').inert=false;setPendingSave(false);refreshEditorButtons();}
+};
 function canExportApplications(){
  if(pendingSave){$('message').textContent='Wait for the current save to finish.';return false;}
  if(dirty()){$('message').textContent='Save your changes before exporting applications.';return false;}

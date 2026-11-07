@@ -69,6 +69,30 @@ try{
  assert.equal(withdrawn.job.status,'Withdrawn');assert.equal(withdrawn.job.interviewOutcomeDate,'2026-11-14');assert.equal(withdrawn.job.offerDate,'2026-11-13');
  const pending=await update({status:'Withdrawn',interviewOutcome:''});
  assert.equal(pending.job.status,'Interview');assert.equal(pending.job.interviewOutcome,'');assert.equal(pending.job.interviewDate,'2026-11-05');
+ const undo=({job,revision,undoToken})=>patch({id:job.id,revision,quickAction:'undo',undoToken});
+ const withoutTimestamp=({updatedAt,...fields})=>fields;
+ assert.equal((await undo(withdrawn)).status,409);
+ const undoOutcome=await undo(pending);assert.equal(undoOutcome.status,200);
+ const outcomeRestored=await undoOutcome.json();
+ assert.deepEqual(withoutTimestamp(outcomeRestored.job),withoutTimestamp(withdrawn.job));
+ assert.equal((await undo({...pending,revision:outcomeRestored.revision})).status,409);
+
+ const edited=await update({status:'Applied',notes:'Replacement notes',applicationDate:'2026-11-07',applicationStatusText:'Replacement text'});
+ const undoneEdit=await undo(edited);assert.equal(undoneEdit.status,200);
+ assert.deepEqual(withoutTimestamp((await undoneEdit.json()).job),withoutTimestamp(outcomeRestored.job));
+
+ const flagged=await update({quickAction:'urgent',urgent:true});
+ const sameFlag=await update({quickAction:'urgent',urgent:true});
+ assert.equal(sameFlag.revision,flagged.revision);assert.equal(sameFlag.undoToken,undefined);
+ const unflag=await undo(flagged);assert.equal(unflag.status,200);assert.equal((await unflag.json()).job.urgent,false);
+
+ const last=await update({quickAction:'urgent',urgent:true});
+ const inventoryFile=path.join(dir,'jobs.json');
+ const newer=JSON.parse(await readFile(inventoryFile,'utf8'));newer.jobs[1].notes='Concurrent change';
+ await writeFile(inventoryFile,JSON.stringify(newer));
+ assert.equal((await undo(last)).status,409);
+ assert.deepEqual(JSON.parse(await readFile(inventoryFile,'utf8')),newer);
+ console.log('PASS: one-step undo restores status, milestones, notes, dates, text and flags, and rejects stale writes and token reuse.');
  const module=await fetch(base+'/view-model.mjs');assert.equal(module.status,200);assert(module.headers.get('content-type').includes('javascript'));
  console.log('PASS: save/revision/origin checks; reversible and idempotent quick dismissal; notes/date/German detail preserved; frontend module served.');
 }finally{if(child){child.kill();await new Promise(resolve=>child.once('exit',resolve));}await rm(dir,{recursive:true,force:true});}
