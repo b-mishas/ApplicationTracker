@@ -174,13 +174,17 @@ function render(){
  $('since-today').title=dateActive?'Clear the found-since date filter':'Found since today ('+Intl.DateTimeFormat().resolvedOptions().timeZone+')';
  const cols=fields.filter(([key])=>visible.has(key));
  // Allocate widths from the selected columns, independent of expanded content.
- const widths={fit:59.5,company:130.5,title:365,star:94,group:110,country:100,city:105,workMode:90.25,status:100,seniority:170,firstSeen:110,postedDate:110,assessmentBasis:130};
+ const widths={fit:77,company:130.5,title:365,star:109,group:110,country:116,city:105,workMode:97.25,status:107,seniority:170,firstSeen:110,postedDate:110,assessmentBasis:137};
  const totalWidth=40+cols.reduce((sum,[key])=>sum+widths[key],0);
  $('colgroup').innerHTML=`<col style="width:${40/totalWidth*100}%">`+cols.map(([key])=>`<col style="width:${widths[key]/totalWidth*100}%">`).join('');
  $('colgroup').closest('table').style.minWidth=totalWidth+'px';
  $('head').innerHTML='<th aria-label="Details"></th>'+cols.map(([key,label])=>{
- const active=Array.isArray(filters[key])?filters[key].length:Boolean(filters[key]);
- return `<th aria-sort="${sort===key?(direction===1?'ascending':'descending'):'none'}"><div class="column-heading"><button class="column-label ${active?'filtered':''}" data-filter="${key}" aria-label="Filter ${label}" aria-haspopup="dialog" aria-controls="column-filter" aria-expanded="${filterKey===key}">${label}${active?' •':''}</button><button class="sort-arrow" data-sort="${key}" aria-label="Sort by ${label}" title="Sort by ${label}">${sort===key?(direction===1?'↑':'↓'):'↕'}</button></div></th>`;
+ const value=filters[key];
+ const active=Array.isArray(value)
+  ?value.length>0&&(key!=='status'||!statuses.every(status=>value.includes(status)))
+  :Boolean(value);
+ const clearButton=active?`<button type="button" class="clear-column-filter" data-clear-column-filter="${key}" aria-label="Clear ${label} filter" title="Clear ${label} filter">×</button>`:'';
+ return `<th aria-sort="${sort===key?(direction===1?'ascending':'descending'):'none'}"><div class="column-heading"><button class="column-label ${active?'filtered':''}" data-filter="${key}" aria-label="Filter ${label}" aria-haspopup="dialog" aria-controls="column-filter" aria-expanded="${filterKey===key}">${label}</button>${clearButton}<button class="sort-arrow" data-sort="${key}" aria-label="Sort by ${label}" title="Sort by ${label}">${sort===key?(direction===1?'↑':'↓'):'↕'}</button></div></th>`;
  }).join('');
  const rows=filtered();
  if(open&&!rows.some(job=>job.id===open))open=null;
@@ -191,6 +195,15 @@ function render(){
 }
 function mayRender(){if(dirty()&&!confirm('Discard unsaved changes to this position?'))return false;render();return true;}
 $('head').onclick=e=>{
+ const clear=e.target.closest('[data-clear-column-filter]');
+ if(clear){
+  if(!canChangeView())return;
+  const key=clear.dataset.clearColumnFilter;
+  closeFilter();
+  clearColumnFilter(key);
+  $('head').querySelector(`[data-filter="${key}"]`).focus({preventScroll:true});
+  return;
+ }
  const label=e.target.closest('[data-filter]');if(label){showFilter(label.dataset.filter);return;}
  const arrow=e.target.closest('[data-sort]');if(!arrow||!canChangeView())return;
  direction=sort===arrow.dataset.sort?-direction:['fit','star'].includes(arrow.dataset.sort)?-1:1;sort=arrow.dataset.sort;render();
@@ -256,6 +269,7 @@ function positionFilter(){
 }
 const checkboxFields=new Set(['group','country','fit','status','workMode','assessmentBasis','star']);
 function refreshOpenFilter(){if(filterKey)populateFilter();}
+function clearColumnFilter(key){delete filters[key];render();refreshOpenFilter();}
 function populateFilter(){
  const key=filterKey,label=fields.find(f=>f[0]===key)[1];
  $('column-filter').setAttribute('aria-label',label+' filter');
@@ -288,11 +302,8 @@ $('column-filter').addEventListener('input',event=>{
 $('column-filter').onclick=event=>{
  const button=event.target.closest('[data-all-filter],[data-clear-filter]');
  if(!button||!canChangeView())return;
- if(button.hasAttribute('data-all-filter')){
-  filters[filterKey]=[...$('column-filter').querySelectorAll('input[data-value]')].map(input=>input.dataset.value);
- }else{
-  delete filters[filterKey];
- }
+ if(button.hasAttribute('data-clear-filter')){clearColumnFilter(filterKey);return;}
+ filters[filterKey]=[...$('column-filter').querySelectorAll('input[data-value]')].map(input=>input.dataset.value);
  render();
  populateFilter();
 };

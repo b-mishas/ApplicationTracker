@@ -38,3 +38,7 @@
 ## 2026-11-10 — dismissal
 
 - Dismissing an urgent position clears its urgency in the same save. Undo restores both values. API and headless Chrome checks passed. Pushed [5464936](https://github.com/b-mishas/ApplicationTracker/commit/546493687d5a83a47688be5d916d049dd5219490).
+
+## 2026-11-10 — column filter shortcuts
+
+- Replaced the active-filter dot with a one-click × in a 25 px-wide button in column headers. Headless Chrome verified independent clearing, keyboard focus, saved filter state and spacing across all columns.
