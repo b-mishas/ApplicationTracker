@@ -41,4 +41,4 @@
 
 ## 2026-11-10 — column filter shortcuts
 
-- Replaced the active-filter dot with a one-click × in a 25 px-wide button in column headers. Headless Chrome verified independent clearing, keyboard focus, saved filter state and spacing across all columns.
+- Replaced the active-filter dot with a one-click × in a 25 px-wide button in column headers. Headless Chrome verified independent clearing, keyboard focus, saved filter state and spacing across all columns. Made the green fill continuous across the title and × with square corners and aligned left-aligned titles with row cells. Capped Actions at 112 px and Country at 120 px, wrapped country pairs, and redistributed extra width to text columns. Aligned the clear glyph with the capital letters. Chrome and Firefox verified resizing, hidden columns, draft preservation and the rendered alignment.

@@ -26,7 +26,7 @@ function cell(j,key){
  if(key==='group'&&!j.group)return '—';
  if(key==='group'){const colour=groupColour(data.groupColours.assignments[j.group]);return `<span class="badge group" style="--group-fill:${colour.background};--group-ink:${colour.foreground}">${esc(j.group)}</span>`;}
  if(key==='status')return effectiveStatus(j)==='Offer'?'<span class="offer-status"><span class="offer-dollar" aria-hidden="true">$</span>Offer</span>':esc(effectiveStatus(j));
- if(key==='country')return (j.countries||[]).map(c=>`${flagGraphic(c)} ${esc(c)}`).join(' / ')||'—';
+ if(key==='country')return (j.countries||[]).map(c=>`<span class="country-code">${flagGraphic(c)} ${esc(c)}</span>`).join(' / ')||'—';
  return esc(j[key]||'—');
 }
 function filtered(){return filterAndSort(data.jobs,{filters,search:$('search').value,sort,direction});}
@@ -163,6 +163,21 @@ async function restoreViewState(){
  }
  if(!retry)lastView=JSON.stringify({search:$('search').value,filters});
 }
+// Resize columns without rendering again, so an open editor keeps its draft.
+function resizeColumns(){
+ const columns=[...$('colgroup').children];
+ if(!columns.length)return;
+ const table=$('colgroup').closest('table');
+ const totalWidth=columns.reduce((sum,column)=>sum+Number(column.dataset.width),0);
+ const flexibleWidth=columns.reduce((sum,column)=>sum+(column.hasAttribute('data-fixed')?0:Number(column.dataset.width)),0);
+ const extraWidth=Math.max(0,table.parentElement.clientWidth-totalWidth);
+ for(const column of columns){
+  const baseWidth=Number(column.dataset.width);
+  column.style.width=(baseWidth+(column.hasAttribute('data-fixed')?0:extraWidth*baseWidth/flexibleWidth))+'px';
+ }
+ table.style.width=(totalWidth+(flexibleWidth?extraWidth:0))+'px';
+}
+new ResizeObserver(resizeColumns).observe(document.querySelector('.table-wrap'));
 function render(){
  saveViewState();
  ensureGroupColours(data);
@@ -173,10 +188,10 @@ function render(){
  $('since-today').textContent=dateActive?'Clear':'Today';
  $('since-today').title=dateActive?'Clear the found-since date filter':'Found since today ('+Intl.DateTimeFormat().resolvedOptions().timeZone+')';
  const cols=fields.filter(([key])=>visible.has(key));
- // Allocate widths from the selected columns, independent of expanded content.
- const widths={fit:77,company:130.5,title:365,star:109,group:110,country:116,city:105,workMode:97.25,status:107,seniority:170,firstSeen:110,postedDate:110,assessmentBasis:137};
+ // Keep controls compact. Extra table width goes to the flexible columns.
+ const widths={fit:77,company:130.5,title:365,star:112,group:110,country:120,city:105,workMode:103.25,status:107,seniority:170,firstSeen:110,postedDate:110,assessmentBasis:143};
  const totalWidth=40+cols.reduce((sum,[key])=>sum+widths[key],0);
- $('colgroup').innerHTML=`<col style="width:${40/totalWidth*100}%">`+cols.map(([key])=>`<col style="width:${widths[key]/totalWidth*100}%">`).join('');
+ $('colgroup').innerHTML='<col data-width="40" data-fixed style="width:40px">'+cols.map(([key])=>`<col data-width="${widths[key]}" ${['star','country'].includes(key)?'data-fixed':''} style="width:${widths[key]}px">`).join('');
  $('colgroup').closest('table').style.minWidth=totalWidth+'px';
  $('head').innerHTML='<th aria-label="Details"></th>'+cols.map(([key,label])=>{
  const value=filters[key];
@@ -190,6 +205,7 @@ function render(){
  if(open&&!rows.some(job=>job.id===open))open=null;
  $('count').textContent=`${rows.length} of ${data.jobs.length} positions`;
  $('body').innerHTML=rows.length?rows.map((j,index)=>`<tr class="job ${index%2?'stripe':'plain'} ${open===j.id?'expanded':'collapsed'} ${rowStage(effectiveStatus(j))}" data-id="${esc(j.id)}"><td><button class="toggle" data-id="${esc(j.id)}" aria-expanded="${open===j.id}" aria-label="${open===j.id?'Collapse':'Expand'} ${esc(j.title)}">${open===j.id?'−':'+'}</button></td>${cols.map(([key])=>`<td class="${key}">${cell(j,key)}</td>`).join('')}</tr>${open===j.id?detail(j):''}`).join(''):`<tr><td colspan="${cols.length+1}" class="empty">${data.jobs.length?'No positions match these filters. Try Reset.':'No positions yet. Set up the search agent to add discoveries.'}</td></tr>`;
+ resizeColumns();
  if(filterKey)positionFilter();
  refreshOverview();refreshEditorButtons();
 }
