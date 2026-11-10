@@ -44,5 +44,10 @@ async function work({file,action='read',records}){
 export async function employerWorkbook(options){return options.action&&options.action!=='read'?withLock(path.dirname(options.file),()=>work(options)):work(options);}
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2),arg=k=>{const i=args.indexOf(k);return i<0?undefined:args[i+1];};
- try{const file=arg('--file')||fileURLToPath(new URL('../profile/companies.xlsx',import.meta.url));console.log(JSON.stringify(await employerWorkbook({file,action:args[0]||'read',records:arg('--input')?JSON.parse(await fs.readFile(arg('--input'),'utf8')):undefined})));}catch(e){console.error(e.message);process.exitCode=1;}
+ try{
+  const file=arg('--file')||fileURLToPath(new URL('../profile/companies.xlsx',import.meta.url));
+  const input=arg('--input');
+  const records=input?JSON.parse((await fs.readFile(input,'utf8')).replace(/^\uFEFF/,'')):undefined;
+  console.log(JSON.stringify(await employerWorkbook({file,action:args[0]||'read',records})));
+ }catch(e){console.error(e.message);process.exitCode=1;}
 }

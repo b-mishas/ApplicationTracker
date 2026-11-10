@@ -10,6 +10,27 @@ const root=fileURLToPath(new URL('../',import.meta.url));
 const manifest=JSON.parse(await fs.readFile(new URL('./runtime-manifest.json',import.meta.url),'utf8'));
 const cache=process.env.JOBTRACKER_BUILD_CACHE||path.join(root,'.build-cache');await fs.mkdir(cache,{recursive:true});
 const digest=b=>crypto.createHash('sha256').update(b).digest('hex');
+// Git Bash can put GNU tar first on PATH. Windows tar accepts drive-letter archive paths.
+const tar=process.platform==='win32'?path.join(process.env.SystemRoot||'C:/Windows','System32','tar.exe'):'tar';
+
+async function refreshCheckoutRuntime(directory,name,executable,license){
+ await fs.mkdir(directory,{recursive:true});
+ const target=path.join(directory,name);
+ const installed=await fs.readFile(target).catch(error=>{if(error.code!=='ENOENT')throw error;});
+ if(!installed?.equals(executable)){
+  // Replace in one step so a running Windows executable can remain in place.
+  const temporary=target+'.'+crypto.randomUUID()+'.tmp';
+  try{
+   await fs.writeFile(temporary,executable,{mode:0o755,flag:'wx'});
+   try{await fs.rename(temporary,target);}catch(error){
+    if(process.platform!=='win32'||!installed||!['EBUSY','EPERM','EACCES'].includes(error.code))throw error;
+    console.warn('Could not refresh '+target+' ('+error.code+'). The ZIP uses the verified runtime. If the tracker is running, stop it and rerun the build to refresh the checkout.');
+    return;
+   }
+  }finally{await fs.rm(temporary,{force:true});}
+ }
+ await fs.writeFile(path.join(directory,'LICENSE'),license);
+}
 const archive=new JSZip();
 const add=(name,data,executable=false)=>archive.file('Application tracker/'+name,data,{unixPermissions:executable?0o100755:0o100644});
 async function tree(source,destination){
@@ -34,14 +55,14 @@ for(const item of manifest.artifacts){
   const zip=await JSZip.loadAsync(bytes);executable=await zip.file(prefix+'/node.exe').async('nodebuffer');license=await zip.file(prefix+'/LICENSE').async('nodebuffer');
  }else{
   const destination=path.join(cache,prefix);await fs.mkdir(destination,{recursive:true});
-  const extracted=spawnSync('tar',['-xzf',cached,'-C',destination,'--strip-components=1',prefix+'/bin/node',prefix+'/LICENSE'],{encoding:'utf8',windowsHide:true});
+  const extracted=spawnSync(tar,['-xzf',cached,'-C',destination,'--strip-components=1',prefix+'/bin/node',prefix+'/LICENSE'],{encoding:'utf8',windowsHide:true});
   if(extracted.status!==0)throw Error('Could not extract Mac runtime: '+(extracted.stderr||extracted.error));
   executable=await fs.readFile(path.join(destination,'bin/node'));license=await fs.readFile(path.join(destination,'LICENSE'));
  }
  const runtime=`runtime/${platform}-${arch}`,name=platform==='win'?'node.exe':'node';
  add(runtime+'/'+name,executable,true);add(runtime+'/LICENSE',license);
  // Also make the source checkout's starters usable without a global Node install.
- await fs.mkdir(path.join(root,runtime),{recursive:true});await fs.writeFile(path.join(root,runtime,name),executable,{mode:0o755});await fs.writeFile(path.join(root,runtime,'LICENSE'),license);
+ await refreshCheckoutRuntime(path.join(root,runtime),name,executable,license);
  console.log('Verified '+item.file);
 }
 for(const name of ['app.js','batch.schema.json','config.mjs','countries.json','employer-workbook.mjs','export-applications.mjs','group-colours.mjs','import-discoveries.mjs','index.html','inventory.schema.json','initialize.mjs','jsonschema.mjs','launch.mjs','print-applications.mjs','README.md','SEARCH_WORKFLOW.md','self-check.mjs','settings-cli.mjs','server.mjs','settings.mjs','status-history.mjs','store.mjs','style.css','view-model.mjs'])add('app/'+name,await fs.readFile(path.join(root,'app',name)));

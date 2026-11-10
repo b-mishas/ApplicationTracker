@@ -27,11 +27,20 @@ Users choose Excel language through Settings. For a proposed export preference, 
 
 batch.schema.json describes structural types and evidence rules. The importer accepts new profile-assigned groups and recognized countries without a settings whitelist or readiness gate. It does not need settings/tracker.json to import. Empty group/countries remain valid for genuinely unspecified data; preserve advertised geography in locationRaw/workModeRaw.
 
+The settings and workbook helpers accept UTF-8 JSON with or without a byte order mark (BOM). In Windows PowerShell 5.1, select UTF-8 explicitly with Out-File -Encoding utf8.
+
 ## Dates — automatic local time
 
 Instants use UTC timestamps ending Z. The importer converts observedAt to firstSeen/lastSeen using its execution computer's local timezone; the browser uses its computer's local date for Today and suggested application dates. There is no tracker timezone setting. Previously saved date-only fields are not reinterpreted.
 
 A scheduled agent running on another host must run the importer with standard process environment variable TZ set to Part A's IANA timezone (for example Europe/Berlin), then verify the execution timezone. This configures that import process, not tracker settings. On a local desktop with the same timezone, no override is needed. This avoids calendar-day differences around midnight. Never rewrite date-only records to compensate for a mismatched environment.
+
+Git Bash on Windows can drop TZ when it launches Windows Node. When a timezone override is required, use PowerShell and set the variable in the same session that verifies the timezone and runs the importer:
+
+    $env:TZ = 'Europe/Berlin'
+    node -p 'Intl.DateTimeFormat().resolvedOptions().timeZone'
+
+Use the same Node executable for the check and the import. Replace Europe/Berlin with the Part A timezone. Proceed after Node reports the intended timezone (or its canonical IANA equivalent).
 
 ## Node and installation self-check
 
