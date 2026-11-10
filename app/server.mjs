@@ -129,6 +129,7 @@ const server=http.createServer(async(req,res)=>{
       if(input.applicationStatusText!==undefined)job.applicationStatusText=input.applicationStatusText;
       else if(previousStatus!==effectiveStatus(job))delete job.applicationStatusText;
      }
+     if(job.status==='Dismissed'&&before.status!=='Dismissed'&&job.urgent)job.urgent=false;
      if(isDeepStrictEqual(job,before))return {skipWrite:true,job};
      job.updatedAt=new Date().toISOString();
      return {job,before};

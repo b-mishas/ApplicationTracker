@@ -81,6 +81,22 @@ try{
  const undoneEdit=await undo(edited);assert.equal(undoneEdit.status,200);
  assert.deepEqual(withoutTimestamp((await undoneEdit.json()).job),withoutTimestamp(outcomeRestored.job));
 
+ await update({status:'Shortlisted'});
+ for(const dismissal of [{quickAction:'dismiss'},{status:'Dismissed'}]){
+  const beforeDismissal=await update({quickAction:'urgent',urgent:true});
+  const dismissedUrgent=await update(dismissal);
+  assert.equal(dismissedUrgent.job.status,'Dismissed');
+  assert.equal(dismissedUrgent.job.urgent,false);
+  assert.equal((await (await fetch(base+'/api/jobs')).json()).data.jobs[0].urgent,false);
+  const undoneDismissal=await undo(dismissedUrgent);assert.equal(undoneDismissal.status,200);
+  assert.deepEqual(withoutTimestamp((await undoneDismissal.json()).job),withoutTimestamp(beforeDismissal.job));
+ }
+ await update({quickAction:'dismiss'});
+ const restoredAfterDismissal=await update({quickAction:'restore'});
+ assert.equal(restoredAfterDismissal.job.status,'Shortlisted');
+ assert.equal(restoredAfterDismissal.job.urgent,false);
+ console.log('PASS: quick and editor dismissal clear urgency; Undo restores it and ordinary Restore leaves it cleared.');
+
  const flagged=await update({quickAction:'urgent',urgent:true});
  const sameFlag=await update({quickAction:'urgent',urgent:true});
  assert.equal(sameFlag.revision,flagged.revision);assert.equal(sameFlag.undoToken,undefined);
