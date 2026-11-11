@@ -2,6 +2,7 @@
 
 
 tr.job{cursor:pointer}
+tr.job>td:not(:first-child):not(.star){user-select:text}
 
 table{table-layout:fixed}td{overflow-wrap:anywhere}.company{white-space:normal}.detail-grid{min-width:0}.detail-grid>section{min-width:0}.detail textarea{max-width:100%}
 

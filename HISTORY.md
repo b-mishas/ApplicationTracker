@@ -52,3 +52,8 @@
 - Applied on, First found and Posted display dates as D MMM YYYY. Relative posting text is preserved.
 - Leaving restores the prior columns and sort. Both layouts survive reload and server restart, including existing filter-only state.
 - Targeted model/API checks and headless Chrome/Firefox checks passed for sorting, date edits, view switching, persistence, draft protection and narrow layout.
+
+## 2026-11-11 — selecting row text
+
+- Dragging over linked or plain row text preserves selection for copying. Ordinary clicks still expand/collapse rows or open position links, and explicit buttons remain usable.
+- Real drag gestures and row/link/action clicks passed in headless Chrome and Firefox. Chrome also verified keyboard expansion after selection.

@@ -43,7 +43,7 @@ function flagGraphic(code){const iso=code==='UK'?'GB':code;return supportedCount
 function cell(j,key){
  if(key==='star'){const selected=j.status==='Shortlisted',allowed=['New','Shortlisted'].includes(j.status);return `<span class="quick-actions"><button class="quick-urgent ${j.urgent?'selected':''}" data-id="${esc(j.id)}" aria-pressed="${Boolean(j.urgent)}" aria-label="${j.urgent?'Remove urgency from':'Mark urgent'} ${esc(j.title)}" title="${j.urgent?'Remove urgent flag':'Mark as urgent'}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.2 2Q9.1 2 9.2 3.2L10.5 14.5h3l1.3-11.3Q14.9 2 13.8 2Q12 1.6 10.2 2Z"/><circle cx="12" cy="19" r="2.2"/></svg></button><button class="shortlist-star ${selected?'selected':''}" data-id="${esc(j.id)}" aria-pressed="${selected}" aria-label="${selected?'Remove from shortlist':'Shortlist'} ${esc(j.title)}" title="${allowed?(selected?'Remove from shortlist':'Shortlist'):'Shortlisting is available for new positions; current application stage is preserved.'}" ${allowed?'':'disabled'}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.3.9-4.55 4.45 1.07 6.28L12 17.36l-5.62 2.97 1.07-6.28L2.9 9.6l6.3-.9Z"/></svg></button><button class="quick-dismiss ${j.status==='Dismissed'?'selected':''}" data-id="${esc(j.id)}" aria-pressed="${j.status==='Dismissed'}" aria-label="${j.status==='Dismissed'?'Restore':'Dismiss'} ${esc(j.title)}" title="${j.status==='Dismissed'?'Restore previous status':'Dismiss position'}" ${allowed||j.status==='Dismissed'?'':'disabled'}><svg viewBox="0 0 24 24" aria-hidden="true">${j.status==='Dismissed'?'<path d="M8 7H4v-4M4 7a8 8 0 1 1-1 9"/>':'<circle cx="12" cy="12" r="8"/><path d="m9 9 6 6m0-6-6 6"/>'}</svg></button></span>`;}
  if(key==='fit')return `<span class="badge score ${j.fit==null?'':'fit'+j.fit}">${esc(j.fit??'—')}</span>${j.assessmentBasis==='Title only'?' <span title="Provisional: posting not reviewed">◌</span>':''}`;
- if(key==='title'){const url=safeUrl(j.url);return url?`<a href="${url}" target="_blank" rel="noopener noreferrer">${esc(j.title)}</a>${j.linkType==='search'?'<span class="muted">Search link · direct posting needed</span>':''}`:esc(j.title);}
+ if(key==='title'){const url=safeUrl(j.url);return url?`<a href="${url}" target="_blank" rel="noopener noreferrer" draggable="false">${esc(j.title)}</a>${j.linkType==='search'?'<span class="muted">Search link · direct posting needed</span>':''}`:esc(j.title);}
  if(key==='group'&&!j.group)return '—';
  if(key==='group'){const colour=groupColour(data.groupColours.assignments[j.group]);return `<span class="badge group" style="--group-fill:${colour.background};--group-ink:${colour.foreground}">${esc(j.group)}</span>`;}
  if(key==='status')return effectiveStatus(j)==='Offer'?'<span class="offer-status"><span class="offer-dollar" aria-hidden="true">$</span>Offer</span>':esc(effectiveStatus(j));
@@ -257,6 +257,12 @@ $('head').onclick=e=>{
  direction=sort===arrow.dataset.sort?-direction:['fit','star','applicationDate'].includes(arrow.dataset.sort)?-1:1;sort=arrow.dataset.sort;render();
 };
 $('body').onclick=async e=>{
+ const row=e.target.closest('tr.job');
+ // A text-selection gesture must keep its range and avoid link navigation.
+ if(row&&!e.target.closest('button')){
+  const selection=window.getSelection();
+  if(selection&&!selection.isCollapsed&&selection.containsNode(row,true)){e.preventDefault();return;}
+ }
  // Links keep their normal navigation; other clicks on a position toggle its details.
  if(e.target.closest('a'))return;
  const action=e.target.closest('.quick-urgent,.shortlist-star,.quick-dismiss');
@@ -274,7 +280,7 @@ $('body').onclick=async e=>{
  }
  // Rebuild the editor from saved data, discarding edits without writing to disk.
  if(e.target.closest('.cancel')){if(!pendingSave)render();return;}
- const row=e.target.closest('tr.job');if(row){if(!canChangeView())return;open=open===row.dataset.id?null:row.dataset.id;render();return;}
+ if(row){if(!canChangeView())return;open=open===row.dataset.id?null:row.dataset.id;render();return;}
  const save=e.target.closest('.save');if(!save||save.disabled||pendingSave)return;
  const section=save.closest('section'),message=section.querySelector('.save-state'),status=section.querySelector('select').value,notes=section.querySelector('textarea').value,applicationDate=section.querySelector('.edit-application-date').value,applicationStatusText=section.querySelector('.edit-application-status').value;
  const job=data.jobs.find(item=>item.id===save.dataset.id);
