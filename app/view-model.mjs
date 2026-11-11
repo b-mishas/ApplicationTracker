@@ -17,7 +17,7 @@ export function filterAndSort(jobs,{filters={},search='',sort='fit',direction=-1
   return Object.entries(filters).every(([key,value])=>{
    if(Array.isArray(value))return !value.length||choicesFor(j,key).some(v=>value.includes(v));
    if(!value)return true;
-   if(key==='firstSeen')return Boolean(j.firstSeen)&&j.firstSeen>=value;
+   if(['firstSeen','applicationDate'].includes(key))return Boolean(j[key])&&j[key]>=value;
    return String(j[key]??'').toLocaleLowerCase().includes(value.toLocaleLowerCase());
   });
  }).sort((a,b)=>{

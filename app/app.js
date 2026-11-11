@@ -1,10 +1,10 @@
-import {STATUS_VALUES, INTERVIEW_OUTCOMES, MILESTONE_DATES, interviewDetails, effectiveStatus, interviewHistoryText} from './status-history.mjs';
+import {STATUS_VALUES, INTERVIEW_OUTCOMES, MILESTONE_DATES, interviewDetails, effectiveStatus, interviewHistoryText, validStageDate} from './status-history.mjs';
 import {filterAndSort,choicesFor,EMPTY} from './view-model.mjs';
 import {groupColour,ensureGroupColours} from './group-colours.mjs';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const statuses=STATUS_VALUES;
-const fields=[['fit','Fit'],['company','Company'],['group','Group'],['title','Position'],['star','Actions'],['country','Country'],['city','City'],['workMode','Work mode'],['status','Status'],['seniority','Seniority'],['firstSeen','First found'],['postedDate','Posted'],['assessmentBasis','Assessment']];
+const fields=[['fit','Fit'],['company','Company'],['group','Group'],['title','Position'],['star','Actions'],['country','Country'],['city','City'],['workMode','Work mode'],['status','Status'],['applicationDate','Applied on'],['seniority','Seniority'],['firstSeen','First found'],['postedDate','Posted'],['assessmentBasis','Assessment']];
 let settings={exportLanguage:'en'},settingsRevision;
 let supportedCountries=new Set();
 let data,revision,sort='star',direction=-1,open=null,filterKey=null,pendingSave=false,lastUndo;
@@ -16,6 +16,27 @@ const filters={status:defaultStatusFilter()};
 const inProgressStatuses=['Applied','Interview','Offer'];
 const statusPresets={New:['New'],Shortlisted:['Shortlisted'],'In progress':inProgressStatuses,All:statuses};
 const visible=new Set(fields.slice(0,9).map(x=>x[0]));
+let standardLayout;
+const applicationDateFormat=new Intl.DateTimeFormat(undefined,{year:'numeric',month:'2-digit',day:'2-digit'});
+function layoutState(){return {columns:[...visible],sort,direction};}
+function applyLayout(layout){
+ visible.clear();layout.columns.forEach(key=>visible.add(key));sort=layout.sort;direction=layout.direction;
+}
+function isInProgressView(){
+ return filters.status?.length===inProgressStatuses.length&&inProgressStatuses.every(status=>filters.status.includes(status));
+}
+function syncViewLayout(){
+ if(isInProgressView()){
+  if(!standardLayout){
+   // Keep the normal layout so changes in this view stay local to it.
+   standardLayout=layoutState();
+   visible.delete('star');visible.add('applicationDate');sort='applicationDate';direction=-1;
+  }
+ }else if(standardLayout){
+  applyLayout(standardLayout);standardLayout=undefined;
+ }
+ for(const input of $('columns').querySelectorAll('input'))input.checked=visible.has(input.value);
+}
 const safeUrl=url=>{try{const u=new URL(url);return ['https:','http:'].includes(u.protocol)?esc(u.href):'';}catch{return '';}};
 // Local SVG files also work without a flag-emoji font.
 function flagGraphic(code){const iso=code==='UK'?'GB':code;return supportedCountries.has(iso)?'<img class="flag-icon" src="/flags/'+iso.toLowerCase()+'.svg" alt="'+esc(code)+'">':'';}
@@ -26,6 +47,7 @@ function cell(j,key){
  if(key==='group'&&!j.group)return '—';
  if(key==='group'){const colour=groupColour(data.groupColours.assignments[j.group]);return `<span class="badge group" style="--group-fill:${colour.background};--group-ink:${colour.foreground}">${esc(j.group)}</span>`;}
  if(key==='status')return effectiveStatus(j)==='Offer'?'<span class="offer-status"><span class="offer-dollar" aria-hidden="true">$</span>Offer</span>':esc(effectiveStatus(j));
+ if(key==='applicationDate')return validStageDate(j.applicationDate,{allowEmpty:false})?`<time datetime="${esc(j.applicationDate)}">${esc(applicationDateFormat.format(new Date(j.applicationDate+'T12:00:00')))}</time>`:'—';
  if(key==='country')return (j.countries||[]).map(c=>`<span class="country-code">${flagGraphic(c)} ${esc(c)}</span>`).join(' / ')||'—';
  return esc(j[key]||'—');
 }
@@ -140,8 +162,9 @@ async function saveJobEdit(payload){
 }
 const pendingViewKey='application-tracker.pending-view';
 let lastView='',viewUpdatedAt=0;
+function viewState(){return {search:$('search').value,filters,layout:layoutState(),...(standardLayout?{standardLayout}:{})};}
 function saveViewState(){
- const view={search:$('search').value,filters};
+ const view=viewState();
  const serialized=JSON.stringify(view);if(serialized===lastView)return;
  lastView=serialized;viewUpdatedAt=Math.max(Date.now(),viewUpdatedAt+1);
  const body=JSON.stringify({...view,updatedAt:viewUpdatedAt});
@@ -159,9 +182,11 @@ async function restoreViewState(){
  if(view){
   for(const key of Object.keys(filters))delete filters[key];
   Object.assign(filters,view.filters);$('search').value=view.search;
+  if(view.layout)applyLayout(view.layout);
+  standardLayout=view.standardLayout;
   viewUpdatedAt=view.updatedAt;
  }
- if(!retry)lastView=JSON.stringify({search:$('search').value,filters});
+ if(!retry)lastView=JSON.stringify(viewState());
 }
 // Resize columns without rendering again, so an open editor keeps its draft.
 function resizeColumns(){
@@ -179,6 +204,7 @@ function resizeColumns(){
 }
 new ResizeObserver(resizeColumns).observe(document.querySelector('.table-wrap'));
 function render(){
+ syncViewLayout();
  saveViewState();
  ensureGroupColours(data);
  $('search-clear').hidden=!$('search').value;
@@ -189,7 +215,7 @@ function render(){
  $('since-today').title=dateActive?'Clear the found-since date filter':'Found since today ('+Intl.DateTimeFormat().resolvedOptions().timeZone+')';
  const cols=fields.filter(([key])=>visible.has(key));
  // Keep controls compact. Extra table width goes to the flexible columns.
- const widths={fit:80,company:130.5,title:365,star:114,group:110,country:124,city:105,workMode:103.25,status:107,seniority:170,firstSeen:110,postedDate:110,assessmentBasis:143};
+ const widths={fit:80,company:130.5,title:365,star:114,group:110,country:124,city:105,workMode:103.25,status:107,applicationDate:130,seniority:170,firstSeen:110,postedDate:110,assessmentBasis:143};
  const totalWidth=44+cols.reduce((sum,[key])=>sum+widths[key],0);
  $('colgroup').innerHTML='<col data-width="44" data-fixed style="width:44px">'+cols.map(([key])=>`<col data-width="${widths[key]}" ${['fit','star','country'].includes(key)?'data-fixed':''} style="width:${widths[key]}px">`).join('');
  $('colgroup').closest('table').style.minWidth=totalWidth+'px';
@@ -217,12 +243,12 @@ $('head').onclick=e=>{
   const key=clear.dataset.clearColumnFilter;
   closeFilter();
   clearColumnFilter(key);
-  $('head').querySelector(`[data-filter="${key}"]`).focus({preventScroll:true});
+  $('head').querySelector(`[data-filter="${key}"]`)?.focus({preventScroll:true});
   return;
  }
  const label=e.target.closest('[data-filter]');if(label){showFilter(label.dataset.filter);return;}
  const arrow=e.target.closest('[data-sort]');if(!arrow||!canChangeView())return;
- direction=sort===arrow.dataset.sort?-direction:['fit','star'].includes(arrow.dataset.sort)?-1:1;sort=arrow.dataset.sort;render();
+ direction=sort===arrow.dataset.sort?-direction:['fit','star','applicationDate'].includes(arrow.dataset.sort)?-1:1;sort=arrow.dataset.sort;render();
 };
 $('body').onclick=async e=>{
  // Links keep their normal navigation; other clicks on a position toggle its details.
@@ -300,7 +326,11 @@ function populateFilter(){
   if(key==='fit')values=['5','4','3','2','1',EMPTY];
   if(key==='star')values=['Urgent','Shortlisted','Dismissed','Other'];
   controls=values.map(value=>`<label class="filter-choice"><input type="checkbox" data-value="${esc(value)}" ${(filters[key]||[]).includes(value)?'checked':''}>${key==='country'&&value!==EMPTY?flagGraphic(value):''}<span>${value===EMPTY?(key==='fit'?'Not assessed':'Not specified'):esc(value)}</span></label>`).join('');
- }else controls=`<label class="filter-text">${key==='firstSeen'?'Found on or after':'Contains'}<input id="column-filter-input" type="${key==='firstSeen'?'date':'search'}" value="${esc(filters[key]||'')}" aria-label="${esc(label)} filter"></label>`;
+ }else{
+  const dateFilter=['firstSeen','applicationDate'].includes(key);
+  const prompt=key==='firstSeen'?'Found on or after':key==='applicationDate'?'Applied on or after':'Contains';
+  controls=`<label class="filter-text">${prompt}<input id="column-filter-input" type="${dateFilter?'date':'search'}" value="${esc(filters[key]||'')}" aria-label="${esc(label)} filter"></label>`;
+ }
  $('column-filter').innerHTML=`<div class="filter-heading"><strong>${esc(label)}</strong><span class="filter-buttons">${checkboxFields.has(key)?'<button type="button" data-all-filter>All</button>':''}<button type="button" data-clear-filter>Clear</button></span></div><div class="filter-options">${controls}</div>`;
  positionFilter();
 }
@@ -321,7 +351,7 @@ $('column-filter').onclick=event=>{
  if(button.hasAttribute('data-clear-filter')){clearColumnFilter(filterKey);return;}
  filters[filterKey]=[...$('column-filter').querySelectorAll('input[data-value]')].map(input=>input.dataset.value);
  render();
- populateFilter();
+ refreshOpenFilter();
 };
 document.addEventListener('click',event=>{if(!event.target.closest('#column-filter,[data-filter]'))closeFilter();const menu=document.querySelector('.columns');if(!menu.contains(event.target))menu.open=false;});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'){const key=filterKey;closeFilter();document.querySelector('.columns').open=false;document.querySelector(`[data-filter="${key}"]`)?.focus();}});
@@ -352,7 +382,7 @@ async function saveStatus(select){
   if(autoDate&&date.value===dateBefore)date.value=saved.applicationDate||autoDate;
   const row=section.closest('tr').previousElementSibling,detailRow=section.closest('tr');
   for(const element of [row,detailRow]){element.classList.remove(...stageClasses.values());const stage=rowStage(effectiveStatus(saved));if(stage)element.classList.add(stage);}
-  for(const key of ['status','star']){const cellElement=row.querySelector('td.'+key);if(cellElement)cellElement.innerHTML=cell(saved,key);}
+  for(const key of ['status','star','applicationDate']){const cellElement=row.querySelector('td.'+key);if(cellElement)cellElement.innerHTML=cell(saved,key);}
   refreshOverview();
   // Keep the open editor visible even if its new stage is outside the current
   // filter. Filters apply again on collapse/navigation, after drafts are handled.

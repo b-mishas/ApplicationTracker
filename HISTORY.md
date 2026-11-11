@@ -45,3 +45,9 @@
 - Made active highlights square and continuous. Aligned left-aligned headings with row cells and the clear glyph with capital letters.
 - Capped Fit at 80 px, Actions at 114 px and Country at 124 px. Fit uses the shared 12 px left inset. Centered plus/minus controls in a 44 px column. Country pairs wrap, and text columns receive extra width.
 - Headless Chrome and Firefox verified controls, sizing, alignment, resizing, hidden columns and draft preservation.
+
+## 2026-11-11 — In progress layout
+
+- Added Applied on with local date formatting and date filtering. In progress hides Actions, shows Applied on and starts with newest applications first, with unknown dates last.
+- Leaving restores the prior columns and sort. Both layouts survive reload and server restart, including existing filter-only state.
+- Targeted model/API checks and headless Chrome/Firefox checks passed for sorting, date edits, view switching, persistence, draft protection and narrow layout.

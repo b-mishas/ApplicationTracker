@@ -39,3 +39,17 @@ for(const direction of [-1,1]){
  assert.deepEqual(filterAndSort(ties,{sort:'company',direction}).map(j=>j.id),['high','urgent-high','urgent-low','low','unknown']);
 }
 console.log('PASS: fit descending breaks equal primary values, including urgent groups and unknown fit.');
+
+const applications=[
+ {id:'older-high',status:'Interview',interviewOutcome:'Offer',applicationDate:'2026-10-30',fit:5},
+ {id:'unknown',status:'Applied',fit:5},
+ {id:'newest',status:'Applied',applicationDate:'2026-11-03',fit:2},
+ {id:'empty',status:'Offer',applicationDate:'',fit:3},
+ {id:'older-low',status:'Interview',applicationDate:'2026-10-30',fit:3},
+ {id:'rejected',status:'Interview',interviewOutcome:'Rejected',applicationDate:'2026-11-04',fit:4}
+];
+const progressOptions={filters:{status:['Applied','Interview','Offer']},sort:'applicationDate',direction:-1};
+assert.deepEqual(filterAndSort(applications,progressOptions).map(job=>job.id),['newest','older-high','older-low','unknown','empty']);
+assert.deepEqual(filterAndSort(applications,{...progressOptions,direction:1}).map(job=>job.id),['older-high','older-low','newest','unknown','empty']);
+assert.deepEqual(filterAndSort(applications,{...progressOptions,filters:{...progressOptions.filters,applicationDate:'2026-11-01'}}).map(job=>job.id),['newest']);
+console.log('PASS: application dates sort chronologically with missing dates last, retain Fit tie-breaking and filter by applied-on date and effective status.');

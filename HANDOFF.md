@@ -1,20 +1,19 @@
 # Application tracker checkpoint
 
-Updated 2026-11-10 23:02 UTC by Codex. Checkout C:/Users/misha/Claude/ApplicationTracker on main at 58b4b4e, matching the local origin/main ref. Remote and CI unverified for this turn. No active operations.
+Updated 2026-11-11 00:50 UTC by Codex. Checkout C:/Users/misha/Claude/ApplicationTracker on main at 7a7797d, matching the local origin/main ref. Remote and CI unverified for this turn. No active operations.
 
 ## Current local work
 
-- app/app.js caps Fit at 80 px, Actions at 114 px and Country at 124 px. Fit is now excluded from proportional growth. The expand column is 44 px.
-- app/style.css centers the plus/minus in a 28 px button with 8 px horizontal cell padding. This fixes overflow caused by the old button and cell padding inside the former 40 px column.
-- Fit stays left-aligned. Its heading and cells inherit the same 12 px inset as the other left-aligned columns, so provisional assessment markers stay beside the badges.
-- HISTORY.md records the verified update. These four files, including this handoff, are unstaged.
+- app/app.js adds Applied on after Status, using the existing applicationDate field and browser-local date formatting. Missing or invalid dates display an em dash. The date column is available in Columns and supports an applied-on-or-after filter.
+- Entering the In progress status selection snapshots the current columns and sort, hides Actions, shows Applied on and sorts application dates newest first. Manual changes inside that view stay temporary. Leaving via another preset, Status filtering or Reset restores the snapshot. Column checkboxes follow the active layout.
+- app/server.mjs validates optional layout and standardLayout fields in the existing saved view state, plus the new applicationDate filter. Existing filter-only state remains supported. Both the current layout and return snapshot survive reload and server restart.
+- app/view-model.mjs applies date-range filtering to applicationDate. Its existing sort handles chronological ISO dates, unknown dates last and Fit ties.
+- app/test-view-model.mjs, app/check.mjs and HISTORY.md record the targeted regressions and behavior. These seven files, including this handoff, are unstaged.
 
 ## Verification
 
-Headless Chrome and Firefox verified the 80/114/124 px caps and 44 px expand column at 390, 1280 and 2200 px. Measurements confirmed centered plus/minus glyphs, equal 12 px Fit insets, room for provisional markers and active filter controls, and correct layout when flexible columns are hidden. The text columns retain proportional growth. A Chrome screenshot verified the rendered alignment. JavaScript syntax and diff whitespace checks passed. Physical-device acceptance was outside this pass.
+View-model and isolated API checks passed, including date order, missing dates, effective interview outcomes, older view states, invalid layouts and stale writes. Headless Chrome and Firefox verified entering/leaving the view, independent customization, date filtering and editing, draft protection, reload, server restart, Reset, hidden-column transitions, legacy state and narrow layout. A Chrome screenshot verified the rendered view. Syntax and diff whitespace checks passed. Physical-device acceptance was outside this pass.
 
-## Previous checkpoint and next steps
+## Next steps
 
-58b4b4e contains the square, continuous green filter highlights, aligned headings, earlier compact column caps, country wrapping, draft-preserving resize behavior and clear-glyph alignment. See HISTORY.md for earlier verification.
-
-Review the current local adjustments. See PLAN.md for the recipient guide, packaging on request, assistant rehearsals, platform acceptance and recipient trial. The existing distribution ZIP predates these source changes.
+Review the local feature changes. See PLAN.md for the recipient guide, packaging on request, assistant rehearsals, platform acceptance and recipient trial. The distribution ZIP predates recent source changes.

@@ -15,7 +15,7 @@ let port=Number(process.env.PORT??8765), origin=`http://127.0.0.1:${port}`;
 const installation=crypto.createHash('sha256').update(root+'\0'+dataRoot).digest('hex');
 class NotFound extends Error{}
 const viewStateFile=path.join(dataRoot,'view-state.json');
-const filterKeys=new Set(['fit','company','group','title','star','country','city','workMode','status','seniority','firstSeen','postedDate','assessmentBasis']);
+const filterKeys=new Set(['fit','company','group','title','star','country','city','workMode','status','applicationDate','seniority','firstSeen','postedDate','assessmentBasis']);
 let viewStateWrite=Promise.resolve();
 // Keep one successful position edit available to the tab that made it.
 let lastJobEdit;
@@ -26,10 +26,16 @@ async function readViewState(){
  }
  catch(error){if(error.code==='ENOENT'||error instanceof SyntaxError)return null;throw error;}
 }
+function validViewLayout(layout){
+ return layout&&Array.isArray(layout.columns)&&layout.columns.length<=filterKeys.size
+  &&layout.columns.every(key=>filterKeys.has(key))&&new Set(layout.columns).size===layout.columns.length
+  &&filterKeys.has(layout.sort)&&[1,-1].includes(layout.direction);
+}
 function validViewState(state){
  if(!state||typeof state.search!=='string'||state.search.length>2000||!Number.isSafeInteger(state.updatedAt)||state.updatedAt<0||!state.filters||typeof state.filters!=='object'||Array.isArray(state.filters))return false;
  const shortText=value=>typeof value==='string'&&value.length<=2000;
- return Object.entries(state.filters).every(([key,value])=>filterKeys.has(key)&&(shortText(value)||Array.isArray(value)&&value.length<=1000&&value.every(shortText)));
+ return Object.entries(state.filters).every(([key,value])=>filterKeys.has(key)&&(shortText(value)||Array.isArray(value)&&value.length<=1000&&value.every(shortText)))
+  &&[state.layout,state.standardLayout].every(layout=>layout===undefined||validViewLayout(layout));
 }
 const server=http.createServer(async(req,res)=>{
  const reply=(code,value,type='application/json')=>{res.writeHead(code,{'Content-Type':type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(type==='application/json'?JSON.stringify(value):value);};
