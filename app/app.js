@@ -189,9 +189,9 @@ function render(){
  $('since-today').title=dateActive?'Clear the found-since date filter':'Found since today ('+Intl.DateTimeFormat().resolvedOptions().timeZone+')';
  const cols=fields.filter(([key])=>visible.has(key));
  // Keep controls compact. Extra table width goes to the flexible columns.
- const widths={fit:77,company:130.5,title:365,star:112,group:110,country:120,city:105,workMode:103.25,status:107,seniority:170,firstSeen:110,postedDate:110,assessmentBasis:143};
- const totalWidth=40+cols.reduce((sum,[key])=>sum+widths[key],0);
- $('colgroup').innerHTML='<col data-width="40" data-fixed style="width:40px">'+cols.map(([key])=>`<col data-width="${widths[key]}" ${['star','country'].includes(key)?'data-fixed':''} style="width:${widths[key]}px">`).join('');
+ const widths={fit:80,company:130.5,title:365,star:114,group:110,country:124,city:105,workMode:103.25,status:107,seniority:170,firstSeen:110,postedDate:110,assessmentBasis:143};
+ const totalWidth=44+cols.reduce((sum,[key])=>sum+widths[key],0);
+ $('colgroup').innerHTML='<col data-width="44" data-fixed style="width:44px">'+cols.map(([key])=>`<col data-width="${widths[key]}" ${['fit','star','country'].includes(key)?'data-fixed':''} style="width:${widths[key]}px">`).join('');
  $('colgroup').closest('table').style.minWidth=totalWidth+'px';
  $('head').innerHTML='<th aria-label="Details"></th>'+cols.map(([key,label])=>{
  const value=filters[key];
