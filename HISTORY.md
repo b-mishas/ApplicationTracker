@@ -57,3 +57,8 @@
 
 - Dragging over linked or plain row text preserves selection for copying. Ordinary clicks still expand/collapse rows or open position links, and explicit buttons remain usable.
 - Real drag gestures and row/link/action clicks passed in headless Chrome and Firefox. Chrome also verified keyboard expansion after selection.
+
+## 2026-11-11 — urgent row markers
+
+- Ported ClaudeCodeLocal JobTracker commit 5b4596a. Urgent positions use the urgency symbol’s red for a 3 px left edge in collapsed and expanded rows, taking precedence over status edge colours.
+- Headless Chrome verified New, Interview and Offer, clearing urgency, status dismissal, Undo and the In progress view.

@@ -191,3 +191,6 @@ tr.stage-rejected .badge{color:#666666;background:#eef0ec}
 .stage-row select,.detail input[type=date]{max-width:100%;height:32px;padding:4px 6px;font-size:12px}
 .stage-row select,.stage-row input[type=date]{width:100%;margin:0}
 .detail button:disabled{opacity:.55;cursor:default}
+
+/* Urgency takes precedence over stage edge colours, including expanded details. */
+tr.job.urgent>td:first-child,tr.detail.urgent>td{box-shadow:inset var(--row-edge-width) 0 #bb3834}
