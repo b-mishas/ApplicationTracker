@@ -48,6 +48,7 @@
 
 ## 2026-11-11 — In progress layout
 
-- Added Applied on with local date formatting and date filtering. In progress hides Actions, shows Applied on and starts with newest applications first, with unknown dates last.
+- Added Applied on with date filtering. In progress hides Actions, shows Applied on and starts with newest applications first, with unknown dates last.
+- Applied on, First found and Posted display dates as D MMM YYYY. Relative posting text is preserved.
 - Leaving restores the prior columns and sort. Both layouts survive reload and server restart, including existing filter-only state.
 - Targeted model/API checks and headless Chrome/Firefox checks passed for sorting, date edits, view switching, persistence, draft protection and narrow layout.

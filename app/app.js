@@ -17,7 +17,7 @@ const inProgressStatuses=['Applied','Interview','Offer'];
 const statusPresets={New:['New'],Shortlisted:['Shortlisted'],'In progress':inProgressStatuses,All:statuses};
 const visible=new Set(fields.slice(0,9).map(x=>x[0]));
 let standardLayout;
-const applicationDateFormat=new Intl.DateTimeFormat(undefined,{year:'numeric',month:'2-digit',day:'2-digit'});
+const dateMonths=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function layoutState(){return {columns:[...visible],sort,direction};}
 function applyLayout(layout){
  visible.clear();layout.columns.forEach(key=>visible.add(key));sort=layout.sort;direction=layout.direction;
@@ -47,7 +47,13 @@ function cell(j,key){
  if(key==='group'&&!j.group)return '—';
  if(key==='group'){const colour=groupColour(data.groupColours.assignments[j.group]);return `<span class="badge group" style="--group-fill:${colour.background};--group-ink:${colour.foreground}">${esc(j.group)}</span>`;}
  if(key==='status')return effectiveStatus(j)==='Offer'?'<span class="offer-status"><span class="offer-dollar" aria-hidden="true">$</span>Offer</span>':esc(effectiveStatus(j));
- if(key==='applicationDate')return validStageDate(j.applicationDate,{allowEmpty:false})?`<time datetime="${esc(j.applicationDate)}">${esc(applicationDateFormat.format(new Date(j.applicationDate+'T12:00:00')))}</time>`:'—';
+ if(['firstSeen','postedDate','applicationDate'].includes(key)){
+  const value=j[key];
+  if(!validStageDate(value,{allowEmpty:false}))return key==='postedDate'?esc(value||'—'):'—';
+  // ISO components keep calendar dates independent of browser timezone.
+  const [year,month,day]=value.split('-');
+  return `<time datetime="${esc(value)}">${Number(day)} ${dateMonths[Number(month)-1]} ${year}</time>`;
+ }
  if(key==='country')return (j.countries||[]).map(c=>`<span class="country-code">${flagGraphic(c)} ${esc(c)}</span>`).join(' / ')||'—';
  return esc(j[key]||'—');
 }

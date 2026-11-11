@@ -1,19 +1,19 @@
 # Application tracker checkpoint
 
-Updated 2026-11-11 00:50 UTC by Codex. Checkout C:/Users/misha/Claude/ApplicationTracker on main at 7a7797d, matching the local origin/main ref. Remote and CI unverified for this turn. No active operations.
+Updated 2026-11-11 02:22 UTC by Codex. Checkout C:/Users/misha/Claude/ApplicationTracker on main. This checkpoint accompanies the date-format commit, based on 67dfb52. Local origin/main matched that base at the start. Push pending at the time of writing. CI unverified. No background operations.
 
-## Current local work
+## Date display
 
-- app/app.js adds Applied on after Status, using the existing applicationDate field and browser-local date formatting. Missing or invalid dates display an em dash. The date column is available in Columns and supports an applied-on-or-after filter.
-- Entering the In progress status selection snapshots the current columns and sort, hides Actions, shows Applied on and sorts application dates newest first. Manual changes inside that view stay temporary. Leaving via another preset, Status filtering or Reset restores the snapshot. Column checkboxes follow the active layout.
-- app/server.mjs validates optional layout and standardLayout fields in the existing saved view state, plus the new applicationDate filter. Existing filter-only state remains supported. Both the current layout and return snapshot survive reload and server restart.
-- app/view-model.mjs applies date-range filtering to applicationDate. Its existing sort handles chronological ISO dates, unknown dates last and Fit ties.
-- app/test-view-model.mjs, app/check.mjs and HISTORY.md record the targeted regressions and behavior. These seven files, including this handoff, are unstaged.
+Applied on, First found and Posted display full dates as D MMM YYYY, for example 8 Nov 2026. app/app.js reads ISO components directly and uses English three-letter month names, avoiding timezone shifts. Relative or free-text posting dates are preserved. Missing dates display an em dash.
+
+The commit includes app/app.js, HISTORY.md and this checkpoint. The attempted Applied gold edge was reverted before this commit.
 
 ## Verification
 
-View-model and isolated API checks passed, including date order, missing dates, effective interview outcomes, older view states, invalid layouts and stale writes. Headless Chrome and Firefox verified entering/leaving the view, independent customization, date filtering and editing, draft protection, reload, server restart, Reset, hidden-column transitions, legacy state and narrow layout. A Chrome screenshot verified the rendered view. Syntax and diff whitespace checks passed. Physical-device acceptance was outside this pass.
+Headless Chrome checked all three date columns, leap days, Sep, unknown and relative dates, date inputs, chronological sorting and ISO filters across different timezones and a German browser locale. The rendered dates were inspected in a screenshot. View-model, JavaScript syntax and diff whitespace checks passed. Physical-device acceptance was outside this pass.
 
-## Next steps
+## Previous feature and next steps
 
-Review the local feature changes. See PLAN.md for the recipient guide, packaging on request, assistant rehearsals, platform acceptance and recipient trial. The distribution ZIP predates recent source changes.
+67dfb52 contains the In progress layout. Entering saves the normal columns and sort, hides Actions, shows Applied on and sorts newest first. Leaving restores the snapshot, including after reload or server restart. Headless Chrome/Firefox and targeted API checks passed for those transitions and draft protection.
+
+See PLAN.md for the recipient guide, packaging on request, assistant rehearsals, supported-platform acceptance and recipient trial. The existing ZIP predates recent source changes.
