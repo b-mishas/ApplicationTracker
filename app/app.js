@@ -14,7 +14,7 @@ const rowStage=status=>stageClasses.get(status)||'';
 const defaultStatusFilter=()=>statuses.filter(status=>!['Rejected','Dismissed','Withdrawn'].includes(status));
 const filters={status:defaultStatusFilter()};
 const inProgressStatuses=['Applied','Interview','Offer'];
-const statusPresets={New:['New'],Shortlisted:['Shortlisted'],'In progress':inProgressStatuses,All:statuses};
+const statusPresets={New:['New'],Shortlisted:['Shortlisted'],Urgent:statuses,'In progress':inProgressStatuses,All:statuses};
 const visible=new Set(fields.slice(0,9).map(x=>x[0]));
 let standardLayout;
 const dateMonths=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -77,10 +77,12 @@ function customApplicationText(job,value){
  return value.startsWith(history)?value.slice(history.length).trimStart():value;
 }
 const hiddenUnless=visible=>visible?'':' hidden';
+const canApply=job=>['New','Shortlisted'].includes(effectiveStatus(job));
 function stageControls(job){
  const saved=interviewDetails(job),visible=stageFields(job,saved);
  return '<div class="stage-row">'
   +'<label>Status <select class="edit-status" title="Status saves automatically">'+statuses.map(status=>'<option'+(status===effectiveStatus(job)?' selected':'')+'>'+status+'</option>').join('')+'</select></label>'
+  +'<button type="button" class="apply-status" title="Mark this position as Applied"'+hiddenUnless(canApply(job))+'>Applied</button>'
   +'<label data-application-date'+hiddenUnless(visible.application)+'>Application date <input type="date" class="edit-application-date" value="'+esc(job.applicationDate||'')+'"></label></div>'
   +'<label data-application-status'+hiddenUnless(visible.application)+'>Application status text <input type="text" class="edit-application-status" value="'+esc(applicationText(job))+'" placeholder="Optional detail for Excel"></label>'
   +'<div class="stage-row" data-interview-row'+hiddenUnless(visible.interview)+'>'
@@ -101,6 +103,7 @@ function milestoneDraft(section,job,{includeHidden=false}={}){
 function syncStageControls(section,job,draft){
  const saved=interviewDetails(job),visible=stageFields(job,saved);
  section.querySelector('.edit-status').value=effectiveStatus(job);
+ section.querySelector('.apply-status').hidden=!canApply(job);
  section.querySelector('.edit-interview-outcome').value=saved.interviewOutcome;
  section.querySelector('[data-interview-row]').hidden=!visible.interview;
  for(const key of MILESTONE_DATES){
@@ -122,11 +125,14 @@ function refreshEditorButtons(){
  const section=document.querySelector('.detail .save')?.closest('section');if(!section)return;
  const disabled=pendingSave||!dirty();section.querySelector('.save').disabled=disabled;section.querySelector('.cancel').disabled=disabled;
 }
+function hasUrgentFilter(){return filters.star?.length===1&&filters.star[0]==='Urgent';}
 function refreshStatusPresets(){
  const selected=filters.status?.length?filters.status:statuses;
- for(const button of $('status-presets').querySelectorAll('[data-status-preset]')){
-  const preset=statusPresets[button.dataset.statusPreset];
-  button.setAttribute('aria-pressed',String(selected.length===preset.length&&preset.every(status=>selected.includes(status))));
+ const urgentView=hasUrgentFilter()&&selected.length===statuses.length&&statuses.every(status=>selected.includes(status));
+ for(const button of document.querySelectorAll('[data-status-preset]')){
+  const name=button.dataset.statusPreset,preset=statusPresets[name];
+  const active=name==='Urgent'?urgentView:!urgentView&&selected.length===preset.length&&preset.every(status=>selected.includes(status));
+  button.setAttribute('aria-pressed',String(active));
  }
 }
 function refreshOverview(){
@@ -278,6 +284,14 @@ $('body').onclick=async e=>{
   }catch(error){$('message').textContent=error.message;action.disabled=false;}finally{setPendingSave(false);refreshEditorButtons();}
   return;
  }
+ const apply=e.target.closest('.apply-status');
+ if(apply){
+  if(apply.disabled||pendingSave)return;
+  const select=apply.closest('section').querySelector('.edit-status');
+  select.value='Applied';
+  await saveStatus(select);
+  return;
+ }
  // Rebuild the editor from saved data, discarding edits without writing to disk.
  if(e.target.closest('.cancel')){if(!pendingSave)render();return;}
  if(row){if(!canChangeView())return;open=open===row.dataset.id?null:row.dataset.id;render();return;}
@@ -383,7 +397,7 @@ async function saveStatus(select){
  const autoDate=status==='Applied'&&!job.applicationDate&&!dateBefore&&!date.validity.badInput?localToday():undefined;
  const payload={id:job.id,status,statusDate:localToday(),...(outcomeControl?{interviewOutcome:select.value}:{}),...(autoDate?{applicationDate:autoDate}:{})};
  // Keep the native calendar visible. The date filter's change handler guards pending saves.
- const controls=[...section.querySelectorAll('button,select'),...document.querySelectorAll('.toolbar input:not([type=date]),.toolbar button,.toolbar select,#head button,#settings-open')];
+ const controls=[...section.querySelectorAll('button,select'),...document.querySelectorAll('.overview button,.toolbar input:not([type=date]),.toolbar button,.toolbar select,#head button,#settings-open')];
  const focused=document.activeElement;
  const disabled=controls.map(control=>({control,wasDisabled:control.disabled}));
  setPendingSave(true);disabled.forEach(({control})=>control.disabled=true);indicator.textContent='Saving status…';$('message').textContent='';
@@ -442,7 +456,16 @@ $('since-today').onclick=()=>{
  else filters.firstSeen=localToday();
  render();refreshOpenFilter();
 };
-$('status-presets').onclick=event=>{const button=event.target.closest('[data-status-preset]');if(!button||!canChangeView())return;filters.status=[...statusPresets[button.dataset.statusPreset]];render();refreshOpenFilter();};
+function selectStatusPreset(event){
+ const button=event.target.closest('[data-status-preset]');if(!button||!canChangeView())return;
+ const name=button.dataset.statusPreset;
+ if(name==='Urgent')filters.star=['Urgent'];
+ else if(hasUrgentFilter())delete filters.star;
+ filters.status=[...statusPresets[name]];
+ render();refreshOpenFilter();
+}
+$('status-presets').onclick=selectStatusPreset;
+document.querySelector('.overview').onclick=selectStatusPreset;
 
 $('settings-open').onclick=()=>{
  if(!canChangeView())return;

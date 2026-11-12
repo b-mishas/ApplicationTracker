@@ -62,3 +62,9 @@
 
 - Ported ClaudeCodeLocal JobTracker commit 5b4596a. Urgent positions use the urgency symbol’s red for a 3 px left edge in collapsed and expanded rows, taking precedence over status edge colours.
 - Headless Chrome verified New, Interview and Offer, clearing urgency, status dismissal, Undo and the In progress view.
+
+## 2026-11-12 — Applied shortcut and count filters
+
+- New and Shortlisted editors have an Applied shortcut using the existing status autosave, date and Undo flow.
+- Count boxes trigger the corresponding quick filters with neutral backgrounds. The Urgent count filters flagged positions across all statuses; the toolbar retains four buttons.
+- Headless Chrome verified filter parity, persistence, draft preservation, shortcut visibility, Undo, keyboard use and narrow layout. Existing view-model checks passed.
