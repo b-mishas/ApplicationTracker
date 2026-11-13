@@ -95,3 +95,7 @@
 
 - Shared #cfdacf across neutral control outlines, count box borders/dividers, preset/export dividers, the table frame, header underline and column-filter popup. Internal table lines stay lighter.
 - Headless Chrome verified border colours, 1 px table structural edges, unchanged internal separators, popup rendering and desktop/narrow layouts.
+
+## 2026-11-14 — preset spacing
+
+- Added 4 px outer margin per side of the preset group, producing 12 px gaps to neighbouring controls on the same row. Chrome verified desktop gaps, unchanged 37 px height and no page overflow at 390/1280 px.
