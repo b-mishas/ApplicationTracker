@@ -1,6 +1,6 @@
 # Setup prompt — paste this into Claude or Codex once
 
-How to use: open a new conversation in the Claude desktop app (give it access to your job-search folder) or a new Codex thread with the job-search folder as the project. Copy everything between the two lines below into the message box and send it. Then answer the assistant's questions. Setup takes about 30–60 minutes.
+How to use: open a new conversation in the Claude desktop app (give it access to your job-search folder) or a new Codex thread with the job-search folder as the project. Copy everything between the two lines below into the message box and send it. Then answer the assistant's questions. Setup takes about an hour and a half; you can stop after the employer list (step 6) and continue the next day in the same conversation.
 
 ---------------------------------------------------------------- COPY FROM HERE
 
@@ -19,7 +19,7 @@ Read `agent/CUSTOMIZE.md` first and follow it strictly. Then do these steps in o
 
 2. **Collect my background.** Ask me to attach my CV (or put it into `profile/cv/`) and, if I have them, 3–6 job postings I applied to or found interesting, plus my verdict on each. Read them fully.
 
-3. **Fill the profile.** Interview me with short, numbered questions (at most 6 per message, multiple choice where possible) to fill every section of `profile/candidate_profile.md`: target role families, levels, countries and remote rules, work authorization (where I may already work, where I would need sponsorship), preferred regions, relocation and on-site limits, strengths, confirmed gaps (and which are bridgeable), mismatch signals, special exclusions. Leave §8 for the next step. Use only what my CV and I confirm; never invent experience. Show me the filled profile and change it until I approve it.
+3. **Fill the profile.** Interview me with short, numbered questions (at most 6 per message, multiple choice where possible) to fill every section of `profile/candidate_profile.md`: target role families, levels, countries and remote rules, work authorization (where I may already work, where I would need sponsorship), preferred regions, relocation and on-site limits, strengths, confirmed gaps (and which are bridgeable), mismatch signals, special exclusions and any special rules (each "always" or "never" must name the roles it covers). Leave §8 for the next step. Use only what my CV and I confirm; never invent experience. Show me the filled profile and change it until I approve it.
 
 4. **Review the fit definitions.** Show me the fit scale and the bridgeable-gap rule from profile §8 exactly as they are now, each level in one plain sentence with an example from my field. Ask whether I want to change any level or the bridgeable rule, and edit §8 accordingly. Keep the fixed frame: whole numbers 1–5, 5 is best, 3 or higher means "worth my attention". Then test the result: rate each example posting from step 2 using only the profile, without looking at my verdict (if I gave none, find 3–5 current postings in my field and ask me to rate them first). Show a table: posting | your fit | my fit | one-line reason. Where we differ by more than one point, name the profile section that caused it (strengths, gaps, bridgeable rule, mismatch signals or the scale) and propose a change. Repeat until every example is within one point, then save the postings with my fit and a one-line reason as calibration examples in §8.
 
@@ -36,15 +36,18 @@ Read `agent/CUSTOMIZE.md` first and follow it strictly. Then do these steps in o
 10. **Schedule it.** Ask me which weekdays and time. Then:
    - Claude: create a scheduled task named "Daily job search" with the filled prompt, weekdays at my time, access to ROOT, the Gmail connector, and approval mode that does not stop for every file action. Tell me which model it uses and recommend a capable one (not the smallest).
    - Codex: create an automation with the filled prompt, ROOT as project folder, my schedule, Gmail plugin enabled, web/network access allowed (it must read job sites) and permissions that allow unattended file reads and writes inside ROOT only. It must run directly in ROOT, not in a separate copy or worktree, otherwise results never reach my tracker. If you cannot create it yourself, give me numbered click-by-click steps from `guides/SETUP_CODEX.md`.
+   Use the raw text of the filled file, never a rendered preview. Afterwards read the installed prompt back and compare it with `agent/ROUTINE_PROMPT.filled.md`; headings, bullets, tables and code blocks must be intact.
    Remind me that the computer must be on, the app running and `profile/companies.xlsx` closed at that time.
 
-11. **Test run.** Start one run now (or ask me to press "Run now"). When it finishes, read its summary with me: did Gmail work, was anything imported, did the table appear, did LinkedIn access work? Fix only setup problems (settings, access, profile wording). Never change Part B to make a test pass; if Part B seems wrong for me, tell me and explain.
+11. **Test run.** Tell me first that a complete run takes half an hour or more, and that "Gmail: empty" is expected if my alerts were created today. Start one run now (or ask me to press "Run now"). When it finishes, read its summary with me: did Gmail work, was anything imported, did the table appear, did LinkedIn access work? Fix only setup problems (settings, access, profile wording). Never change Part B to make a test pass; if Part B seems wrong for me, tell me and explain.
    Setup is finished only when all of these are true; tell me which one fails and why:
    - the summary says Gmail "OK" or "empty", not "not read";
    - the run's batch is in `data/incoming/imported/` and its report is in `data/reports/`;
    - `data/reports/coverage.json` exists and lists the sources that were checked;
    - new positions, if any, show up in the tracker;
-   - the summary has the Import, New positions (or "No new positions added") and Coverage sections.
+   - the summary has the Import, New positions (or "No new positions added") and Coverage sections;
+   - the Coverage line shows start and end time, and for alerts, employers and portals the number due equals the number checked plus the number failed, with "Not done" either "nothing" or exact tool errors. A run that ended within a few minutes, or that names time, budget or effort as a reason, has skipped work: tell me, and do not accept it.
+   Judge the run by its own record (the run log if you can read it, the files it wrote), not only by its summary.
 
 Rules for the whole setup: never apply to jobs, send messages or emails, or sign in on my behalf; Gmail stays read-only; do not edit tracker code or the batch schema; ask before deleting anything.
 

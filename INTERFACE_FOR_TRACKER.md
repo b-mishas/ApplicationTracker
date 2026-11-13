@@ -33,7 +33,7 @@ Not shipped: `AGENTS.md`, `CLAUDE.md`, `HANDOFF.md`, `PLAN.md`, `HISTORY.md`, `P
 | `data/incoming/` | agent writes batches | write new batches |
 | `data/incoming/imported/` | agent moves completed batches | move only |
 | `data/reports/<batch filename without .json>.report.json` | importer | read |
-| `data/reports/coverage.json` | agent | read/write (incl. `employers` check dates, the fallback when the workbook cannot be written) |
+| `data/reports/coverage.json` | agent | read/write (incl. `employers` check dates, the fallback when the workbook cannot be written; `dropped`, the agent's 60-day memory of dropped roles; `linkedinAccess`) |
 | `profile/candidate_profile.md` | user | read |
 | `profile/companies.xlsx` (sheet "Companies": columns "Careers page", "Priority", "Status", "Last checked") | user; agent writes "Last checked" and "Careers page" using the bundled workbook helper | read/write those two columns |
 

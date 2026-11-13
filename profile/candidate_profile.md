@@ -67,9 +67,13 @@ Add 3–6 real postings you have already judged, from strong to weak. The setup 
 - Example: Company Y, Senior Analyst (Vienna) = 3: field fits, but one essential skill missing.
 - Example: Company Z, Sales Engineer (Zurich) = 1: quota-carrying sales role.
 
-## 9. Special exclusions
+## 9. Special rules and exclusions
 Roles never to re-report (beyond what the tracker already records as applied/rejected/dismissed):
 - {{e.g. Company Q, Senior Engineer — declined offer, reposted often}}
+
+Special rules (optional; delete if not needed). Every "always" or "never" must say which roles it covers, otherwise it pulls in unrelated jobs:
+- {{e.g. Never drop a role in my home city that belongs to one of my role families (§2), whatever its level or fit; other roles there are dropped as usual}}
+- {{e.g. In Spain and Belgium, add a new vacancy only at fit 3 or higher; rate fit first, never adjust it for country}}
 
 ## 10. Sources
 ### Job-alert emails (read via Gmail label from the routine's Part A)

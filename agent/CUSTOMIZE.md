@@ -11,7 +11,7 @@ The agent has three layers. Only the first two are personal.
 | Tracker | `app/`, `data/` | Nobody (the tracker manages itself) | Only via the tracker's documented settings |
 
 ## What stays identical (Part B)
-Safety rules (no applying, no messages, no sign-in, Gmail read-only), work order and budget, Gmail checkpointing, how postings are read, verification states (Reviewed / Title only / Open / Closed / Unverified), the fixed fit frame (whole numbers 1–5, 5 best, 3 or higher = relevant), the work-authorization check, deadline handling, duplicate rules, batch and import procedure, coverage checkpoint format and the summary format. These rules keep the agent compatible with the tracker. Changing them breaks imports or makes results unreliable.
+Safety rules (no applying, no messages, no sign-in, Gmail read-only), work order and completion checklist, subagent and ledger rules, Gmail checkpointing, how postings are read, verification states (Reviewed / Title only / Open / Closed / Unverified), the fixed fit frame (whole numbers 1–5, 5 best, 3 or higher = relevant), the work-authorization check, deadline handling, duplicate rules, batch and import procedure, coverage checkpoint format and the summary format. These rules keep the agent compatible with the tracker. Changing them breaks imports or makes results unreliable.
 
 ## What must be rewritten for each person
 - Part A: name, one-line description, folder path, Gmail label, time zone, summary language.
@@ -27,14 +27,14 @@ Safety rules (no applying, no messages, no sign-in, Gmail read-only), work order
 | §1 Work authorization, §4 Geography | 3 Scope, countries field | Ineligible locations reported, or sponsorship roles dropped |
 | §5 Strengths, §6 Gaps, §8 Fit scale and calibration | 6 Fit rating | Fit ratings too high or too low |
 | §7 Mismatch signals | 3 Scope (drop without review) | Noise, or good roles dropped |
-| §9 Exclusions | 3 Scope | Old roles reported again |
+| §9 Special rules and exclusions | 3 Scope | Old roles reported again; an unscoped "always/never" rule adds unrelated jobs |
 | §10 Sources, rotation, schedule | 2 Work order, 4 Gmail, 5 Sources | Sources never checked or browsed against your wish |
 
 ## What may be adjusted, but only in the profile
 - The wording of each fit level and the bridgeable-gap rule (§8), within the fixed frame.
 - Employer schedule (default A daily, B Mon/Thu, C Fri).
 - Portal list and weekday rotation.
-- Mismatch signals and special exclusions.
+- Mismatch signals, special rules and special exclusions (§9).
 - Which sources are "alerts only" (never browsed directly).
 
 ## Rules for the assistant doing the customization
@@ -44,6 +44,9 @@ Safety rules (no applying, no messages, no sign-in, Gmail read-only), work order
 4. Assign group names consistently with the profile and use country codes accepted by app/batch.schema.json and app/countries.json (UK is accepted for GB). Do not create tracker group/country/time settings. On a hosted import, process TZ must match Part A.
 5. Keep the profile in plain language; the agent rereads it every run.
 6. Whenever §8 or the strengths/gaps change, show the current fit scale first, then re-test it against the calibration examples as in setup step 4.
+7. Standing rules go into the profile (§9), never into coverage.json or a chat. Every "always" or "never" rule names the roles it covers (for example "roles in my role families", not "any role in my city").
+8. Do not add budgets or targets ("about 20 postings", "if time allows") anywhere; the agent treats them as permission to stop early.
+9. After changing the scheduled task's prompt, compare the installed text with `agent/ROUTINE_PROMPT.filled.md`; paste the raw file, never a rendered preview.
 
 ## Changing things later — prompts that work
 Open a conversation with access to the job-search folder and send, for example:
