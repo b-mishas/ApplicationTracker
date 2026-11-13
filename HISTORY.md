@@ -104,3 +104,7 @@
 
 - Removed the Found since toolbar shortcuts and their handlers. The count follows the preset group; Reset and Columns stay together at the right edge. Search uses up to 50% of the toolbar width and takes a full row at window widths of 850 px or less.
 - First found column date filtering remains available with the label Found since. Chrome verified responsive sizing and action alignment from 320 to 1800 px, stable widths with search/clear/Reset and presets, date filtering/reload and status autosave, including the Applied shortcut.
+
+## 2026-11-14 — count box order
+
+- Ordered the count boxes: Positions collected, Applications in progress, Shortlisted, Urgent, New. Chrome verified desktop/narrow visual order and all five filter actions.
