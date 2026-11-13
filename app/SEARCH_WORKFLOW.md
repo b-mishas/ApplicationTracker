@@ -31,7 +31,7 @@ The settings and workbook helpers accept UTF-8 JSON with or without a byte order
 
 ## Dates — automatic local time
 
-Instants use UTC timestamps ending Z. The importer converts observedAt to firstSeen/lastSeen using its execution computer's local timezone; the browser uses its computer's local date for Today and suggested application dates. There is no tracker timezone setting. Previously saved date-only fields are not reinterpreted.
+Instants use UTC timestamps ending Z. The importer converts observedAt to firstSeen/lastSeen using its execution computer's local timezone; the browser uses its computer's local date for suggested application and status dates. There is no tracker timezone setting. Previously saved date-only fields are not reinterpreted.
 
 A scheduled agent running on another host must run the importer with standard process environment variable TZ set to Part A's IANA timezone (for example Europe/Berlin), then verify the execution timezone. This configures that import process, not tracker settings. On a local desktop with the same timezone, no override is needed. This avoids calendar-day differences around midnight. Never rewrite date-only records to compensate for a mismatched environment.
 

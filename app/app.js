@@ -225,10 +225,6 @@ function render(){
  ensureGroupColours(data);
  $('search-clear').hidden=!$('search').value;
  refreshStatusPresets();
- $('since').value=filters.firstSeen||'';
- const dateActive=Boolean(filters.firstSeen);
- $('since-today').textContent=dateActive?'Clear':'Today';
- $('since-today').title=dateActive?'Clear the found-since date filter':'Found since today ('+Intl.DateTimeFormat().resolvedOptions().timeZone+')';
  const cols=fields.filter(([key])=>visible.has(key));
  // Keep controls compact. Extra table width goes to the flexible columns.
  const widths={fit:80,company:130.5,title:365,star:114,group:110,country:124,city:105,workMode:103.25,status:107,applicationDate:130,seniority:170,firstSeen:110,postedDate:110,assessmentBasis:143};
@@ -324,7 +320,6 @@ $('search-clear').onclick=()=>{
  render();
  $('search').focus();
 };
-$('since').addEventListener('change',()=>{if(!canChangeView()){$('since').value=filters.firstSeen||'';return;}filters.firstSeen=$('since').value;render();refreshOpenFilter();});
 $('reset').onclick=()=>{if(!canChangeView())return;for(const key of Object.keys(filters))delete filters[key];filters.status=defaultStatusFilter();$('search').value='';closeFilter();render();};
 $('columns').onchange=e=>{if(!canChangeView()){e.target.checked=!e.target.checked;return;}e.target.checked?visible.add(e.target.value):visible.delete(e.target.value);render();};
 $('export').onclick=async e=>{e.preventDefault();if(pendingSave){$('message').textContent='Wait for the current save to finish.';return;}try{const r=await fetch('/api/jobs');if(!r.ok)throw Error('Export failed');const {data:latest}=await r.json();const url=URL.createObjectURL(new Blob([JSON.stringify(latest,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`jobs-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(err){$('message').textContent=err.message;}};
@@ -358,7 +353,7 @@ function populateFilter(){
   controls=values.map(value=>`<label class="filter-choice"><input type="checkbox" data-value="${esc(value)}" ${(filters[key]||[]).includes(value)?'checked':''}>${key==='country'&&value!==EMPTY?flagGraphic(value):''}<span>${value===EMPTY?(key==='fit'?'Not assessed':'Not specified'):esc(value)}</span></label>`).join('');
  }else{
   const dateFilter=['firstSeen','applicationDate'].includes(key);
-  const prompt=key==='firstSeen'?'Found on or after':key==='applicationDate'?'Applied on or after':'Contains';
+  const prompt=key==='firstSeen'?'Found since':key==='applicationDate'?'Applied on or after':'Contains';
   controls=`<label class="filter-text">${prompt}<input id="column-filter-input" type="${dateFilter?'date':'search'}" value="${esc(filters[key]||'')}" aria-label="${esc(label)} filter"></label>`;
  }
  $('column-filter').innerHTML=`<div class="filter-heading"><strong>${esc(label)}</strong><span class="filter-buttons">${checkboxFields.has(key)?'<button type="button" data-all-filter>All</button>':''}<button type="button" data-clear-filter>Clear</button></span></div><div class="filter-options">${controls}</div>`;
@@ -400,7 +395,7 @@ async function saveStatus(select){
  const dateBefore=date.value,oldText=applicationText(job);
  const autoDate=status==='Applied'&&!job.applicationDate&&!dateBefore&&!date.validity.badInput?localToday():undefined;
  const payload={id:job.id,status,statusDate:localToday(),...(outcomeControl?{interviewOutcome:select.value}:{}),...(autoDate?{applicationDate:autoDate}:{})};
- // Keep the native calendar visible. The date filter's change handler guards pending saves.
+ // Keep native editor calendars stable by leaving date inputs enabled.
  const controls=[...section.querySelectorAll('button,select'),...document.querySelectorAll('.overview button,.toolbar input:not([type=date]),.toolbar button,.toolbar select,#head button,#settings-open')];
  const focused=document.activeElement;
  const disabled=controls.map(control=>({control,wasDisabled:control.disabled}));
@@ -451,15 +446,9 @@ $('export-applications').onclick=async event=>{
  }catch(error){$('message').textContent=error.message;}finally{delete button.dataset.busy;button.textContent='Excel';}
 };
 
-// Both date controls use the computer's local calendar day, including around midnight.
+// Suggested application and status dates use the computer's local calendar day.
 function localToday(){const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(p=>[p.type,p.value]));return `${p.year}-${p.month}-${p.day}`;}
 // Quick filters share the column-filter state and remain independent.
-$('since-today').onclick=()=>{
- if(!canChangeView())return;
- if(filters.firstSeen)delete filters.firstSeen;
- else filters.firstSeen=localToday();
- render();refreshOpenFilter();
-};
 function selectStatusPreset(event){
  const button=event.target.closest('[data-status-preset]');if(!button||!canChangeView())return;
  const name=button.dataset.statusPreset;

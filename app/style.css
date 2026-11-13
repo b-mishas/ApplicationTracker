@@ -74,15 +74,8 @@ header{--undo-result-space:90px;flex-wrap:wrap;gap:8px var(--undo-result-space)}
 }
 .detail input[type=date],.detail input[type=text]{max-width:100%;margin:5px 0 10px}.detail input[type=text]{width:100%}
 
-.found-since-controls{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}#since-today{padding:5px 9px;font-size:12px}
-
-
-
-/* Stable widths prevent filter controls shifting when their labels change. */
-#since-today{width:58px;min-width:58px;flex:0 0 58px}
-
 /* Header titles open filters, × clears them, and arrows sort. */
-.toolbar{align-items:center}.toolbar #since{font-size:12px;padding:6px}.toolbar .columns{font-size:12px}/* Reserve count space so filtering cannot resize the adjacent search field. */
+.toolbar{align-items:center}.toolbar .columns{font-size:12px}/* Reserve count space so filtering cannot resize the adjacent search field. */
 .result-count{font-size:12px;color:#6b7973;white-space:nowrap;width:21ch;flex:0 0 21ch;font-variant-numeric:tabular-nums}
 /* Keep the divider after the complete title-and-sort header. */
 th{padding:0}th:not(:last-child){border-right:1px solid #dde5da}
@@ -110,7 +103,11 @@ th .clear-column-filter:focus-visible{outline-offset:-2px}
 #message:empty{display:none}
 
 /* Reserve space for the clear button so entered text stays readable. */
-.search-control{position:relative;flex:1;min-width:170px}
+/* Use toolbar proportions; allow a full search row on smaller windows. */
+.search-control{position:relative;flex:1;min-width:170px;max-width:50%}
+@media(max-width:850px){
+.search-control{flex-basis:100%;max-width:none}
+}
 .toolbar .search-control input{width:100%;min-width:0;padding-right:34px}
 .search-control input::-webkit-search-cancel-button{-webkit-appearance:none}
 .toolbar #search-clear{position:absolute;right:5px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:26px;height:26px;padding:5px;border:0;background:transparent;color:#718079}
@@ -195,9 +192,11 @@ tr.stage-rejected .badge{color:#666666;background:#eef0ec}
 
 /* Match full-size toolbar controls to the search field's existing height. */
 .toolbar{--toolbar-control-height:37px}
-.toolbar .search-control input,.toolbar #since-today,.toolbar #since,.toolbar #reset,.toolbar .status-presets{height:var(--toolbar-control-height)}
-.toolbar .search-control input,.toolbar #since-today,.toolbar #since,.toolbar #reset{padding-block:0}
+.toolbar .search-control input,.toolbar #reset,.toolbar .status-presets{height:var(--toolbar-control-height)}
+.toolbar .search-control input,.toolbar #reset{padding-block:0}
 .toolbar .status-presets{margin-inline:4px}
+/* Keep Reset and Columns together at the trailing edge when the row wraps. */
+.toolbar-actions{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
 .toolbar .status-presets button{height:100%;padding-block:0}
 .toolbar .status-presets button[data-status-preset=New],.toolbar .status-presets button[data-status-preset=All],.toolbar #reset{padding-inline:14px}
 .toolbar .columns summary{height:var(--toolbar-control-height);line-height:calc(var(--toolbar-control-height) - 2px);padding:0 9px;border:1px solid #d8dfd7;border-radius:6px;background:white}
