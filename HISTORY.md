@@ -108,3 +108,7 @@
 ## 2026-11-14 — count box order
 
 - Ordered the count boxes: Positions collected, Applications in progress, Shortlisted, Urgent, New. Chrome verified desktop/narrow visual order and all five filter actions.
+
+## 2026-11-14 — count labels
+
+- All count labels use sentence case. Order remains: Positions collected, Applications in progress, Shortlisted, Urgent, New.
