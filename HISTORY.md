@@ -90,3 +90,8 @@
 
 - Matched toolbar controls to the 37 px search field, retained text sizes and added side padding to New, All and Reset. Adjusted Columns menu placement.
 - Headless Chrome checks passed at desktop and narrow widths for dimensions, padding, overflow and filter actions; rendering inspected.
+
+## 2026-11-13 — consistent outlines
+
+- Shared #cfdacf across neutral control outlines, count box borders/dividers, preset/export dividers, the table frame, header underline and column-filter popup. Internal table lines stay lighter.
+- Headless Chrome verified border colours, 1 px table structural edges, unchanged internal separators, popup rendering and desktop/narrow layouts.

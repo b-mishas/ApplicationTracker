@@ -202,6 +202,13 @@ tr.stage-rejected .badge{color:#666666;background:#eef0ec}
 .toolbar .columns summary{height:var(--toolbar-control-height);line-height:calc(var(--toolbar-control-height) - 2px);padding:0 9px;border:1px solid #d8dfd7;border-radius:6px;background:white}
 .toolbar .columns>div{top:calc(100% + 6px)}
 
+/* Share one neutral outline across fields, buttons and preset dividers. */
+:root{--control-border:#cfdacf}
+/* Stronger structural edges frame the table; internal grid lines stay light. */
+.table-wrap,.filter-panel{border-color:var(--control-border)}
+th{border-bottom-color:var(--control-border)}
+input,select,button,textarea,.overview,.overview>button,.export,.application-export,.application-export>.export,#settings-form input,#settings-form textarea,#settings-form select,.toolbar .status-presets,.toolbar .status-presets button,.toolbar .columns summary{border-color:var(--control-border)}
+
 .detail label[hidden],.detail [data-interview-row][hidden]{display:none}
 .stage-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end;gap:8px}
 .stage-row label{min-width:0}
