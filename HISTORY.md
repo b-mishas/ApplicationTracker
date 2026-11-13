@@ -68,3 +68,9 @@
 - New and Shortlisted editors have an Applied shortcut using the existing status autosave, date and Undo flow.
 - Count boxes trigger the corresponding quick filters with neutral backgrounds. The Urgent count filters flagged positions across all statuses; the toolbar retains four buttons.
 - Headless Chrome verified filter parity, persistence, draft preservation, shortcut visibility, Undo, keyboard use and narrow layout. Existing view-model checks passed.
+
+## 2026-11-13 — rejection after interview
+
+- Rejected position titles are regular, with bold titles and Interview -> Rejected for recorded interview rejections. Links and plain text follow the same rule.
+- Added Rejected after Interview to the Status filter as a subgroup of the overall Rejected selection, using existing JSON history fields.
+- Model and headless Chrome checks passed for older records, filtering/persistence, All/Reset, live updates and Undo.

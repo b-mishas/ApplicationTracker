@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import {filterAndSort,EMPTY} from './view-model.mjs';
+import {filterAndSort,choicesFor,EMPTY,REJECTED_AFTER_INTERVIEW} from './view-model.mjs';
+import {STATUS_VALUES,isRejectedAfterInterview} from './status-history.mjs';
 const jobs=[
  {id:'a',company:'Alpha',title:'Lead',group:'ELN/LIMS',countries:['DE'],status:'New',fit:2,firstSeen:'2026-11-02'},
  {id:'b',company:'Beta',title:'Scientist',group:'Computational',countries:['CH','DE'],status:'Shortlisted',fit:4,firstSeen:'2026-11-03'},
@@ -53,3 +54,25 @@ assert.deepEqual(filterAndSort(applications,progressOptions).map(job=>job.id),['
 assert.deepEqual(filterAndSort(applications,{...progressOptions,direction:1}).map(job=>job.id),['older-high','older-low','newest','unknown','empty']);
 assert.deepEqual(filterAndSort(applications,{...progressOptions,filters:{...progressOptions.filters,applicationDate:'2026-11-01'}}).map(job=>job.id),['newest']);
 console.log('PASS: application dates sort chronologically with missing dates last, retain Fit tie-breaking and filter by applied-on date and effective status.');
+
+const rejectionJobs=[
+ {id:'direct',status:'Rejected'},
+ {id:'after-interview',status:'Rejected',interviewDate:'2026-11-03',interviewOutcome:'Rejected'},
+ {id:'old-outcome',status:'Interview',interviewOutcome:'Rejected'},
+ {id:'old-history',status:'Rejected',statusHistory:[{status:'Interview',date:'2026-11-03'},{status:'Rejected',date:'2026-11-05'}]},
+ {id:'unknown-interview-date',status:'Rejected',interviewDate:''},
+ {id:'offer-without-interview',status:'Rejected',offerDate:'2026-11-04'},
+ {id:'reapplied',status:'Applied',interviewDate:'2026-11-03',interviewOutcome:'Rejected'},
+ {id:'withdrawn-after-interview',status:'Withdrawn',interviewDate:'2026-11-03',interviewOutcome:'Withdrawn'}
+];
+const afterInterview=['after-interview','old-outcome','old-history','unknown-interview-date'];
+assert.deepEqual(rejectionJobs.filter(isRejectedAfterInterview).map(job=>job.id),afterInterview);
+assert.deepEqual(choicesFor(rejectionJobs[1],'status'),['Rejected',REJECTED_AFTER_INTERVIEW]);
+const rejectionIds=selected=>filterAndSort(rejectionJobs,{filters:{status:selected}}).map(job=>job.id);
+assert.deepEqual(rejectionIds([REJECTED_AFTER_INTERVIEW]),afterInterview);
+assert.deepEqual(rejectionIds(['Rejected']),['direct',...afterInterview,'offer-without-interview']);
+assert.deepEqual(rejectionIds(['Rejected',REJECTED_AFTER_INTERVIEW]),rejectionIds(['Rejected']));
+assert.deepEqual(rejectionIds(STATUS_VALUES),rejectionJobs.map(job=>job.id));
+assert.deepEqual(rejectionIds([...STATUS_VALUES,REJECTED_AFTER_INTERVIEW]),rejectionIds(STATUS_VALUES));
+assert.deepEqual(rejectionIds(STATUS_VALUES.filter(status=>!['Rejected','Dismissed','Withdrawn'].includes(status))),['reapplied']);
+console.log('PASS: interview-rejection subgroup recognizes current and legacy records, excludes stale interview outcomes, preserves the overall Rejected group and works with All/Reset selections.');

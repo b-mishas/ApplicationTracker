@@ -28,6 +28,10 @@ export function effectiveStatus(job) {
  return INTERVIEW_OUTCOMES.includes(interviewOutcome) ? interviewOutcome : job.status;
 }
 
+export function isRejectedAfterInterview(job) {
+ return effectiveStatus(job) === 'Rejected' && interviewDetails(job).hasInterview;
+}
+
 export function validateMilestones(fields) {
  for (const key of MILESTONE_DATES) {
   if (Object.hasOwn(fields,key) && !validStageDate(fields[key])) throw new StatusHistoryError('Enter a valid ' + ({interviewDate:'interview date',interviewOutcomeDate:'outcome date',offerDate:'offer date'})[key] + '.');

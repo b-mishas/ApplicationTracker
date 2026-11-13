@@ -174,6 +174,8 @@ tr.detail.stage-offer>td{background:var(--stage-fill)}
 tr.job.stage-offer .company{font-weight:750}
 /* Rejected positions stay readable and interactive, with muted text/badges. */
 tr.job.stage-rejected,tr.detail.stage-rejected{color:#666666}
+tr.job.stage-rejected td.title,tr.job.stage-rejected td.title a{font-weight:400}
+tr.job.stage-rejected.rejected-after-interview td.title,tr.job.stage-rejected.rejected-after-interview td.title a{font-weight:650}
 tr.stage-rejected a,tr.stage-rejected .muted,tr.stage-rejected h3{color:#666666}
 tr.stage-rejected .badge{color:#666666;background:#eef0ec}
 

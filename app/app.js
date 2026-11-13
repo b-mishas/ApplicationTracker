@@ -1,9 +1,10 @@
-import {STATUS_VALUES, INTERVIEW_OUTCOMES, MILESTONE_DATES, interviewDetails, effectiveStatus, interviewHistoryText, validStageDate} from './status-history.mjs';
-import {filterAndSort,choicesFor,EMPTY} from './view-model.mjs';
+import {STATUS_VALUES, INTERVIEW_OUTCOMES, MILESTONE_DATES, interviewDetails, effectiveStatus, interviewHistoryText, validStageDate, isRejectedAfterInterview} from './status-history.mjs';
+import {filterAndSort,choicesFor,EMPTY,REJECTED_AFTER_INTERVIEW} from './view-model.mjs';
 import {groupColour,ensureGroupColours} from './group-colours.mjs';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const statuses=STATUS_VALUES;
+const statusFilters=statuses.flatMap(status=>status==='Rejected'?[status,REJECTED_AFTER_INTERVIEW]:[status]);
 const fields=[['fit','Fit'],['company','Company'],['group','Group'],['title','Position'],['star','Actions'],['country','Country'],['city','City'],['workMode','Work mode'],['status','Status'],['applicationDate','Applied on'],['seniority','Seniority'],['firstSeen','First found'],['postedDate','Posted'],['assessmentBasis','Assessment']];
 let settings={exportLanguage:'en'},settingsRevision;
 let supportedCountries=new Set();
@@ -46,6 +47,7 @@ function cell(j,key){
  if(key==='title'){const url=safeUrl(j.url);return url?`<a href="${url}" target="_blank" rel="noopener noreferrer" draggable="false">${esc(j.title)}</a>${j.linkType==='search'?'<span class="muted">Search link · direct posting needed</span>':''}`:esc(j.title);}
  if(key==='group'&&!j.group)return '—';
  if(key==='group'){const colour=groupColour(data.groupColours.assignments[j.group]);return `<span class="badge group" style="--group-fill:${colour.background};--group-ink:${colour.foreground}">${esc(j.group)}</span>`;}
+ if(key==='status'&&isRejectedAfterInterview(j))return esc('Interview -> Rejected');
  if(key==='status')return effectiveStatus(j)==='Offer'?'<span class="offer-status"><span class="offer-dollar" aria-hidden="true">$</span>Offer</span>':esc(effectiveStatus(j));
  if(['firstSeen','postedDate','applicationDate'].includes(key)){
   const value=j[key];
@@ -114,7 +116,7 @@ function syncStageControls(section,job,draft){
  section.querySelector('[data-application-date]').hidden=!visible.application;
  section.querySelector('[data-application-status]').hidden=!visible.application;
 }
-function detail(j){return `<tr class="detail ${rowStage(effectiveStatus(j))} ${j.urgent?'urgent':''}"><td colspan="${visible.size+1}"><div class="detail-grid"><section><h3>Why it fits</h3><p>${esc(j.reasoning||'No assessment yet.')}</p><h3>Gaps</h3><p>${esc(j.gaps||'No caveats recorded.')}</p></section><section><h3>Evidence & location</h3><p>Assessment: <b>${esc(j.assessmentBasis)}</b>\nSeniority: ${esc(j.seniority||'Unknown')}\nLocation as recorded: ${esc(j.locationRaw)}\nFirst found: ${esc(j.firstSeen)}\nPosted: ${esc(j.postedDate||'Unknown')}\nAvailability: ${esc(j.availability||'Unverified')}</p><h3>Sources</h3>${j.sources.map(s=>`<p>${esc(s.label)}${safeUrl(s.url)?` · <a target="_blank" rel="noopener noreferrer" href="${safeUrl(s.url)}">${j.linkType==='search'?'Open search':'Open listing'} ↗</a>`:''}<br><span class="muted">${esc(s.file)}</span></p>`).join('')}</section><section><h3>Your next step</h3>${stageControls(j)}<label>Notes<textarea class="edit-notes" placeholder="Questions, follow-ups, application notes…">${esc(j.notes)}</textarea></label><button class="save" data-id="${esc(j.id)}" disabled>Save changes</button> <button type="button" class="cancel" disabled title="Discard unsaved edits; saved status changes are kept">Cancel</button><span class="save-state" role="status"></span></section></div></td></tr>`;}
+function detail(j){return `<tr class="detail ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}"><td colspan="${visible.size+1}"><div class="detail-grid"><section><h3>Why it fits</h3><p>${esc(j.reasoning||'No assessment yet.')}</p><h3>Gaps</h3><p>${esc(j.gaps||'No caveats recorded.')}</p></section><section><h3>Evidence & location</h3><p>Assessment: <b>${esc(j.assessmentBasis)}</b>\nSeniority: ${esc(j.seniority||'Unknown')}\nLocation as recorded: ${esc(j.locationRaw)}\nFirst found: ${esc(j.firstSeen)}\nPosted: ${esc(j.postedDate||'Unknown')}\nAvailability: ${esc(j.availability||'Unverified')}</p><h3>Sources</h3>${j.sources.map(s=>`<p>${esc(s.label)}${safeUrl(s.url)?` · <a target="_blank" rel="noopener noreferrer" href="${safeUrl(s.url)}">${j.linkType==='search'?'Open search':'Open listing'} ↗</a>`:''}<br><span class="muted">${esc(s.file)}</span></p>`).join('')}</section><section><h3>Your next step</h3>${stageControls(j)}<label>Notes<textarea class="edit-notes" placeholder="Questions, follow-ups, application notes…">${esc(j.notes)}</textarea></label><button class="save" data-id="${esc(j.id)}" disabled>Save changes</button> <button type="button" class="cancel" disabled title="Discard unsaved edits; saved status changes are kept">Cancel</button><span class="save-state" role="status"></span></section></div></td></tr>`;}
 function dirty(){
  const area=document.querySelector('.edit-notes');if(!area)return false;
  const job=data.jobs.find(item=>item.id===open),section=area.closest('section');
@@ -127,7 +129,9 @@ function refreshEditorButtons(){
 }
 function hasUrgentFilter(){return filters.star?.length===1&&filters.star[0]==='Urgent';}
 function refreshStatusPresets(){
- const selected=filters.status?.length?filters.status:statuses;
+ const selectedFilters=filters.status?.length?filters.status:statuses;
+ // The interview subgroup is redundant when all rejections are selected.
+ const selected=selectedFilters.includes('Rejected')?selectedFilters.filter(status=>status!==REJECTED_AFTER_INTERVIEW):selectedFilters;
  const urgentView=hasUrgentFilter()&&selected.length===statuses.length&&statuses.every(status=>selected.includes(status));
  for(const button of document.querySelectorAll('[data-status-preset]')){
   const name=button.dataset.statusPreset,preset=statusPresets[name];
@@ -242,7 +246,7 @@ function render(){
  const rows=filtered();
  if(open&&!rows.some(job=>job.id===open))open=null;
  $('count').textContent=`${rows.length} of ${data.jobs.length} positions`;
- $('body').innerHTML=rows.length?rows.map((j,index)=>`<tr class="job ${index%2?'stripe':'plain'} ${open===j.id?'expanded':'collapsed'} ${rowStage(effectiveStatus(j))} ${j.urgent?'urgent':''}" data-id="${esc(j.id)}"><td><button class="toggle" data-id="${esc(j.id)}" aria-expanded="${open===j.id}" aria-label="${open===j.id?'Collapse':'Expand'} ${esc(j.title)}">${open===j.id?'−':'+'}</button></td>${cols.map(([key])=>`<td class="${key}">${cell(j,key)}</td>`).join('')}</tr>${open===j.id?detail(j):''}`).join(''):`<tr><td colspan="${cols.length+1}" class="empty">${data.jobs.length?'No positions match these filters. Try Reset.':'No positions yet. Set up the search agent to add discoveries.'}</td></tr>`;
+ $('body').innerHTML=rows.length?rows.map((j,index)=>`<tr class="job ${index%2?'stripe':'plain'} ${open===j.id?'expanded':'collapsed'} ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}" data-id="${esc(j.id)}"><td><button class="toggle" data-id="${esc(j.id)}" aria-expanded="${open===j.id}" aria-label="${open===j.id?'Collapse':'Expand'} ${esc(j.title)}">${open===j.id?'−':'+'}</button></td>${cols.map(([key])=>`<td class="${key}">${cell(j,key)}</td>`).join('')}</tr>${open===j.id?detail(j):''}`).join(''):`<tr><td colspan="${cols.length+1}" class="empty">${data.jobs.length?'No positions match these filters. Try Reset.':'No positions yet. Set up the search agent to add discoveries.'}</td></tr>`;
  resizeColumns();
  if(filterKey)positionFilter();
  refreshOverview();refreshEditorButtons();
@@ -348,7 +352,7 @@ function populateFilter(){
    if(a===EMPTY||b===EMPTY)return Number(a===EMPTY)-Number(b===EMPTY);
    return a.localeCompare(b,undefined,{numeric:true});
   });
-  if(key==='status')values=statuses;
+  if(key==='status')values=statusFilters;
   if(key==='fit')values=['5','4','3','2','1',EMPTY];
   if(key==='star')values=['Urgent','Shortlisted','Dismissed','Other'];
   controls=values.map(value=>`<label class="filter-choice"><input type="checkbox" data-value="${esc(value)}" ${(filters[key]||[]).includes(value)?'checked':''}>${key==='country'&&value!==EMPTY?flagGraphic(value):''}<span>${value===EMPTY?(key==='fit'?'Not assessed':'Not specified'):esc(value)}</span></label>`).join('');
@@ -407,7 +411,7 @@ async function saveStatus(select){
   text.value=text.value===oldText?applicationText(saved):applicationText({...saved,applicationStatusText:customApplicationText(job,text.value)});
   if(autoDate&&date.value===dateBefore)date.value=saved.applicationDate||autoDate;
   const row=section.closest('tr').previousElementSibling,detailRow=section.closest('tr');
-  for(const element of [row,detailRow]){element.classList.remove(...stageClasses.values());element.classList.toggle('urgent',Boolean(saved.urgent));const stage=rowStage(effectiveStatus(saved));if(stage)element.classList.add(stage);}
+  for(const element of [row,detailRow]){element.classList.remove(...stageClasses.values());element.classList.toggle('urgent',Boolean(saved.urgent));element.classList.toggle('rejected-after-interview',isRejectedAfterInterview(saved));const stage=rowStage(effectiveStatus(saved));if(stage)element.classList.add(stage);}
   for(const key of ['status','star','applicationDate']){const cellElement=row.querySelector('td.'+key);if(cellElement)cellElement.innerHTML=cell(saved,key);}
   refreshOverview();
   // Keep the open editor visible even if its new stage is outside the current
