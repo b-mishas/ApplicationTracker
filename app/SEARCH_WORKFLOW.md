@@ -74,6 +74,18 @@ From ROOT:
 
 If the workbook cannot be updated, record employer check dates/career URLs in data/reports/coverage.json and report the fallback. The agent owns that file.
 
+## Agent search coverage
+
+`data/reports/coverage.json` is the agent's run-to-run search record, not tracker configuration or an import batch. Neither the tracker nor the importer reads it. Follow `agent/ROUTINE_PROMPT.md` Part B for its exact JSON structure and completion rules.
+
+- `updatedAt`, `gmailCheckedThrough`, `gmailLastAttempt` and `sources` record attempts and successful coverage. Preserve earlier successful checkpoints for failed, skipped or partial scans; counts describe the current attempt.
+- `employers` records successful check dates and career URLs under the exact workbook company name, including when workbook writes are unavailable.
+- `linkedinAccess` is an object with `attemptedAt` (UTC Z), `browser`, `status` (`ok` or `failed`), `postingsRead`, `postingsFailed` and `reason`. It records the observed browser-access result for the run.
+- `dropped` is an array of candidates dropped by the agent that are not in jobs.json. Each entry has `provider`, `providerJobId`, `url`, `company`, `title`, `reason` and `droppedAt` (YYYY-MM-DD). Keep existing entries and remove only those older than 60 days. This memory is separate from the user's Dismissed status in the tracker.
+- `unfinished` holds only work that failed with an observed tool error; remove an entry only after completing it. Standing user rules belong in the candidate profile.
+
+The agent writes this file directly; do not submit these fields to the discovery importer or add them to jobs.json.
+
 ## Application exports
 
 The saved inventory keeps the primary status and optional interviewDate, interviewOutcome, interviewOutcomeDate and offerDate fields. Dates use YYYY-MM-DD in JSON. The interview outcome can be Rejected, Offer or Withdrawn. Rejected and Withdrawn use interviewOutcomeDate, while Offer uses offerDate. Selecting an interview outcome saves the matching primary status in the same update. Pending returns the status to Interview. Older records saved with status Interview and an outcome display and filter by that outcome. These fields are user-owned and cannot be submitted in discovery batches.

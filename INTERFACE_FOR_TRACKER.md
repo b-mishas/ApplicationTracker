@@ -5,7 +5,7 @@ The routine prompt (`agent/ROUTINE_PROMPT.md`, Part B) relies on exactly these p
 ## What the recipient gets (one ZIP, unpacked to e.g. `Documents/JobSearch`)
 | Path | Content | Source |
 |---|---|---|
-| `READ ME.html` | Single recipient starting guide and copyable setup instruction | tracker package |
+| `START_HERE.html` | Single recipient starting guide and copyable setup instruction | tracker package |
 | `app/` | tracker, importer, schema and helpers (starters and runtime/ are at ROOT) | Codex |
 | `data/` | empty but valid inventory (`jobs.json`, `incoming/`, `incoming/imported/`, `reports/`, `backups/`) | Codex (or created on first start) |
 | `settings/tracker.json` | export preferences only: schemaVersion 1, exportLanguage en | Codex |

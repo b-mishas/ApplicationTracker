@@ -2,7 +2,7 @@
 
 The visible tracker is Application tracker. The importer command and JSON fields keep the original integration contract.
 
-Open the operating-system Start file in the parent folder. It initializes missing folders, starts a local server and opens the browser. Use the same starter again to reopen it. Settings are available in the page header. For first-launch troubleshooting, read ../READ ME.html and data/logs/server.log.
+Open the operating-system Start file in the parent folder. It initializes missing folders, starts a local server and opens the browser. Use the same starter again to reopen it. Settings are available in the page header. For first-launch troubleshooting, read ../START_HERE.html and data/logs/server.log.
 
 From the installation root:
 

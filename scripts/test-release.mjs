@@ -27,7 +27,7 @@ try{
  delete env.JOBTRACKER_DATA_DIR;delete env.JOBTRACKER_SETTINGS_FILE;
  const runtime=path.join(directory,'runtime',`${process.platform==='win32'?'win':'darwin'}-${process.arch}`,process.platform==='win32'?'node.exe':'node');
  const invoke=(script,args=[])=>{const r=spawnSync(runtime,[path.join(directory,'app',script),...args],{env,encoding:'utf8',timeout:30000,windowsHide:true});assert.equal(r.status,0,r.stderr||r.stdout);return r.stdout;};
- const starter=process.platform==='win32'?'Start Windows.cmd':'Start macOS.command';
+ const starter=process.platform==='win32'?'Start (Windows).cmd':'Start (Mac).command';
  const command=process.platform==='win32'?process.env.ComSpec:'/bin/sh';
  const args=process.platform==='win32'?['/d','/s','/c',`""${path.join(directory,starter)}""`]:[path.join(directory,starter)];
  const start=()=>{const result=spawnSync(command,args,{env,encoding:'utf8',timeout:30000,windowsHide:true,windowsVerbatimArguments:process.platform==='win32'});assert.equal(result.status,0,result.stderr||result.stdout);return result.stdout;};
@@ -44,7 +44,7 @@ try{
  assert.equal((await fetch(repeated.url+'/api/export/applications.xlsx')).status,200);
  assert.deepEqual(JSON.parse(await fs.readFile(path.join(directory,'settings/tracker.json'),'utf8')),{schemaVersion:1,exportLanguage:'en'});
  assert(!Object.keys(zip.files).some(n=>/^Application tracker\/(?:HANDOFF|PLAN|HISTORY|CLAUDE)\.md$/.test(n)));
- assert.equal(zip.file('Application tracker/Start macOS.command').unixPermissions&0o777,0o755);
+ assert.equal(zip.file('Application tracker/Start (Mac).command').unixPermissions&0o777,0o755);
  assert.equal(zip.file('Application tracker/runtime/darwin-arm64/node').unixPermissions&0o777,0o755);
  console.log('PASS: clean ZIP extraction in a path with spaces/&; platform starter without global Node; repeat launch; empty UI/inventory; self-check; Excel download; neutral settings; private-file exclusion; Mac executable permissions.');
  invoke('launch.mjs',['--stop']);

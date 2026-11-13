@@ -2,6 +2,17 @@
 
 [PLAN.md](PLAN.md) lists remaining work. [HANDOFF.md](HANDOFF.md) records the latest verification details.
 
+## 2026-11-12 — guide and launcher naming
+
+- Renamed the recipient guide to START_HERE.html and starters to Start (Windows).cmd and Start (Mac).command; updated documentation, release builder and release-test references without rebuilding the ZIP.
+- Shortened everyday instructions, removed redundant prerequisites, and directed search changes back to the existing setup chat. Static guide/template/filename checks and release-script syntax checks passed; renamed-launcher execution and updated rendering remain untested.
+
+## 2026-11-11 — recipient guide and search coverage
+
+- Added a Before you start box to START_HERE.html with assistant/app, Gmail, CV and setup-time prerequisites. Removed the separate test-before-scheduling instruction; the guide now follows setup's scheduled-task test order.
+- Documented the existing Excel/PDF controls, shared export language and optional report name. Added the agent-owned coverage fields, including dropped-role retention and LinkedIn access results, to SEARCH_WORKFLOW.md.
+- Static checks passed for HTML IDs, copy targets, local links, script syntax and source/template parity. Headless Chrome failed to launch (exit -2147483645); visual and scheduled-task acceptance remain pending.
+
 ## 2026-11-04 — standalone tracker
 
 - Created the separate JobTracker repository (`0f7ad2b`) with pristine agent, guide and profile templates. Used installation-relative data and initialization that preserves an existing inventory. Verified importer, view model, API saves and repeat initialization on Windows.
@@ -10,7 +21,7 @@
 
 - Renamed the local and GitHub repositories to ApplicationTracker and kept the `JOBTRACKER_*` environment variables. Added bundled Windows/macOS runtimes, launchers, self-check, ExcelJS export and employer workbook tools, and a pristine-template ZIP builder and audit (`45f07a3`).
 - Verified an earlier ZIP on Windows x64 from a clean extraction without global Node. Start and repeat launch, empty inventory, self-check, Excel download, Stop and privacy audit passed. Verified all four runtime hashes and macOS executable permissions.
-- Committed agent setup, routine, templates and adjustable fit guidance (`a030d28`, `1fb3caa`, `4e13896`). Consolidated onboarding into `READ ME.html` and added four copyable chatbot prompts.
+- Committed agent setup, routine, templates and adjustable fit guidance (`a030d28`, `1fb3caa`, `4e13896`). Consolidated onboarding into `START_HERE.html` and added four copyable chatbot prompts.
 
 ## 2026-11-05 to 2026-11-06 — tracker workflow and exports
 

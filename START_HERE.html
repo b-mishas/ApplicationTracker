@@ -14,6 +14,9 @@ button{font:inherit;padding:7px 14px;border:1px solid #a9b8a9;border-radius:7px;
 button:hover{background:#e0e8da}
 button:focus-visible{outline:2px solid #177464;outline-offset:3px}
 .note{font-size:15px;color:#586657}
+.before-start{margin:24px 0;padding:16px 20px;border:1px solid #cbd5c6;border-radius:9px;background:#f0f3ec}
+.before-start h2{margin:0}
+.before-start ul{margin-bottom:0}
 .prompt{margin:16px 0;border:1px solid #cbd5c6;border-radius:9px;overflow:hidden;background:#f0f3ec}
 .prompt-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 12px;border-bottom:1px solid #d8e0d3;background:#e8eee2;font-size:13px;font-weight:600}
 .prompt-header button{flex-shrink:0;min-width:78px;padding:4px 10px;font-size:13px;background:#fafcf8}
@@ -26,54 +29,75 @@ button:focus-visible{outline:2px solid #177464;outline-offset:3px}
 </head>
 <body>
 <h1>Application tracker</h1>
-<p>A local tracker with an AI-assisted job search. Start here; no programming knowledge is needed.</p>
+<p>A local tracker with an AI-assisted job search.</p>
+
+<section class="before-start" aria-labelledby="before-start-heading">
+<h2 id="before-start-heading">Before you start</h2>
+<ul>
+<li><strong>Your assistant:</strong> Claude Pro or higher or ChatGPT plan with Codex.</li>
+<li><strong>Gmail:</strong> an account for job alerts.</li>
+<li><strong>Your CV:</strong> ready for building your search profile.</li>
+<li><strong>Time:</strong> Allow ~1.5 hours for setup.</li>
+</ul>
+</section>
 
 <h2>1. Extract and open</h2>
-<p>Extract the <strong>entire ZIP</strong> into a folder you want to keep, such as Documents/Application tracker. Then double-click:</p>
-<ul><li><strong>Windows:</strong> Start Windows.cmd</li><li><strong>Mac:</strong> Start macOS.command</li></ul>
-<p>Your browser opens an empty tracker. No Node.js, Python or package installation is needed. Keep all the extracted files together. The matching Stop file stops the background server.</p>
+<p>Extract the <strong>entire ZIP</strong> into a folder you want to keep, such as Documents/Application tracker. Then start using:</p>
+<ul><li><strong>Windows:</strong> Start (Windows).cmd</li><li><strong>Mac:</strong> Start (Mac).command</li></ul>
+<p>Your browser opens an empty tracker. Keep all the extracted files together. The matching Stop file stops the background server.</p>
 
-<h2>2. Set up your search with your assistant</h2>
-<p>Open Claude or Codex in a desktop environment that can work with local folders. Give it access to the <strong>whole extracted folder</strong>. Copy this into a new conversation:</p>
+<h2>2. Set up job search with LLM assistant</h2>
+<p>Open Claude or Codex in a desktop environment that can work with local folders. Give it access to the <strong>whole extracted folder</strong>. Start a new chat and paste this prompt:</p>
 <div class="prompt">
 <div class="prompt-header"><span>Setup instruction</span><button type="button" data-copy="setup-prompt" aria-label="Copy setup instruction">Copy</button></div>
 <pre><code id="setup-prompt">Read agent/SETUP_PROMPT.md in this folder and guide me through setting up Application tracker. Treat this folder as ROOT. Follow the setup steps with me, ask for my background and preferences, and do not assume any personal information.</code></pre>
 <p class="copy-status" role="status"></p>
 </div>
-<p>Have your CV ready. The assistant interviews you, helps choose tracks and geography, sets your Excel export language, fills your employer list and helps set up alerts and a schedule. You approve the profile and schedule. You sign in to services yourself.</p>
+<p>The assistant helps you:</p>
+<ul>
+<li>Build your profile and choose search tracks and geography.</li>
+<li>Make a list of potential employers.</li>
+<li>Set up a search schedule.</li>
+<p>Run the scheduled task once and check its results.</p>
+</ul>
+<p>You approve the profile and schedule, and sign in to services yourself.</p>
+<ul>
+<li><strong>Test run:</strong> allow 30 minutes or more.</li>
+<li><strong>New alerts:</strong> an empty Gmail result is expected on day one.</li>
+<li><strong>Check:</strong> review completed and failed work in the summary’s Coverage line; confirm new positions appear in the tracker.</li>
+</ul>
 <p>If it cannot read the setup file, open <code>agent/SETUP_PROMPT.md</code> and paste the text between the COPY markers.</p>
 
-<h2>3. Test before scheduling</h2>
-<p>Copy this to your assistant:</p>
-<div class="prompt">
-<div class="prompt-header"><span>Test instruction</span><button type="button" data-copy="test-prompt" aria-label="Copy test instruction">Copy</button></div>
-<pre><code id="test-prompt">Run the installation check and one test search with me.</code></pre>
-<p class="copy-status" role="status"></p>
-</div>
-<p>Check the summary and any new positions in the browser. Enable unattended searches only after setup and intended connectors work.</p>
+<h2>3. Daily routine</h2>
+<ul>
+<li>Open the Start file to open the Application tracker in the browser — it gives you an overview of all positions and applications.</li>
+<li>Keep the computer awake and the AI app running for local scheduled searches.</li>
+<li>You can export your applications as Excel or PDF using the corresponding buttons at the top right.</li>
+</ul>
+<p>Back up this whole folder. Once personalized, it contains private information; do not share it or replace it with a blank download. Your assistant's routine never applies, sends messages or changes your CV.</p>
 
-<h2>Every day</h2>
-<ul><li>Open the Start file to reopen the tracker. Use the star, dismiss icon and status editor to track decisions.</li><li>Keep the computer awake and the AI app running for local scheduled searches. Close the employer workbook in Excel before a search.</li><li>Use Export applications for Excel. Applied positions need an actual application date.</li></ul>
-<p>Back up this whole folder. Once personalized it contains private information; do not share it or replace it with a blank download. Your assistant's routine never applies, sends messages or changes your CV.</p>
-
-<h2>Change your search later</h2>
-<p>Give your assistant access to this folder and copy this into the conversation:</p>
+<h3>Change your search later</h3>
+<p>Return to your setup chat, which already has access to the Application tracker folder, and paste:</p>
 <div class="prompt">
 <div class="prompt-header"><span>Change your search</span><button type="button" data-copy="customize-prompt" aria-label="Copy search customization instruction">Copy</button></div>
 <pre><code id="customize-prompt">Read agent/CUSTOMIZE.md, then help me change my search.</code></pre>
 <p class="copy-status" role="status"></p>
 </div>
-<p>Search tracks and geography belong in your profile; the agent assigns them to each position. The tracker’s Settings screen controls Excel export language.</p>
+<ul>
+<li><strong>Profile:</strong> search tracks and geography.</li>
+<li><strong>Settings → Excel language (for export):</strong> language for both Excel and PDF.</li>
+<li><strong>Settings → Name:</strong> optional name in both report titles.</li>
+</ul>
 
-<h2>If something is blocked</h2>
-<p class="note">Downloaded starters or runtimes may need operating-system approval. Review the package source and follow the system's displayed instructions; do not disable protections. Real macOS and Windows ARM64 acceptance checks are still pending.</p>
+<h3>If something is blocked</h3>
+<p class="note">Downloaded starters or runtimes may need operating-system approval. Review the package source and follow the system's displayed instructions; do not disable protections.</p>
 <p>For startup problems, copy this to your assistant:</p>
 <div class="prompt">
 <div class="prompt-header"><span>Startup help</span><button type="button" data-copy="startup-prompt" aria-label="Copy startup help instruction">Copy</button></div>
 <pre><code id="startup-prompt">Read data/logs/server.log in this folder and help me fix the tracker startup problem.</code></pre>
 <p class="copy-status" role="status"></p>
 </div>
-<p class="note">The tracker stores records locally. The search needs an appropriate AI account/app, internet access and your approved connectors. Connected AI services process material you give them access to. Platform-specific instructions are in guides/.</p>
+<p class="note">The tracker stores records locally. Connected AI services process material you give them access to. Platform-specific instructions are in guides/.</p>
 
 <script>
 // Copy only the prompt text, without its heading or button label.

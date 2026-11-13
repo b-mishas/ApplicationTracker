@@ -4,7 +4,7 @@
 
 ## Before shipping
 
-1. **Update the recipient guide.** Bring [READ ME.html](<READ ME.html>) in line with the Excel/PDF controls and optional export name.
+1. **Verify the revised recipient guide visually.** Prerequisites, scheduled-task test order, Excel/PDF controls and optional export name are documented. Browser rendering remains unchecked: headless Chrome failed to launch during the 2026-11-11 documentation update.
 2. **Prepare the release ZIP only when explicitly requested.** The existing ZIP predates tracker commit `82dc7d3`. Remove the five local development positions (`dev-mock-fit-1` through `dev-mock-fit-5`) before shipping. Build from pristine templates, then audit the archive for an empty inventory, neutral settings and exclusion of personal and developer files.
 3. **Test a clean extraction on supported platforms.** Repeat the Windows x64 check on the new ZIP. Verify real macOS (Intel and Apple silicon) and Windows ARM64 for any variants advertised as supported. Check first-launch approvals, Start/Stop/restart, sample import, workbook helper, desktop Excel and the browser's landscape PDF save dialog.
 4. **Rehearse one scheduled search in each supported assistant environment.** Confirm connector access, unattended folder permissions, import and visible results. Check that the hosted importer's `TZ` matches Part A across midnight.

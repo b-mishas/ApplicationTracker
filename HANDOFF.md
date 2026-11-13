@@ -1,21 +1,21 @@
 # Application tracker checkpoint
 
-Updated 2026-11-11 02:35 UTC by Codex. Checkout C:/Users/misha/Claude/ApplicationTracker on main at 535dcea, matching the local origin/main ref. Remote and CI unverified for this turn. No background operations.
+Updated 2026-11-13 20:54 UTC by Codex. Checkout C:/Users/misha/Claude/ApplicationTracker on main at cfaacb0, one local commit ahead of origin/main. Remote and CI unverified for this turn. No active operations. The requested rejection feature was committed locally as cfaacb0.
 
-## Current local work
+## Latest local commit
 
-- app/app.js preserves a noncollapsed text selection intersecting the clicked row. It cancels the click’s default action and skips expansion so the table rebuild cannot erase the selection. Explicit buttons bypass the guard.
-- Position links use draggable=false, and app/style.css explicitly enables text selection in data cells. Dragging selects the title, while an ordinary click follows its link. Expand and quick-action cells retain their native selection behavior.
-- HISTORY.md records the verified behavior. These four files, including this handoff, are unstaged.
+- app/status-history.mjs derives rejection after interview from effectiveStatus and the existing interviewDetails helper, supporting current milestone fields and older history/outcome records.
+- app/app.js marks those rows and expanded details with rejected-after-interview, displays Interview -> Rejected, and adds Rejected after Interview to the Status filter checklist. The edit dropdown and saved job status retain the existing status values.
+- app/view-model.mjs gives interview rejections both the Rejected and subgroup filter values. The overall Rejected filter still includes every rejection. Preset matching accounts for the redundant subgroup when all rejections are selected.
+- app/style.css sets ordinary rejected position titles to weight 400 and interview-rejected titles to 650 for links and plain text. Autosave updates the class and label in place; Undo derives them again.
+- app/test-view-model.mjs and HISTORY.md record the regression cases and completed behavior. Only the five rejection-feature app files and their own HISTORY.md entry were committed. Earlier history/guide edits and this checkpoint remain local.
 
 ## Verification
 
-Real pointer drags in headless Chrome and Firefox selected both linked and plain position names, preserved selection on expanded rows, and avoided expansion or link navigation on mouse-up. Ordinary row clicks, linked-title navigation, explicit plus/minus controls and quick actions passed. Job data stayed byte-identical until the intentional quick-action check.
+The view-model suite passed for current/legacy records, unknown interview dates, stale outcomes, subgroup/overall filters and All/Reset selections. Headless Chrome verified linked/plain title weights and grey colours, both legacy representations, filter reload persistence, preset matching, outcome/status autosave, class removal on reapplication and Undo. A screenshot verified rendering. Syntax and focused diff whitespace checks passed. Firefox and physical-device acceptance were outside this pass.
 
-Chrome also verified keyboard activation after selection. Firefox WebDriver key events reached the focused button but did not synthesize a click in the scratch harness, so native Firefox keyboard activation remains unconfirmed. Firefox explicit button activation passed. Syntax and diff whitespace checks passed. Physical-device acceptance was outside this pass.
+## Preserved work and next steps
 
-## Previous features and next steps
+The guide and agent changes are being committed as requested. START_HERE.html and launcher renames, coverage documentation, release-script references and Claude’s agent/guides/profile/templates/interface revisions remain local. Preserve those edits and their template parity. Guide rendering/copy, renamed-launcher execution and scheduled-run acceptance remain pending.
 
-535dcea contains D MMM YYYY table dates. 67dfb52 contains the In progress layout with Applied on, date sorting and restoration of the previous layout after leaving, reload or restart. See HISTORY.md for verification.
-
-Review the local selection fix. See PLAN.md for the guide update, packaging on request, assistant rehearsals, supported-platform acceptance and recipient trial. The existing ZIP predates recent source changes.
+Review the rejection feature. See PLAN.md for guide review, scheduled-run rehearsal, platform checks and recipient acceptance. No release rebuild was performed.

@@ -4,7 +4,7 @@ A local job tracker and daily search-agent package. The GitHub/source repository
 
 ## Recipient
 
-Download the maintainer-built Application-tracker.zip, extract it into the folder you want to keep and open READ ME.html. Open Start Windows.cmd or Start macOS.command; the tracker opens in a browser and runs locally in the background. Node, flags and Excel support are included; no package installation is needed. Give your assistant this whole folder and follow agent/SETUP_PROMPT.md; it helps define your search profile after interviewing you; groups and countries are assigned in position JSON.
+Download the maintainer-built Application-tracker.zip, extract it into the folder you want to keep and open START_HERE.html. Open Start (Windows).cmd or Start (Mac).command; the tracker opens in a browser and runs locally in the background. Node, flags and Excel support are included; no package installation is needed. Give your assistant this whole folder and follow agent/SETUP_PROMPT.md; it helps define your search profile after interviewing you; groups and countries are assigned in position JSON.
 
 Runtime information lives in data/, settings/tracker.json, customized profile/ and agent/ROUTINE_PROMPT.filled.md. Back up those together. Do not share a customized installation as a distribution.
 
@@ -17,7 +17,7 @@ Use Node 22 or newer. From this repository root:
     npm test
     node app/launch.mjs
 
-npm ci installs pinned dependencies for development; the final recipient ZIP already contains them. initialize creates missing settings and an empty inventory without overwriting existing files. launch starts a background server on a free local port and opens the browser; Start Windows.cmd restarts this installation's running server before opening the browser. The macOS starter reopens the running tracker. Use the matching Stop file to stop it.
+npm ci installs pinned dependencies for development; the final recipient ZIP already contains them. initialize creates missing settings and an empty inventory without overwriting existing files. launch starts a background server on a free local port and opens the browser; Start (Windows).cmd restarts this installation's running server before opening the browser. The macOS starter reopens the running tracker. Use the matching Stop file to stop it.
 
     node app/self-check.mjs
 
