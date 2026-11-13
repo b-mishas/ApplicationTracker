@@ -22,8 +22,9 @@ Use the titles from profile §2 and the countries from §4.
 
 Tips:
 - Keep each alert focused (title family + country). Broad alerts flood the agent with noise.
-- Indeed: use only its email alerts; the agent never browses Indeed directly.
+- Indeed: use only its email alerts, and have the assistant mark it "alerts only" in your profile so the agent never browses it directly.
+- Prefer alert services whose emails link to each job. Where an email lists jobs without links, the agent can only search the web for the employer's posting and may not find it.
 - After a few days, ask the assistant: "Which alert sources produced relevant roles?" (it keeps statistics in `data/reports/coverage.json`).
 
 ## 4. Check
-Next day, open the label: alert emails should be inside. The first agent run reports "Gmail: OK" or "empty".
+Alerts need about a day to arrive. Next day, open the label: alert emails should be inside. A run on the day you create the alerts reports "Gmail: empty"; that is correct. Later runs report "Gmail: OK".
