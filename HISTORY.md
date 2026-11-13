@@ -85,3 +85,8 @@
 - Rejected position titles are regular, with bold titles and Interview -> Rejected for recorded interview rejections. Links and plain text follow the same rule.
 - Added Rejected after Interview to the Status filter as a subgroup of the overall Rejected selection, using existing JSON history fields.
 - Model and headless Chrome checks passed for older records, filtering/persistence, All/Reset, live updates and Undo.
+
+## 2026-11-13 — toolbar sizing
+
+- Matched toolbar controls to the 37 px search field, retained text sizes and added side padding to New, All and Reset. Adjusted Columns menu placement.
+- Headless Chrome checks passed at desktop and narrow widths for dimensions, padding, overflow and filter actions; rendering inspected.

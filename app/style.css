@@ -193,6 +193,15 @@ tr.stage-rejected .badge{color:#666666;background:#eef0ec}
 .toolbar .status-presets button[aria-pressed=true]{background:#e1ecde;color:#155c49;box-shadow:inset 0 -2px #177464}
 .toolbar .status-presets button:focus-visible{outline-offset:-3px}
 
+/* Match full-size toolbar controls to the search field's existing height. */
+.toolbar{--toolbar-control-height:37px}
+.toolbar .search-control input,.toolbar #since-today,.toolbar #since,.toolbar #reset,.toolbar .status-presets{height:var(--toolbar-control-height)}
+.toolbar .search-control input,.toolbar #since-today,.toolbar #since,.toolbar #reset{padding-block:0}
+.toolbar .status-presets button{height:100%;padding-block:0}
+.toolbar .status-presets button[data-status-preset=New],.toolbar .status-presets button[data-status-preset=All],.toolbar #reset{padding-inline:14px}
+.toolbar .columns summary{height:var(--toolbar-control-height);line-height:calc(var(--toolbar-control-height) - 2px);padding:0 9px;border:1px solid #d8dfd7;border-radius:6px;background:white}
+.toolbar .columns>div{top:calc(100% + 6px)}
+
 .detail label[hidden],.detail [data-interview-row][hidden]{display:none}
 .stage-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end;gap:8px}
 .stage-row label{min-width:0}
