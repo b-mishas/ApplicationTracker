@@ -30,7 +30,7 @@ The setup itself is a conversation: `START_HERE.html` gives you one instruction 
 - **"Gmail not read":** check *Connectors*, and that the task has Gmail enabled.
 - **"LinkedIn access: none":** sign in to LinkedIn again in the built-in browser.
 - **The run stops and waits:** choose the approval mode that does not ask before each action.
-- **Poor fit ratings:** pick a capable model for the task (not the smallest one) in the task's settings.
+- **Model:** set the task to Sonnet in its settings. The smallest model rates fit badly; the largest only uses up your allowance faster, because the routine already hands simple reading to the smallest model.
 - **Changing the task's instruction** needs one confirmation in the desktop app.
 
 Official help: [Schedule recurring tasks in Claude](https://support.claude.com/en/articles/13854387-schedule-recurring-tasks-in-claude-cowork).
