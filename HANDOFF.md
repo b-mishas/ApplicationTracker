@@ -1,6 +1,6 @@
 # Application tracker checkpoint
 
-Updated 2026-11-14 16:10 UTC by Codex. Checkout: `C:/Users/misha/Claude/ApplicationTracker`, branch `feature/per-platform-release`; this snapshot accompanies the launcher rename commit based on HEAD `ff0e8f3`. Local `main` is `3df5319`. The remote feature branch did not exist at 16:10 UTC; a normal push with upstream tracking was requested. CI is unverified. No operations are active.
+Updated 2026-11-14 16:12 UTC by Codex. Checkout: `C:/Users/misha/Claude/ApplicationTracker`, branch `feature/per-platform-release`. Source commit/HEAD `39e15fe` and upstream `origin/feature/per-platform-release` matched the remote SHA after the push (`git ls-remote`). Local `main` is `3df5319`. CI is unverified; no operations are active.
 
 ## Release state
 
