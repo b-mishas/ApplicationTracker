@@ -117,3 +117,8 @@
 
 - Inactive checklists start unchecked for one-click selection. Clear removes the selection; All selects every option. Both keep the popup open, and complete/empty selections leave the header neutral. Fresh views and Reset retain New, Shortlisted, Applied, Interview and Offer.
 - Existing saved views remain compatible. Model and native Chrome-click checks cover one-click/partial/all/empty selection, popup persistence, presets, text Clear and reload.
+
+## 2026-11-14 — date-clear controls
+
+- Ported ClaudeCodeLocal 19d042e: accessible clear crosses beside Application, Interview, Offer and Outcome dates. Clears remain drafts until Save; Cancel restores them. Empty and pending-save controls are disabled; native calendars remain.
+- Offer date matches one picker-column width, with consistent 10 px gaps above standalone dates. Renamed Your next step to Application steps. Synthetic-data Chrome verified keyboard/focus, 32 px geometry, half-width Offer, draft/Cancel, pending saves, reload persistence and stage visibility.

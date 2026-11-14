@@ -209,7 +209,7 @@ tr.stage-rejected .badge{color:#666666;background:#eef0ec}
 th{border-bottom-color:var(--control-border)}
 input,select,button,textarea,.overview,.overview>button,.export,.application-export,.application-export>.export,#settings-form input,#settings-form textarea,#settings-form select,.toolbar .status-presets,.toolbar .status-presets button,.toolbar .columns summary{border-color:var(--control-border)}
 
-.detail label[hidden],.detail [data-interview-row][hidden]{display:none}
+.detail label[hidden],.detail .date-field[hidden],.detail [data-interview-row][hidden]{display:none}
 .stage-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end;gap:8px}
 .stage-row label{min-width:0}
 .stage-row .apply-status{justify-self:start;height:32px;padding:4px 12px;font-size:12px}
@@ -219,3 +219,17 @@ input,select,button,textarea,.overview,.overview>button,.export,.application-exp
 
 /* Urgency takes precedence over stage edge colours, including expanded details. */
 tr.job.urgent>td:first-child,tr.detail.urgent>td{box-shadow:inset var(--row-edge-width) 0 #bb3834}
+
+/* Retain native calendars; the adjacent cross clears the same date input. */
+.date-field{min-width:0}
+.detail section>.date-field{margin-top:10px}
+.date-field-half{width:calc((100% - 8px)/2)}
+.date-control{display:flex;align-items:center;max-width:100%;height:32px;margin:5px 0 10px;border:1px solid var(--control-border);border-radius:6px;background:white}
+.stage-row .date-control{margin:0}
+.detail .date-control input[type=date]{flex:1;min-width:0;width:100%;height:30px;margin:0;border:0;padding:4px 6px}
+.date-control:focus-within{outline:2px solid #5ca894;outline-offset:2px}
+.detail .date-control input:focus{outline:none}
+.detail .clear-date{display:inline-flex;align-items:center;justify-content:center;flex:0 0 26px;width:26px;height:30px;padding:0;border:0;border-radius:0 5px 5px 0;background:transparent;color:#718079}
+.clear-date span{font-family:Arial,sans-serif;font-size:22px;line-height:1}
+.detail .clear-date:enabled:hover{background:#e7eee4;color:#253331}
+.detail .clear-date:focus-visible{outline-offset:-2px}

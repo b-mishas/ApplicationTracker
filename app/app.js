@@ -85,7 +85,7 @@ function stageControls(job){
  return '<div class="stage-row">'
   +'<label>Status <select class="edit-status" title="Status saves automatically">'+statuses.map(status=>'<option'+(status===effectiveStatus(job)?' selected':'')+'>'+status+'</option>').join('')+'</select></label>'
   +'<button type="button" class="apply-status" title="Mark this position as Applied"'+hiddenUnless(canApply(job))+'>Applied</button>'
-  +'<label data-application-date'+hiddenUnless(visible.application)+'>Application date <input type="date" class="edit-application-date" value="'+esc(job.applicationDate||'')+'"></label></div>'
+  +dateInput('Application date','applicationDate',job.applicationDate||'',visible.application)+'</div>'
   +'<label data-application-status'+hiddenUnless(visible.application)+'>Application status text <input type="text" class="edit-application-status" value="'+esc(applicationText(job))+'" placeholder="Optional detail for Excel"></label>'
   +'<div class="stage-row" data-interview-row'+hiddenUnless(visible.interview)+'>'
   +milestoneInput('Interview date','interviewDate',saved.interviewDate)
@@ -93,9 +93,11 @@ function stageControls(job){
   +milestoneInput('Offer date','offerDate',saved.offerDate,visible.offerDate)
   +milestoneInput('Outcome date','interviewOutcomeDate',saved.interviewOutcomeDate,visible.interviewOutcomeDate);
 }
-function milestoneInput(label,key,value,visible=true){
- return '<label'+hiddenUnless(visible)+'>'+label+' <input type="date" data-milestone="'+key+'" value="'+esc(value)+'"></label>';
+function dateInput(label,key,value,visible=true){
+ const application=key==='applicationDate',id='step-'+key;
+ return '<div class="date-field'+(key==='offerDate'?' date-field-half':'')+'"'+(application?' data-application-date':'')+hiddenUnless(visible)+'><label for="'+id+'">'+label+'</label><span class="date-control"><input id="'+id+'" type="date" '+(application?'class="edit-application-date"':'data-milestone="'+key+'"')+' value="'+esc(value)+'"><button type="button" class="clear-date" aria-label="Clear '+label.toLowerCase()+'" title="Clear '+label.toLowerCase()+'"'+(value?'':' disabled')+'><span aria-hidden="true">×</span></button></span></div>';
 }
+function milestoneInput(label,key,value,visible=true){return dateInput(label,key,value,visible);}
 function milestoneDraft(section,job,{includeHidden=false}={}){
  const saved=interviewDetails(job);
  return Object.fromEntries([...section.querySelectorAll('[data-milestone]')]
@@ -111,12 +113,12 @@ function syncStageControls(section,job,draft){
  for(const key of MILESTONE_DATES){
   const field=section.querySelector('[data-milestone="'+key+'"]');
   field.value=draft[key]??saved[key];
-  if(key!=='interviewDate')field.closest('label').hidden=!visible[key];
+  if(key!=='interviewDate')field.closest('.date-field').hidden=!visible[key];
  }
  section.querySelector('[data-application-date]').hidden=!visible.application;
  section.querySelector('[data-application-status]').hidden=!visible.application;
 }
-function detail(j){return `<tr class="detail ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}"><td colspan="${visible.size+1}"><div class="detail-grid"><section><h3>Why it fits</h3><p>${esc(j.reasoning||'No assessment yet.')}</p><h3>Gaps</h3><p>${esc(j.gaps||'No caveats recorded.')}</p></section><section><h3>Evidence & location</h3><p>Assessment: <b>${esc(j.assessmentBasis)}</b>\nSeniority: ${esc(j.seniority||'Unknown')}\nLocation as recorded: ${esc(j.locationRaw)}\nFirst found: ${esc(j.firstSeen)}\nPosted: ${esc(j.postedDate||'Unknown')}\nAvailability: ${esc(j.availability||'Unverified')}</p><h3>Sources</h3>${j.sources.map(s=>`<p>${esc(s.label)}${safeUrl(s.url)?` · <a target="_blank" rel="noopener noreferrer" href="${safeUrl(s.url)}">${j.linkType==='search'?'Open search':'Open listing'} ↗</a>`:''}<br><span class="muted">${esc(s.file)}</span></p>`).join('')}</section><section><h3>Your next step</h3>${stageControls(j)}<label>Notes<textarea class="edit-notes" placeholder="Questions, follow-ups, application notes…">${esc(j.notes)}</textarea></label><button class="save" data-id="${esc(j.id)}" disabled>Save changes</button> <button type="button" class="cancel" disabled title="Discard unsaved edits; saved status changes are kept">Cancel</button><span class="save-state" role="status"></span></section></div></td></tr>`;}
+function detail(j){return `<tr class="detail ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}"><td colspan="${visible.size+1}"><div class="detail-grid"><section><h3>Why it fits</h3><p>${esc(j.reasoning||'No assessment yet.')}</p><h3>Gaps</h3><p>${esc(j.gaps||'No caveats recorded.')}</p></section><section><h3>Evidence & location</h3><p>Assessment: <b>${esc(j.assessmentBasis)}</b>\nSeniority: ${esc(j.seniority||'Unknown')}\nLocation as recorded: ${esc(j.locationRaw)}\nFirst found: ${esc(j.firstSeen)}\nPosted: ${esc(j.postedDate||'Unknown')}\nAvailability: ${esc(j.availability||'Unverified')}</p><h3>Sources</h3>${j.sources.map(s=>`<p>${esc(s.label)}${safeUrl(s.url)?` · <a target="_blank" rel="noopener noreferrer" href="${safeUrl(s.url)}">${j.linkType==='search'?'Open search':'Open listing'} ↗</a>`:''}<br><span class="muted">${esc(s.file)}</span></p>`).join('')}</section><section><h3>Application steps</h3>${stageControls(j)}<label>Notes<textarea class="edit-notes" placeholder="Questions, follow-ups, application notes…">${esc(j.notes)}</textarea></label><button class="save" data-id="${esc(j.id)}" disabled>Save changes</button> <button type="button" class="cancel" disabled title="Discard unsaved edits; saved status changes are kept">Cancel</button><span class="save-state" role="status"></span></section></div></td></tr>`;}
 function dirty(){
  const area=document.querySelector('.edit-notes');if(!area)return false;
  const job=data.jobs.find(item=>item.id===open),section=area.closest('section');
@@ -126,6 +128,7 @@ function dirty(){
 function refreshEditorButtons(){
  const section=document.querySelector('.detail .save')?.closest('section');if(!section)return;
  const disabled=pendingSave||!dirty();section.querySelector('.save').disabled=disabled;section.querySelector('.cancel').disabled=disabled;
+ for(const button of section.querySelectorAll('.clear-date')){const input=button.previousElementSibling;button.disabled=pendingSave||(!input.value&&!input.validity.badInput);}
 }
 function hasUrgentFilter(){return filters.star?.length===1&&filters.star[0]==='Urgent';}
 function refreshStatusPresets(){
@@ -282,6 +285,15 @@ $('body').onclick=async e=>{
    await saveJobEdit({id:job.id,...payload});
    render();
   }catch(error){$('message').textContent=error.message;action.disabled=false;}finally{setPendingSave(false);refreshEditorButtons();}
+  return;
+ }
+ const clearDate=e.target.closest('.clear-date');
+ if(clearDate){
+  if(clearDate.disabled||pendingSave)return;
+  const input=clearDate.previousElementSibling;input.value='';
+  input.dispatchEvent(new Event('input',{bubbles:true}));
+  input.dispatchEvent(new Event('change',{bubbles:true}));
+  input.focus({preventScroll:true});
   return;
  }
  const apply=e.target.closest('.apply-status');
