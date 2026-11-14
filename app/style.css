@@ -191,15 +191,16 @@ tr.stage-rejected .badge{color:#666666;background:#eef0ec}
 .toolbar .status-presets button:focus-visible{outline-offset:-3px}
 
 /* Match full-size toolbar controls to the search field's existing height. */
-.toolbar{--toolbar-control-height:37px}
-.toolbar .search-control input,.toolbar #reset,.toolbar .status-presets{height:var(--toolbar-control-height)}
+.toolbar{--toolbar-control-height:37px;--toolbar-action-height:30px}
+.toolbar .search-control input,.toolbar .status-presets{height:var(--toolbar-control-height)}
+.toolbar #reset{height:var(--toolbar-action-height)}
 .toolbar .search-control input,.toolbar #reset{padding-block:0}
 .toolbar .status-presets{margin-inline:4px}
 /* Keep Reset and Columns together at the trailing edge when the row wraps. */
 .toolbar-actions{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
 .toolbar .status-presets button{height:100%;padding-block:0}
 .toolbar .status-presets button[data-status-preset=New],.toolbar .status-presets button[data-status-preset=All],.toolbar #reset{padding-inline:14px}
-.toolbar .columns summary{height:var(--toolbar-control-height);line-height:calc(var(--toolbar-control-height) - 2px);padding:0 9px;border:1px solid #d8dfd7;border-radius:6px;background:white}
+.toolbar .columns summary{height:var(--toolbar-action-height);line-height:calc(var(--toolbar-action-height) - 2px);padding:0 9px;border:1px solid #d8dfd7;border-radius:6px;background:white}
 .toolbar .columns>div{top:calc(100% + 6px)}
 
 /* Share one neutral outline across fields, buttons and preset dividers. */
