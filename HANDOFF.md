@@ -1,17 +1,17 @@
 # Application tracker checkpoint
 
-Updated 2026-11-14 20:56 UTC by Codex. Checkout C:/Users/misha/Claude/ApplicationTracker. This snapshot accompanies the local-port Settings commit and its requested fast-forward merge from feature/port-settings into main. HEAD is the commit containing this snapshot (parent 9735f09); main tracks origin/main. Remote/CI unverified. No push or ZIP rebuild requested/performed. No test/build operations active; the normal tracker server remains running.
+Updated 2026-11-14 21:21 UTC by Codex. Checkout C:/Users/misha/Claude/ApplicationTracker, branch main, tracking origin/main. This snapshot accompanies the requested merge of feature/new-count-boxes (0dc955f) into main (0079cf2); HEAD is this merge commit. Remote/CI unverified. No push or ZIP rebuild performed. Remove the managed counter worktree only after successful verification/merge.
 
-## Delivered behaviour
+## Integrated features
 
-Settings → Advanced exposes a validated Local port and clickable current address. Revision-protected saves stage data/server-port.json for explicit Restart; the current server stays running and Cancel changes nothing. Occupied ports are rejected. Restart checks the requested address before stopping the server and attempts old-address recovery on a later startup failure. Start/Restart files offer replacement-port input or Enter to cancel; the installation lock is released while waiting. Login/background launches do not prompt. JOBTRACKER_PORT overrides are explained and disable editing. Export preferences and position schema remain unchanged.
+The branch retains three separate ports: ada39b5 from ClaudeCodeLocal edc13d6 adds total sent applications; f7918be from 19a25bd adds total recorded interviews; 0dc955f from 1299faf groups the counters. Applications sent and Interviews held include later outcomes and legacy history, while Status offers separate pending/total choices. The application group contains Positions collected, Applications sent, Interviews held and Applications in progress; priorities contain Shortlisted, Urgent and New. Both groups use shared click delegation, neutral styling and responsive wrapping. The four toolbar presets remain unchanged.
 
-The reported disabled input was traced to the old live server returning 404 for /api/port-settings. The page now displays explicit Restart/reload guidance for that case. The actual tracker was restarted at the same address; its endpoint returned 200 and inventory/export settings remained byte-for-byte unchanged. Settings now anchors its top edge with bounded height/internal scrolling, preventing movement when Advanced expands.
+Main's Advanced port settings, conflict-safe launchers, editable field/stale-server guidance and top-anchored Settings dialog remain integrated. No inventory/schema, export preferences, importer or agent contract changed. Original JobTracker code/data were read-only sources.
 
-The commit includes API/helper/launcher/Settings changes, four Start/Restart files, focused tests, release file list and recipient/maintainer documentation. Existing archives remain stale. The discarded design sketch and compact expanded-field trial are not part of this feature.
+## Verification and local preservation
 
-## Verification and next action
+Feature model/browser/API tests passed before merging, including history/outcomes, search/reload, All/Reset, autosave/Undo, seven click actions and 390/900/1280/1800 px rendering. Merge conflicts were limited to HANDOFF/HISTORY; application files merged automatically. Merged-tree model and port-settings regressions passed. Chrome verified all seven counter actions and responsive wrapping, plus the editable local port, correct current address and stable Settings top edge. Physical-device/macOS, actual OS login and release acceptance remain untested.
 
-Focused port/API/prompt and startup regressions passed, including actual Windows starters and isolated login registration. Existing API regressions passed. Chrome verified native keyboard editing, stale-server guidance, Save/Cancel, occupied-port rejection, pending values, stable heading/top on expand/collapse, desktop/390 px layouts and scrolling at 390×360; screenshots inspected. Final syntax/whitespace checks passed before committing. Functional tests were not repeated for the Git-only merge.
+Before merging, main had uncommitted handoff notes and design/wrapper-directions.html. Exact notes and design hashes were saved under .build-cache/count-merge-preservation.json and its referenced backup. Keep design files unchanged and restore the local design-review notes after the merge commit, without folding that unrelated work into it. The design review remains pending; no proposed wrapper design was applied.
 
-Actual OS login, macOS execution and rare post-probe recovery remain untested. Next: review the local main commit and perform recipient/platform acceptance. Push and distribution builds require explicit requests.
+Next: finish the merge commit, restore local notes and remove the isolated worktree through the app. Keep ZIPs unchanged unless explicitly requested.

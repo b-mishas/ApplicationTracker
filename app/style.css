@@ -177,6 +177,7 @@ tr.stage-rejected a,tr.stage-rejected .muted,tr.stage-rejected h3{color:#666666}
 tr.stage-rejected .badge{color:#666666;background:#eef0ec}
 
 /* Count buttons and toolbar presets share one filter action. */
+.overview-row{display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px;flex-shrink:0}
 .overview{padding-block:0}
 .overview>button{padding-block:10px}
 .overview>button:hover{background:transparent}

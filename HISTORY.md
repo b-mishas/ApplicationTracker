@@ -165,3 +165,18 @@
 
 - Confirmed the live server still lacked /api/port-settings (404), which left the control disabled. Added explicit Restart/reload guidance for older servers and restarted the actual tracker at its existing address; inventory and export settings were byte-for-byte unchanged, and the endpoint now allows editing.
 - Anchored the Settings dialog near the viewport top, with bounded height and internal scrolling. Chrome reproduced the old vertical-centering jump, then verified a stable heading/top edge during expand/collapse, actual keyboard port entry, Cancel, stale-server feedback and short/narrow-screen usability. Existing port Save/Cancel/conflict browser checks still pass.
+
+## 2026-11-14 — total applications counter
+
+- Ported ClaudeCodeLocal edc13d6: clickable total sent-applications counter and Applied (pending)/(total) Status choices. Totals include later outcomes and legacy application/interview history, using existing JSON fields. Other filters, All/Reset and view persistence remain compatible.
+- Model regressions and synthetic Chrome checks passed for outcomes, unsent exclusions, search, reload, neutral All and normal-column restoration after In progress.
+
+## 2026-11-14 — total interviews counter
+
+- Ported ClaudeCodeLocal 19a25bd: clickable Interviews held counter across recorded current/legacy interviews and later outcomes; Status choices distinguish Interview (pending)/(total). Renamed the sent-applications counter to Applications sent, matching the source feature.
+- Model and synthetic Chrome checks passed for legacy/outcome membership, pending-only filtering, search, reload, All/Reset and live counters after status autosave and Undo.
+
+## 2026-11-14 — grouped overview counters
+
+- Ported ClaudeCodeLocal 1299faf: application overview groups Positions collected, Applications sent, Interviews held and Applications in progress; a separate priorities group holds Shortlisted, Urgent and New. A shared parent delegates all seven click filters; groups wrap with a 12 px gap.
+- Synthetic Chrome checks passed for group order, all click actions, unchanged four toolbar presets, neutral button styling and no page overflow at 390/900/1280/1800 px. Desktop/narrow rendering inspected; existing save/Undo/export API regressions passed.
