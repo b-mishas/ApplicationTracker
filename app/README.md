@@ -8,6 +8,6 @@ From the installation root:
 
     node app/self-check.mjs
 
-Node here means an available compatible Node executable; the release includes runtime/win-x64/node.exe, runtime/win-arm64/node.exe, runtime/darwin-x64/node and runtime/darwin-arm64/node. Quote paths containing spaces. Linux agent environments need their own Linux Node; host executables cannot run there. No private Codex/Claude runtime, Python or package installation is needed.
+Node here means an available compatible Node executable. The Windows x64 release includes runtime/win-x64/node.exe; the Mac Intel release includes runtime/darwin-x64/node. Quote paths containing spaces. Linux agent environments need their own Linux Node; host executables cannot run there. No private Codex/Claude runtime, Python or package installation is needed.
 
 See SEARCH_WORKFLOW.md for exact settings, import, employer-workbook and export commands. Settings contains only Excel export language. Groups/countries come from position JSON and dates use local computer time. No tracker search configuration is required before importing. The old --require-configured self-check option is accepted as a compatibility alias.

@@ -2,6 +2,12 @@
 
 [PLAN.md](PLAN.md) lists remaining work. [HANDOFF.md](HANDOFF.md) records the latest verification details.
 
+## 2026-11-14 — platform release archives
+
+- The default release build now creates Windows x64 and Mac Intel ZIPs, each with one pinned Node runtime, its own Start/Stop files, reduced runtime checksums and a .sha256 sidecar. The old combined ZIP and checksum were removed. ARM64 manifest entries remain available for explicit targets, but no ARM64 package is built by default. Starters on ARM64 report that no package exists yet; emulation was not verified.
+- Both ZIPs passed the release audit (`textFiles: 5455`, `workbooks: 1`, `ok: true`) and the release test's checksum, current app files, runtime folder, launcher and Mac permission checks. On Windows x64, the extracted package passed Start/Stop without global Node, repeat launch, empty inventory, self-check and Excel download. The ZIPs are 47,058,433 bytes (Windows) and 52,768,267 bytes (Mac).
+- `npm test` passed 57/57 importer cases and 15 portable integration checks after correcting a pre-existing print fixture that incorrectly expected generated status text while setting a manual override. Mac execution and ARM64 emulation were not tested on this Windows x64 computer.
+
 ## 2026-11-12 — guide and launcher naming
 
 - Renamed the recipient guide to START_HERE.html and starters to Start (Windows).cmd and Start (Mac).command; updated documentation, release builder and release-test references without rebuilding the ZIP.

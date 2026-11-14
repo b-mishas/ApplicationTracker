@@ -44,7 +44,7 @@ Use the same Node executable for the check and the import. Replace Europe/Berlin
 
 ## Node and installation self-check
 
-Use Node 22 or newer in the actual execution environment. Host runtimes bundled with the release are runtime/win-x64/node.exe, runtime/win-arm64/node.exe, runtime/darwin-x64/node and runtime/darwin-arm64/node (relative to ROOT). Use the executable matching that OS and processor. Linux scheduled-agent environments must verify their own Linux Node with node --version; never attempt a Windows/Mac executable there. Do not install software during scheduled searches.
+Use Node 22 or newer in the actual execution environment. The Windows x64 package bundles runtime/win-x64/node.exe; the Mac Intel package bundles runtime/darwin-x64/node (relative to ROOT). Use the executable matching the installed package. ARM64 packages are not built by default. Linux scheduled-agent environments must verify their own Linux Node with node --version; never attempt a Windows/Mac executable there. Do not install software during scheduled searches.
 
 From ROOT run node app/self-check.mjs. The legacy --require-configured option is accepted for compatibility and adds no search-configuration requirement. It checks schema, settings, valid inventory, required folders, writes/backups in a temporary data subfolder, Excel export/readback and the employer workbook. Temporary files are removed; actual jobs are not changed. Exit 0 means checks passed, exit 1 means setup needs attention. This is the installation test. An empty-batch --validate-only test checks batch parsing, not inventory access, saving or export.
 
