@@ -142,7 +142,7 @@ th .clear-column-filter:focus-visible{outline-offset:-2px}
 .detail .edit-status,.detail .edit-application-date{height:32px;padding:4px 6px;font-size:12px;line-height:normal}
 
 /* Installation settings. */
-#settings-dialog{max-width:520px;width:calc(100% - 48px);border:1px solid #cdd4c8;border-radius:14px;padding:24px;color:#29382d;background:#fafbf8}
+#settings-dialog{position:fixed;inset:0;max-width:520px;width:calc(100% - 48px);max-height:calc(100dvh - clamp(16px,12vh,120px) - 16px);margin:clamp(16px,12vh,120px) auto auto;overflow-y:auto;border:1px solid #cdd4c8;border-radius:14px;padding:24px;color:#29382d;background:#fafbf8}
 #settings-dialog::backdrop{background:#26352966}
 #settings-form{display:grid;gap:12px}
 #settings-form h2,#settings-form p{margin:0}
@@ -238,3 +238,9 @@ tr.job.urgent>td:first-child,tr.detail.urgent>td{box-shadow:inset var(--row-edge
 #settings-form .startup-setting{display:flex;align-items:center;gap:8px}
 #settings-form #settings-startup{width:auto;margin:0}
 #settings-startup-help{font-size:12px}
+
+#settings-advanced summary{cursor:pointer}
+.advanced-settings{display:grid;gap:8px;margin-top:10px}
+#settings-form #settings-port{max-width:140px}
+#settings-address{overflow-wrap:anywhere}
+#settings-port-help{font-size:12px}

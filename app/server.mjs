@@ -6,6 +6,7 @@ import path from 'node:path';
 import {commit, revision, STATUSES, ConflictError, BusyError, writeJsonAtomic} from './store.mjs';
 import {dataRoot} from './config.mjs';
 import {readStartup,saveStartup} from './startup.mjs';
+import {readPortSettings,savePortSettings} from './port-settings.mjs';
 import {readSettings,settingsFile,saveSettings,ready,countryCodes,isCountryCode} from './settings.mjs';
 import crypto from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
@@ -67,6 +68,12 @@ const server=http.createServer(async(req,res)=>{
    return reply(200,{saved:true});
   }
   if(url.pathname==='/api/countries'&&req.method==='GET')return reply(200,countryCodes.filter(isCountryCode));
+  if(url.pathname==='/api/port-settings'&&req.method==='GET')return reply(200,await readPortSettings(port));
+  if(url.pathname==='/api/port-settings'&&req.method==='PATCH'){
+   if(req.headers.origin!==origin||!req.headers['content-type']?.startsWith('application/json'))return reply(403,{error:'Save from the tracker page.'});
+   let body='';for await(const chunk of req){body+=chunk;if(body.length>1000)return reply(413,{error:'Port setting too large.'});}
+   try{const input=JSON.parse(body);return reply(200,await savePortSettings(input.port,input.revision,port));}catch(error){return reply(error instanceof ConflictError?409:400,{error:error.message});}
+  }
   if(url.pathname==='/api/startup'&&req.method==='GET')return reply(200,await readStartup());
   if(url.pathname==='/api/startup'&&req.method==='PATCH'){
    if(req.headers.origin!==origin||!req.headers['content-type']?.startsWith('application/json'))return reply(403,{error:'Save from the tracker page.'});

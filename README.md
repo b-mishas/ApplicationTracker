@@ -19,7 +19,9 @@ Use Node 22 or newer. From this repository root:
 
 npm ci installs pinned dependencies for development; the final recipient ZIP already contains them. initialize creates missing settings and an empty inventory without overwriting existing files. launch starts a background server at http://127.0.0.1:8765 and opens the browser; both `Start` files reuse a running server. Bookmark its address. Use the `Restart` file after updates or the `Stop` file to shut it down. Settings → Start server at login offers opt-in per-user startup without opening a browser. Disable it before moving/deleting the installation; enable it again at the new location.
 
-If that port is occupied, use `node app/launch.mjs --port 8766` (or `--restart --port 8766` for a running tracker). The chosen port is saved in data/server-port.json and stays fixed. JOBTRACKER_PORT is also supported. Conflicts never silently select another port. Automatic startup uses a Windows Startup shortcut or a macOS LaunchAgent; it starts the tracker, independently of any scheduled AI search.
+Settings → Advanced shows the current local address and an editable Local port. Save stages a port change for the next explicit Restart; the running server stays open. Occupied ports are rejected, including on Restart before stopping the current server. Update your bookmark after changing the address. The `Start` and `Restart` files offer a terminal prompt if the chosen port is occupied (Enter cancels without changing it).
+
+For command-line use, run `node app/launch.mjs --port 8766` (or `--restart --port 8766` for a running tracker). The chosen port is saved in data/server-port.json and stays fixed. JOBTRACKER_PORT is also supported. Conflicts never silently select another port. Automatic startup uses a Windows Startup shortcut or a macOS LaunchAgent; it starts the tracker, independently of any scheduled AI search.
 
     node app/self-check.mjs
 

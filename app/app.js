@@ -6,7 +6,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const statuses=STATUS_VALUES;
 const statusFilters=statuses.flatMap(status=>status==='Rejected'?[status,REJECTED_AFTER_INTERVIEW]:[status]);
 const fields=[['fit','Fit'],['company','Company'],['group','Group'],['title','Position'],['star','Actions'],['country','Country'],['city','City'],['workMode','Work mode'],['status','Status'],['applicationDate','Applied on'],['seniority','Seniority'],['firstSeen','First found'],['postedDate','Posted'],['assessmentBasis','Assessment']];
-let settings={exportLanguage:'en'},settingsRevision,startupState;
+let settings={exportLanguage:'en'},settingsRevision,startupState,portState;
 let supportedCountries=new Set();
 let data,revision,sort='star',direction=-1,open=null,filterKey=null,pendingSave=false,lastUndo;
 // Fixed class names keep application-stage styling independent of sorting.
@@ -506,7 +506,10 @@ $('settings-open').onclick=async()=>{
  if(!canChangeView())return;
  $('settings-name').value=settings.exportName??'';
  $('settings-language').value=settings.exportLanguage;
- $('settings-result').textContent='';startupState=undefined;
+ $('settings-result').textContent='';startupState=undefined;portState=undefined;
+ $('settings-advanced').open=false;$('settings-port').disabled=true;$('settings-port').value=location.port||'8765';
+ $('settings-port-help').textContent='Loading local port…';
+ $('settings-address').textContent=location.origin;$('settings-address').href=location.origin;
  $('settings-startup').checked=false;$('settings-startup').disabled=true;
  $('settings-startup-help').textContent='Checking startup preference…';$('settings-dialog').showModal();
  try{
@@ -514,11 +517,23 @@ $('settings-open').onclick=async()=>{
   startupState=await response.json();$('settings-startup').checked=startupState.enabled;$('settings-startup').disabled=!startupState.supported;
   $('settings-startup-help').textContent=startupState.supported?'Starts in the background without opening a browser.':'Automatic startup is available on Windows and macOS.';
  }catch(error){$('settings-startup-help').textContent=error.message;}
+ try{
+  const response=await fetch('/api/port-settings');
+  if(response.status===404)throw Error('Port settings need a server update. Open the Restart file for your system, then reload this page.');
+  if(!response.ok)throw Error('Could not read local port. Reopen Settings to try again.');
+  portState=await response.json();$('settings-port').value=portState.port;$('settings-port').disabled=portState.controlledByEnvironment;
+  $('settings-port-help').textContent=portState.controlledByEnvironment?'The port is controlled by JOBTRACKER_PORT.':portState.pending?'Port '+portState.port+' is saved for the next Restart. The current address stays active until then. Update your bookmark afterwards.':'Changes apply after Restart. Update your bookmark if you change the port.';
+ }catch(error){$('settings-port-help').textContent=error.message;}
 };
 $('settings-cancel').onclick=()=>$('settings-dialog').close();
+$('settings-port').oninvalid=()=>{$('settings-advanced').open=true;};
 $('settings-form').onsubmit=async event=>{
  event.preventDefault();const button=$('settings-save');button.disabled=true;
  try{
+  if(portState&&!$('settings-port').disabled&&Number($('settings-port').value)!==portState.port){
+   const response=await fetch('/api/port-settings',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({port:Number($('settings-port').value),revision:portState.revision})});
+   const result=await response.json();if(!response.ok)throw Error(result.error);portState=result;
+  }
   const next={schemaVersion:1,exportLanguage:$('settings-language').value,exportName:$('settings-name').value};
   const response=await fetch('/api/settings',{method:'PATCH',headers:{Origin:location.origin,'Content-Type':'application/json'},body:JSON.stringify({settings:next,revision:settingsRevision})});
   const result=await response.json();if(!response.ok)throw Error(result.error);
@@ -528,6 +543,6 @@ $('settings-form').onsubmit=async event=>{
    const result=await response.json();if(!response.ok)throw Error('Export settings saved. Startup preference could not be saved: '+result.error);
    startupState=result;
   }
-  $('settings-dialog').close();$('message').textContent='Settings saved.';render();
- }catch(error){$('settings-result').textContent=error.message;}finally{button.disabled=false;}
+  $('settings-dialog').close();$('message').textContent=portState?.pending?'Settings saved. Port '+portState.port+' will apply after Restart. Update your bookmark afterwards.':'Settings saved.';render();
+ }catch(error){$('settings-result').textContent=error.message+(portState?.pending?' Port '+portState.port+' is saved for the next Restart.':'');}finally{button.disabled=false;}
 };

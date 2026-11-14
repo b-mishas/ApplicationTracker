@@ -18,8 +18,9 @@ if [ ! -x "$tracker_node" ]; then
   read -r tracker_reply
   exit 1
 fi
-"$tracker_node" "$PWD/app/launch.mjs" --restart
+"$tracker_node" "$PWD/app/launch.mjs" --restart --interactive
 if [ "$?" -ne 0 ]; then
   printf 'Startup failed. Press Return to close.\n'
   read -r tracker_reply
+  exit 1
 fi

@@ -154,3 +154,14 @@
 - Start reuses the running tracker on both platforms; separate Restart files restart it explicitly. A fixed local port (default 8765) is saved per installation, including adoption of older running servers. Concurrent starts are serialized; conflicts fail without random fallback. A different port can be selected with --port or JOBTRACKER_PORT.
 - Settings offers opt-in background startup at login through a per-user Windows shortcut or macOS LaunchAgent, independent of agent scheduling and export preferences. Cancel leaves registration unchanged. Updated START_HERE, interface/docs and release file lists/checks; no ZIP rebuilt.
 - Isolated Windows checks passed for Start/Restart/Stop, port persistence/conflicts, legacy adoption, origin checks, real temporary shortcut creation/removal and its silent login command. Chrome verified Settings save/Cancel, registration state and desktop/390 px layouts; API and 15 portable regressions passed. Actual OS login and macOS execution remain acceptance checks.
+
+## 2026-11-14 — local port Settings
+
+- Added Advanced Settings with a validated Local port, clickable current address and pending-Restart guidance. Saves are revision-protected and leave the server running; Cancel changes nothing. Export settings and position JSON remain unchanged.
+- Restart checks the requested port before stopping the server and attempts to restore the old address on a later launch failure. Start/Restart files offer replacement-port input or cancellation when blocked; background login never prompts. The prompt releases the installation lock while waiting. Updated guide, interface and release file list without rebuilding archives.
+- Isolated port/API/prompt and existing startup regressions passed, including actual Windows launchers and temporary login registration. Chrome verified validation, occupied-port rejection, Cancel/Save, pending values/current address and desktop/390 px layouts. Existing API regressions passed; actual macOS execution/login and recipient acceptance remain pending.
+
+## 2026-11-14 — Settings editing and positioning
+
+- Confirmed the live server still lacked /api/port-settings (404), which left the control disabled. Added explicit Restart/reload guidance for older servers and restarted the actual tracker at its existing address; inventory and export settings were byte-for-byte unchanged, and the endpoint now allows editing.
+- Anchored the Settings dialog near the viewport top, with bounded height and internal scrolling. Chrome reproduced the old vertical-centering jump, then verified a stable heading/top edge during expand/collapse, actual keyboard port entry, Cancel, stale-server feedback and short/narrow-screen usability. Existing port Save/Cancel/conflict browser checks still pass.
