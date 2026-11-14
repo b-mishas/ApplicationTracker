@@ -159,3 +159,8 @@
 
 - Ported ClaudeCodeLocal edc13d6: clickable total sent-applications counter and Applied (pending)/(total) Status choices. Totals include later outcomes and legacy application/interview history, using existing JSON fields. Other filters, All/Reset and view persistence remain compatible.
 - Model regressions and synthetic Chrome checks passed for outcomes, unsent exclusions, search, reload, neutral All and normal-column restoration after In progress.
+
+## 2026-11-14 — total interviews counter
+
+- Ported ClaudeCodeLocal 19a25bd: clickable Interviews held counter across recorded current/legacy interviews and later outcomes; Status choices distinguish Interview (pending)/(total). Renamed the sent-applications counter to Applications sent, matching the source feature.
+- Model and synthetic Chrome checks passed for legacy/outcome membership, pending-only filtering, search, reload, All/Reset and live counters after status autosave and Undo.

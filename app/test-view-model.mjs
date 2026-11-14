@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {filterAndSort,choicesFor,EMPTY,REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL} from './view-model.mjs';
+import {filterAndSort,choicesFor,EMPTY,REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL,INTERVIEW_TOTAL} from './view-model.mjs';
 import {STATUS_VALUES,isRejectedAfterInterview,hasSentApplication} from './status-history.mjs';
 const jobs=[
  {id:'a',company:'Alpha',title:'Lead',group:'ELN/LIMS',countries:['DE'],status:'New',fit:2,firstSeen:'2026-11-02'},
@@ -67,7 +67,7 @@ const rejectionJobs=[
 ];
 const afterInterview=['after-interview','old-outcome','old-history','unknown-interview-date'];
 assert.deepEqual(rejectionJobs.filter(isRejectedAfterInterview).map(job=>job.id),afterInterview);
-assert.deepEqual(choicesFor(rejectionJobs[1],'status'),['Rejected',REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL]);
+assert.deepEqual(choicesFor(rejectionJobs[1],'status'),['Rejected',REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL,INTERVIEW_TOTAL]);
 const rejectionIds=selected=>filterAndSort(rejectionJobs,{filters:{status:selected}}).map(job=>job.id);
 assert.deepEqual(rejectionIds([REJECTED_AFTER_INTERVIEW]),afterInterview);
 assert.deepEqual(rejectionIds(['Rejected']),['direct',...afterInterview,'offer-without-interview']);
@@ -102,3 +102,22 @@ assert.deepEqual(new Set(filterAndSort(sentJobs,{filters:{status:[APPLIED_TOTAL]
 assert.deepEqual(filterAndSort(sentJobs,{filters:{status:[APPLIED_TOTAL]},search:'nothing'}),[]);
 assert.equal(filterAndSort(sentJobs,{filters:{status:STATUS_VALUES}}).length,sentJobs.length);
 console.log('PASS: total sent applications include all outcomes and historic records, exclude unsent entries and respect other filters.');
+
+const interviewJobs=[
+ {id:'pending',status:'Interview'},
+ {id:'rejected',status:'Rejected',interviewDate:'2026-11-01'},
+ {id:'offer',status:'Offer',interviewDate:''},
+ {id:'withdrawn',status:'Withdrawn',interviewOutcome:'Withdrawn'},
+ {id:'legacy',status:'Dismissed',statusHistory:[{status:'Interview',date:'2026-11-01'}]},
+ {id:'reapplied',status:'Applied',interviewDate:'2026-11-01'},
+ {id:'direct-rejection',status:'Rejected'},
+ {id:'direct-offer',status:'Offer'},
+ {id:'only-applied',status:'Applied'}
+];
+const interviewIds=selected=>filterAndSort(interviewJobs,{filters:{status:selected}}).map(job=>job.id);
+assert.deepEqual(new Set(interviewIds([INTERVIEW_TOTAL])),new Set(['pending','rejected','offer','withdrawn','legacy','reapplied']));
+assert.deepEqual(interviewIds(['Interview']),['pending']);
+assert.equal(interviewIds(STATUS_VALUES).length,interviewJobs.length);
+assert.equal(interviewIds([...STATUS_VALUES,APPLIED_TOTAL,INTERVIEW_TOTAL,REJECTED_AFTER_INTERVIEW]).length,interviewJobs.length);
+assert.deepEqual(filterAndSort(interviewJobs,{filters:{status:[INTERVIEW_TOTAL],company:'absent'}}),[]);
+console.log('PASS: total interviews include recorded current/legacy interviews across outcomes, retain pending-only filtering and exclude unrecorded interviews.');

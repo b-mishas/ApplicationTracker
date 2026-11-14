@@ -1,11 +1,11 @@
 import {STATUS_VALUES, INTERVIEW_OUTCOMES, MILESTONE_DATES, interviewDetails, effectiveStatus, interviewHistoryText, validStageDate, isRejectedAfterInterview, hasSentApplication} from './status-history.mjs';
-import {filterAndSort,choicesFor,EMPTY,REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL} from './view-model.mjs';
+import {filterAndSort,choicesFor,EMPTY,REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL,INTERVIEW_TOTAL} from './view-model.mjs';
 import {groupColour,ensureGroupColours} from './group-colours.mjs';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const statuses=STATUS_VALUES;
-const statusFilters=statuses.flatMap(status=>status==='Applied'?[status,APPLIED_TOTAL]:status==='Rejected'?[status,REJECTED_AFTER_INTERVIEW]:[status]);
-const statusFilterLabels={Applied:'Applied (pending)',[APPLIED_TOTAL]:'Applied (total)'};
+const statusFilters=statuses.flatMap(status=>status==='Applied'?[status,APPLIED_TOTAL]:status==='Interview'?[status,INTERVIEW_TOTAL]:status==='Rejected'?[status,REJECTED_AFTER_INTERVIEW]:[status]);
+const statusFilterLabels={Applied:'Applied (pending)',[APPLIED_TOTAL]:'Applied (total)',Interview:'Interview (pending)',[INTERVIEW_TOTAL]:'Interview (total)'};
 const fields=[['fit','Fit'],['company','Company'],['group','Group'],['title','Position'],['star','Actions'],['country','Country'],['city','City'],['workMode','Work mode'],['status','Status'],['applicationDate','Applied on'],['seniority','Seniority'],['firstSeen','First found'],['postedDate','Posted'],['assessmentBasis','Assessment']];
 let settings={exportLanguage:'en'},settingsRevision,startupState;
 let supportedCountries=new Set();
@@ -16,7 +16,7 @@ const rowStage=status=>stageClasses.get(status)||'';
 const defaultStatusFilter=()=>statuses.filter(status=>!['Rejected','Dismissed','Withdrawn'].includes(status));
 const filters={status:defaultStatusFilter()};
 const inProgressStatuses=['Applied','Interview','Offer'];
-const statusPresets={New:['New'],Shortlisted:['Shortlisted'],Urgent:statuses,'In progress':inProgressStatuses,[APPLIED_TOTAL]:[APPLIED_TOTAL],All:statuses};
+const statusPresets={New:['New'],Shortlisted:['Shortlisted'],Urgent:statuses,'In progress':inProgressStatuses,[APPLIED_TOTAL]:[APPLIED_TOTAL],[INTERVIEW_TOTAL]:[INTERVIEW_TOTAL],All:statuses};
 const visible=new Set(fields.slice(0,9).map(x=>x[0]));
 let standardLayout;
 const dateMonths=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -129,7 +129,7 @@ function refreshStatusPresets(){
  const selectedFilters=filters.status?.length?filters.status:statuses;
  // The interview subgroup is redundant when all rejections are selected.
  const withoutSubgroup=selectedFilters.includes('Rejected')?selectedFilters.filter(status=>status!==REJECTED_AFTER_INTERVIEW):selectedFilters;
- const selected=statuses.every(status=>withoutSubgroup.includes(status))?withoutSubgroup.filter(status=>status!==APPLIED_TOTAL):withoutSubgroup;
+ const selected=statuses.every(status=>withoutSubgroup.includes(status))?withoutSubgroup.filter(status=>![APPLIED_TOTAL,INTERVIEW_TOTAL].includes(status)):withoutSubgroup;
  const urgentView=hasUrgentFilter()&&selected.length===statuses.length&&statuses.every(status=>selected.includes(status));
  for(const button of document.querySelectorAll('[data-status-preset]')){
   const name=button.dataset.statusPreset,preset=statusPresets[name];
@@ -140,6 +140,7 @@ function refreshStatusPresets(){
 function refreshOverview(){
  $('total').textContent=data.jobs.length;
  $('applied-total').textContent=data.jobs.filter(hasSentApplication).length;
+ $('interview-total').textContent=data.jobs.filter(job=>interviewDetails(job).hasInterview).length;
  $('shortlist').textContent=data.jobs.filter(j=>j.status==='Shortlisted').length;
  $('new-count').textContent=data.jobs.filter(j=>j.status==='New').length;
  $('urgent').textContent=data.jobs.filter(j=>j.urgent).length;
