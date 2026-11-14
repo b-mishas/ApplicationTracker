@@ -112,3 +112,8 @@
 ## 2026-11-14 — count labels
 
 - All count labels use sentence case. Order remains: Positions collected, Applications in progress, Shortlisted, Urgent, New.
+
+## 2026-11-14 — column checklist filters
+
+- Inactive checklists start unchecked for one-click selection. Clear removes the selection; All selects every option. Both keep the popup open, and complete/empty selections leave the header neutral. Fresh views and Reset retain New, Shortlisted, Applied, Interview and Offer.
+- Existing saved views remain compatible. Model and native Chrome-click checks cover one-click/partial/all/empty selection, popup persistence, presets, text Clear and reload.

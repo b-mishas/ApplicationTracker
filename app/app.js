@@ -234,7 +234,7 @@ function render(){
  $('head').innerHTML='<th aria-label="Details"></th>'+cols.map(([key,label])=>{
  const value=filters[key];
  const active=Array.isArray(value)
-  ?value.length>0&&(key!=='status'||!statuses.every(status=>value.includes(status)))
+  ?value.length>0&&!allCheckboxValuesSelected(key,value)
   :Boolean(value);
  const clearButton=active?`<button type="button" class="clear-column-filter" data-clear-column-filter="${key}" aria-label="Clear ${label} filter" title="Clear ${label} filter">×</button>`:'';
  return `<th aria-sort="${sort===key?(direction===1?'ascending':'descending'):'none'}"><div class="column-heading"><button class="column-label ${active?'filtered':''}" data-filter="${key}" aria-label="Filter ${label}" aria-haspopup="dialog" aria-controls="column-filter" aria-expanded="${filterKey===key}">${label}</button>${clearButton}<button class="sort-arrow" data-sort="${key}" aria-label="Sort by ${label}" title="Sort by ${label}">${sort===key?(direction===1?'↑':'↓'):'↕'}</button></div></th>`;
@@ -337,20 +337,33 @@ function positionFilter(){
 const checkboxFields=new Set(['group','country','fit','status','workMode','assessmentBasis','star']);
 function refreshOpenFilter(){if(filterKey)populateFilter();}
 function clearColumnFilter(key){delete filters[key];render();refreshOpenFilter();}
+function checkboxValues(key){
+ let values=[...new Set(data.jobs.flatMap(j=>choicesFor(j,key)))].sort((a,b)=>{
+  // Missing values belong after the named options.
+  if(a===EMPTY||b===EMPTY)return Number(a===EMPTY)-Number(b===EMPTY);
+  return a.localeCompare(b,undefined,{numeric:true});
+ });
+ if(key==='status')values=statusFilters;
+ if(key==='fit')values=['5','4','3','2','1',EMPTY];
+ if(key==='star')values=['Urgent','Shortlisted','Dismissed','Other'];
+ return values;
+}
+function allCheckboxValuesSelected(key,selected){
+ const values=key==='status'?statuses:checkboxValues(key);
+ return selected.length>0&&values.every(value=>selected.includes(value));
+}
+function setCheckboxFilter(key,selected){
+ if(selected.length)filters[key]=selected;
+ else delete filters[key];
+}
 function populateFilter(){
  const key=filterKey,label=fields.find(f=>f[0]===key)[1];
  $('column-filter').setAttribute('aria-label',label+' filter');
  let controls;
  if(checkboxFields.has(key)){
-  let values=[...new Set(data.jobs.flatMap(j=>choicesFor(j,key)))].sort((a,b)=>{
-   // Missing values belong after the named options.
-   if(a===EMPTY||b===EMPTY)return Number(a===EMPTY)-Number(b===EMPTY);
-   return a.localeCompare(b,undefined,{numeric:true});
-  });
-  if(key==='status')values=statusFilters;
-  if(key==='fit')values=['5','4','3','2','1',EMPTY];
-  if(key==='star')values=['Urgent','Shortlisted','Dismissed','Other'];
-  controls=values.map(value=>`<label class="filter-choice"><input type="checkbox" data-value="${esc(value)}" ${(filters[key]||[]).includes(value)?'checked':''}>${key==='country'&&value!==EMPTY?flagGraphic(value):''}<span>${value===EMPTY?(key==='fit'?'Not assessed':'Not specified'):esc(value)}</span></label>`).join('');
+  const values=checkboxValues(key);
+  const selected=filters[key]||[];
+  controls=values.map(value=>`<label class="filter-choice"><input type="checkbox" data-value="${esc(value)}" ${selected.includes(value)?'checked':''}>${key==='country'&&value!==EMPTY?flagGraphic(value):''}<span>${value===EMPTY?(key==='fit'?'Not assessed':'Not specified'):esc(value)}</span></label>`).join('');
  }else{
   const dateFilter=['firstSeen','applicationDate'].includes(key);
   const prompt=key==='firstSeen'?'Found since':key==='applicationDate'?'Applied on or after':'Contains';
@@ -363,7 +376,7 @@ function showFilter(key){if(filterKey===key){closeFilter();return;}filterKey=key
 $('column-filter').addEventListener('change',event=>{
  if(!event.target.matches('input[type=checkbox]'))return;
  if(!canChangeView()){event.target.checked=!event.target.checked;return;}
- filters[filterKey]=[...$('column-filter').querySelectorAll('input:checked')].map(input=>input.dataset.value);render();
+ setCheckboxFilter(filterKey,[...$('column-filter').querySelectorAll('input:checked')].map(input=>input.dataset.value));render();
 });
 $('column-filter').addEventListener('input',event=>{
  if(event.target.id!=='column-filter-input')return;
@@ -373,12 +386,18 @@ $('column-filter').addEventListener('input',event=>{
 $('column-filter').onclick=event=>{
  const button=event.target.closest('[data-all-filter],[data-clear-filter]');
  if(!button||!canChangeView())return;
- if(button.hasAttribute('data-clear-filter')){clearColumnFilter(filterKey);return;}
- filters[filterKey]=[...$('column-filter').querySelectorAll('input[data-value]')].map(input=>input.dataset.value);
- render();
- refreshOpenFilter();
+ const clear=button.hasAttribute('data-clear-filter');
+ if(clear)delete filters[filterKey];
+ else setCheckboxFilter(filterKey,checkboxValues(filterKey));
+ render();refreshOpenFilter();
+ $('column-filter').querySelector(clear?'[data-clear-filter]':'[data-all-filter]')?.focus({preventScroll:true});
 };
-document.addEventListener('click',event=>{if(!event.target.closest('#column-filter,[data-filter]'))closeFilter();const menu=document.querySelector('.columns');if(!menu.contains(event.target))menu.open=false;});
+document.addEventListener('click',event=>{
+ // The popup can replace its buttons during this click; the event path survives that rebuild.
+ if(!event.composedPath().includes($('column-filter'))&&!event.target.closest('[data-filter]'))closeFilter();
+ const menu=document.querySelector('.columns');
+ if(!menu.contains(event.target))menu.open=false;
+});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'){const key=filterKey;closeFilter();document.querySelector('.columns').open=false;document.querySelector(`[data-filter="${key}"]`)?.focus();}});
 window.addEventListener('resize',closeFilter);
 document.querySelector('.table-wrap').addEventListener('scroll',closeFilter);
@@ -454,7 +473,7 @@ function selectStatusPreset(event){
  const name=button.dataset.statusPreset;
  if(name==='Urgent')filters.star=['Urgent'];
  else if(hasUrgentFilter())delete filters.star;
- filters.status=[...statusPresets[name]];
+ setCheckboxFilter('status',[...statusPresets[name]]);
  render();refreshOpenFilter();
 }
 $('status-presets').onclick=selectStatusPreset;

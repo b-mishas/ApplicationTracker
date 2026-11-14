@@ -17,6 +17,7 @@ export function filterAndSort(jobs,{filters={},search='',sort='fit',direction=-1
  return jobs.filter(j=>{
   if(query&&![j.company,j.title,j.group,j.reasoning,j.gaps,j.notes,j.locationRaw].join(' ').toLocaleLowerCase().includes(query))return false;
   return Object.entries(filters).every(([key,value])=>{
+   // Unchecked options mean no filter, so selecting one value takes one click.
    if(Array.isArray(value))return !value.length||choicesFor(j,key).some(v=>value.includes(v));
    if(!value)return true;
    if(['firstSeen','applicationDate'].includes(key))return Boolean(j[key])&&j[key]>=value;

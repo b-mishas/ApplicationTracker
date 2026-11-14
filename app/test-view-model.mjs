@@ -76,3 +76,13 @@ assert.deepEqual(rejectionIds(STATUS_VALUES),rejectionJobs.map(job=>job.id));
 assert.deepEqual(rejectionIds([...STATUS_VALUES,REJECTED_AFTER_INTERVIEW]),rejectionIds(STATUS_VALUES));
 assert.deepEqual(rejectionIds(STATUS_VALUES.filter(status=>!['Rejected','Dismissed','Withdrawn'].includes(status))),['reapplied']);
 console.log('PASS: interview-rejection subgroup recognizes current and legacy records, excludes stale interview outcomes, preserves the overall Rejected group and works with All/Reset selections.');
+
+// Empty selections keep the one-click default; positive selections still filter.
+for(const key of ['group','country','fit','status','workMode','assessmentBasis','star']){
+ assert.deepEqual(ids({filters:{[key]:[]}}),ids({}),key+' empty selection is unfiltered');
+ const all=[...new Set(jobs.flatMap(job=>choicesFor(job,key)))];
+ assert.deepEqual(ids({filters:{[key]:all}}),ids({}),key+' all selected');
+}
+assert.deepEqual(rejectionIds([]),rejectionIds(STATUS_VALUES));
+assert.deepEqual(ids({filters:{group:[],country:['DE']}}),ids({filters:{country:['DE']}}));
+console.log('PASS: unchecked/default, Clear and All selections are unfiltered; other column filters still apply, including missing values and interview rejections.');
