@@ -1,21 +1,17 @@
 # Application tracker checkpoint
 
-Updated 2026-11-14 16:12 UTC by Codex. Checkout: `C:/Users/misha/Claude/ApplicationTracker`, branch `feature/per-platform-release`. Source commit/HEAD `39e15fe` and upstream `origin/feature/per-platform-release` matched the remote SHA after the push (`git ls-remote`). Local `main` is `3df5319`. CI is unverified; no operations are active.
+Updated 2026-11-14 17:29 UTC by Codex. Checkout C:/Users/misha/Claude/ApplicationTracker, branch feature/per-platform-release, HEAD is the startup commit containing this snapshot (parent 8e02373), tracking origin/feature/per-platform-release. Remote/CI unverified this turn. No active operations. Startup changes, guide wording and target aliases are included in this commit; no push, branch switch or ZIP rebuild performed.
 
-## Release state
+## Current work
 
-The committed builder has a working `--target` flag for `windows-x64`, `windows-arm64`, `mac-intel` and `mac-apple-silicon`. Default `npm run build` produces the Windows x64 and Mac Intel ZIPs only. Each contains one pinned Node runtime, its platform's Start/Stop files and one runtime checksum entry. ARM64 entries remain in `scripts/runtime-manifest.json` but are not built by default. ARM64 starters say that no package exists yet, since emulation has not been verified.
+Settings now offers the off-by-default checkbox **Start server at login**, independent of the search agent and portable export preferences. Save creates/removes this installation's per-user Windows Startup shortcut or macOS LaunchAgent; Cancel leaves it unchanged. Login launches suppress browser opening. Disable before moving/deleting the installation; enable again after moving.
 
-The last built `dist/` ZIPs are 47,058,433 bytes (Windows x64) and 52,768,267 bytes (Mac Intel), each with `.sha256`. They predate the Stop renames and still contain `Stop Windows.cmd` and `Stop macOS.command`. Their guide lists both starters, matching the restored source guide. The old combined ZIP was removed earlier. Do not treat the current ZIPs as matching the source checkout.
+Start reuses the running server on both platforms; separate Restart files restart explicitly. launch.mjs saves a fixed port in data/server-port.json (default 8765), adopts an older running server's address, serializes concurrent starts and waits for shutdown before restarting. --port or JOBTRACKER_PORT selects another fixed port; occupied ports fail without random fallback. macOS keeps the launcher attached for supervision without requesting respawn after Stop.
 
-## Latest source edits and verification
+Changed startup/server/Settings files, Windows Start, new Restart files, package tests, release builder/checks and documentation. START_HERE now formats file references as code followed by normal-text “file”, uses the new checkbox name, and says “Settings → Name: name in exported report titles.” README/SEARCH_WORKFLOW wording matches. Target aliases win-x64, win-arm64, mac-x64 and mac-arm64 remain supported alongside original names; ZIP names unchanged. Existing dist archives remain stale. Compact expanded-field layout remains outside this branch.
 
-- Renamed the source Stop files to `Stop (Windows).cmd` and `Stop (Mac).command`; updated `scripts/build-release.mjs` and `scripts/test-release.mjs` references. The Start filenames remain `Start (Windows).cmd` and `Start (Mac).command` for clarity in the shared source checkout.
-- `START_HERE.html` retains the explicit Windows and Mac starter names after user review; its experimental generic wording was reverted. `README.md` lists all four accepted `--target` values. `HISTORY.md` records this source milestone.
-- `node --check` passed for both changed scripts; `git diff --check` passed after cleaning the README target list. A focused check passed for all four launcher files and build/test references; `START_HERE.html` matches its committed wording. No ZIP rebuild or release extraction test was run for these latest edits.
+## Verification and next action
 
-Before these edits, both ZIPs passed release audits and `scripts/test-release.mjs` on Windows x64; `npm test` passed 57/57 importer cases and 15 portable integration checks. Those results apply to the earlier ZIP contents.
+Startup regressions passed using disposable data: port conflicts/persistence, legacy adoption, concurrent Start, actual Windows starters/bundled runtime, Restart/Stop, origin/validation, temporary Windows shortcut creation/removal and its actual silent command, escaped paths, macOS plist generation and foreground shutdown. No real login settings or positions changed. Chrome checked Settings save/Cancel/reopen, desktop/390 px layouts and guide rendering. API checks and 15 portable checks passed. Target parsing/syntax checks passed. Latest text edits passed exact-wording checks. Final syntax and whitespace checks passed before committing; functional tests were not repeated for unchanged code.
 
-## Next action and limits
-
-Rebuild both ZIPs only on explicit request, then rerun the release audit and extraction test. Test Mac Intel execution and first-launch permissions on a real Mac before publishing. ARM64 execution/emulation remains untested. `INTERFACE_FOR_TRACKER.md` still describes the former combined ZIP and was outside the prior permitted edit scope. No merge or publication was requested.
+Actual Windows login, macOS execution/login and OS approvals still need acceptance testing. No extraction test rerun without a new ZIP. Next: use Restart once to load the new endpoint, then test login behaviour. Build ZIPs only on explicit request.

@@ -5,6 +5,7 @@
 ## 2026-11-14 — matching Stop names and build targets
 
 - Renamed the source Stop launchers to `Stop (Windows).cmd` and `Stop (Mac).command`, and updated release build/test references. The four-target `--target` option already existed; README.md now names its accepted values.
+- Added short `--target` aliases (`win-x64`, `win-arm64`, `mac-x64`, `mac-arm64`) while retaining the original names and output ZIP filenames. Parser checks passed for all aliases, original names, defaults and invalid input; no distribution rebuild was performed.
 - Kept START_HERE.html's explicit Windows and Mac starter names after review, avoiding confusion with the guide's own filename. Script syntax, launcher/reference presence and guide wording checks passed. The distribution ZIPs were not rebuilt, so they still contain the prior Stop names.
 
 ## 2026-11-14 — platform release archives
@@ -147,3 +148,9 @@
 
 - Confirmed and ported ClaudeCodeLocal 8d636ce: Reset restores normal columns before setting Actions descending, so remembered In progress/column sorts cannot override the default. Search clearing, default status exclusions and draft protection remain.
 - Synthetic Chrome checks passed for reversed Actions, ascending In progress dates, restored custom columns, cleared filters, Urgent/Shortlisted priority, reload and rejected draft discard.
+
+## 2026-11-14 — bookmarkable local startup
+
+- Start reuses the running tracker on both platforms; separate Restart files restart it explicitly. A fixed local port (default 8765) is saved per installation, including adoption of older running servers. Concurrent starts are serialized; conflicts fail without random fallback. A different port can be selected with --port or JOBTRACKER_PORT.
+- Settings offers opt-in background startup at login through a per-user Windows shortcut or macOS LaunchAgent, independent of agent scheduling and export preferences. Cancel leaves registration unchanged. Updated START_HERE, interface/docs and release file lists/checks; no ZIP rebuilt.
+- Isolated Windows checks passed for Start/Restart/Stop, port persistence/conflicts, legacy adoption, origin checks, real temporary shortcut creation/removal and its silent login command. Chrome verified Settings save/Cancel, registration state and desktop/390 px layouts; API and 15 portable regressions passed. Actual OS login and macOS execution remain acceptance checks.

@@ -234,3 +234,7 @@ tr.job.urgent>td:first-child,tr.detail.urgent>td{box-shadow:inset var(--row-edge
 .clear-date span{font-family:Arial,sans-serif;font-size:22px;line-height:1}
 .detail .clear-date:enabled:hover{background:#e7eee4;color:#253331}
 .detail .clear-date:focus-visible{outline-offset:-2px}
+
+#settings-form .startup-setting{display:flex;align-items:center;gap:8px}
+#settings-form #settings-startup{width:auto;margin:0}
+#settings-startup-help{font-size:12px}

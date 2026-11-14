@@ -5,6 +5,7 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {commit, revision, STATUSES, ConflictError, BusyError, writeJsonAtomic} from './store.mjs';
 import {dataRoot} from './config.mjs';
+import {readStartup,saveStartup} from './startup.mjs';
 import {readSettings,settingsFile,saveSettings,ready,countryCodes,isCountryCode} from './settings.mjs';
 import crypto from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
@@ -66,6 +67,12 @@ const server=http.createServer(async(req,res)=>{
    return reply(200,{saved:true});
   }
   if(url.pathname==='/api/countries'&&req.method==='GET')return reply(200,countryCodes.filter(isCountryCode));
+  if(url.pathname==='/api/startup'&&req.method==='GET')return reply(200,await readStartup());
+  if(url.pathname==='/api/startup'&&req.method==='PATCH'){
+   if(req.headers.origin!==origin||!req.headers['content-type']?.startsWith('application/json'))return reply(403,{error:'Save from the tracker page.'});
+   let body='';for await(const chunk of req){body+=chunk;if(body.length>1000)return reply(413,{error:'Startup setting too large.'});}
+   try{return reply(200,await saveStartup(JSON.parse(body).enabled));}catch(error){return reply(400,{error:error.message});}
+  }
   if(url.pathname==='/api/settings'&&req.method==='GET'){const settings=await readSettings();return reply(200,{settings,revision:revision(await readFile(settingsFile,'utf8')),ready:ready(settings)});}
   if(url.pathname==='/api/settings'&&req.method==='PATCH'){
    if(req.headers.origin!==origin||!req.headers['content-type']?.startsWith('application/json'))return reply(403,{error:'Save from the tracker page.'});

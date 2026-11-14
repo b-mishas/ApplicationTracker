@@ -2,7 +2,7 @@
 
 The routine prompt (`agent/ROUTINE_PROMPT.md`, Part B) relies on exactly these points. Keep them stable, or update Part B together with the tracker.
 
-## What the recipient gets (one ZIP, unpacked to e.g. `Documents/JobSearch`)
+## What the recipient gets (platform ZIP, unpacked to e.g. `Documents/JobSearch`)
 | Path | Content | Source |
 |---|---|---|
 | `START_HERE.html` | Single recipient starting guide and copyable setup instruction | tracker package |
@@ -19,7 +19,8 @@ Not shipped: `AGENTS.md`, `CLAUDE.md`, `HANDOFF.md`, `PLAN.md`, `HISTORY.md`, `P
 - Settings: settings/tracker.json contains schemaVersion, exportLanguage and optional exportName. Use Settings or settings-cli.mjs --check/--apply for export preferences. Profile-defined groups and country codes arrive in position JSON; no search whitelist or tracker timezone is configured. The importer validates recognized country codes independently of settings. Old settings fields are ignored on read and dropped on explicit save.
 - Application status and interview/offer milestones belong to the tracker and user. The agent submits discoveries through batch.schema.json. The saved job fields are documented in app/inventory.schema.json and app/SEARCH_WORKFLOW.md.
 - Self-check: node app/self-check.mjs from ROOT; no search-configuration prerequisite; legacy --require-configured is a compatibility alias. Exit zero means installation checks passed. Empty-batch validation alone does not establish storage/export health.
-- Node: four platform runtimes are bundled by the release builder. Exact paths are documented in app/SEARCH_WORKFLOW.md; Linux agents need Linux Node in their environment.
+- Local startup: Start reuses a fixed local address; Restart restarts explicitly. Optional startup at login is controlled in tracker Settings and registered per-user on the computer, independently of agent scheduling. It is not part of settings/tracker.json or the position database.
+- Node: each platform ZIP contains one runtime; the default build targets Windows x64 and Mac Intel. Exact paths are documented in app/SEARCH_WORKFLOW.md; Linux agents need Linux Node in their environment.
 - Workbook helper: employer-workbook.mjs read/replace/update provides deterministic setup and maintenance without Python; read SEARCH_WORKFLOW.md for input fields and fallback.
 - Runtime/package and integration verification: see HANDOFF.md and HISTORY.md in the development repository; they are not distributed. macOS needs a real-machine acceptance check.
 

@@ -97,3 +97,9 @@ The PDF button opens a printable report in a new tab. Choose Save as PDF in the 
     node app/export-applications.mjs --output PATH
 
 Run that from ROOT; --root DIR selects inventory. Existing output files are not overwritten. No private formatting template or LLM runtime is needed. Bundled ExcelJS provides a neutral formatted sheet with frozen header, filter, column widths and print settings. Export language comes from settings.
+
+## Local startup
+
+The `Start` file reuses this installation’s running server. The `Restart` file explicitly restarts it; the `Stop` file shuts it down. The default bookmarkable address is http://127.0.0.1:8765. `node app/launch.mjs --port 8766` selects and saves another fixed port in data/server-port.json; use `--restart --port 8766` if already running. JOBTRACKER_PORT overrides the saved port and is saved after successful startup. Occupied ports are reported without random fallback.
+
+The tracker Settings checkbox Start server at login installs/removes a per-user Windows Startup shortcut or macOS LaunchAgent for this folder. It is off by default, starts without opening a browser, and applies from the next login. It is independent of agent scheduling and is not stored in exported JSON or portable export preferences. Disable it before moving/deleting the folder; enable it again after moving. `--background` suppresses browser opening; `--foreground` keeps the launcher attached for macOS login supervision.

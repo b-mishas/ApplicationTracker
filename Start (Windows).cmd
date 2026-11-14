@@ -14,5 +14,5 @@ if /i "%TRACKER_ARCH%"=="arm64" (
 pause
 exit /b 1
 :run
-"%TRACKER_NODE%" "%~dp0app\launch.mjs" --restart
+"%TRACKER_NODE%" "%~dp0app\launch.mjs"
 if errorlevel 1 pause

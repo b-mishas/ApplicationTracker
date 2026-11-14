@@ -43,8 +43,8 @@ button:focus-visible{outline:2px solid #177464;outline-offset:3px}
 
 <h2>1. Extract and open</h2>
 <p>Extract the <strong>entire ZIP</strong> into a folder you want to keep, such as Documents/Application tracker. Then start using:</p>
-<ul><li><strong>Windows:</strong> Start (Windows).cmd</li><li><strong>Mac:</strong> Start (Mac).command</li></ul>
-<p>Your browser opens an empty tracker. Keep all the extracted files together. The matching Stop file stops the background server.</p>
+<ul><li><strong>Windows:</strong> <code>Start (Windows).cmd</code> file</li><li><strong>Mac:</strong> <code>Start (Mac).command</code> file</li></ul>
+<p>Your browser opens an empty tracker. Keep all the extracted files together. The <code>Start</code> file reopens the tracker if it is already running. Use the <code>Restart</code> file after an update, or the <code>Stop</code> file to shut down the background server. Use the files matching your system.</p>
 
 <h2>2. Set up job search with LLM assistant</h2>
 <p>Open Claude or Codex in a desktop environment that can work with local folders. Give it access to the <strong>whole extracted folder</strong>. Start a new chat and paste this prompt:</p>
@@ -70,7 +70,8 @@ button:focus-visible{outline:2px solid #177464;outline-offset:3px}
 
 <h2>3. Daily routine</h2>
 <ul>
-<li>Open the Start file to open the Application tracker in the browser — it gives you an overview of all positions and applications.</li>
+<li>Open the <code>Start</code> file once, then bookmark the tracker’s address. It normally uses <code>http://127.0.0.1:8765</code> and keeps the same address after restarting. Closing the browser leaves the tracker running.</li>
+<li>In <strong>Settings</strong>, optionally enable <strong>Start server at login</strong> and save. From your next login, the tracker starts quietly; open your bookmark when needed. Otherwise, open the <code>Start</code> file once after logging in.</li>
 <li>Keep the computer awake and the AI app running for local scheduled searches.</li>
 <li>You can export your applications as Excel or PDF using the corresponding buttons at the top right.</li>
 </ul>
@@ -86,11 +87,13 @@ button:focus-visible{outline:2px solid #177464;outline-offset:3px}
 <ul>
 <li><strong>Profile:</strong> search tracks and geography.</li>
 <li><strong>Settings → Excel language (for export):</strong> language for both Excel and PDF.</li>
-<li><strong>Settings → Name:</strong> optional name in both report titles.</li>
+<li><strong>Settings → Name:</strong> name in exported report titles.</li>
+<li><strong>Settings → Start server at login:</strong> starts this tracker on your computer, independently of the assistant’s search schedule. Disable and save before moving or deleting the folder; enable it again after moving.</li>
 </ul>
 
 <h3>If something is blocked</h3>
 <p class="note">Downloaded starters or runtimes may need operating-system approval. Review the package source and follow the system's displayed instructions; do not disable protections.</p>
+<p>If the local address is already used by another program, the tracker reports the conflict instead of changing its address. Your assistant can help choose another fixed port; bookmark the new address afterwards.</p>
 <p>For startup problems, copy this to your assistant:</p>
 <div class="prompt">
 <div class="prompt-header"><span>Startup help</span><button type="button" data-copy="startup-prompt" aria-label="Copy startup help instruction">Copy</button></div>

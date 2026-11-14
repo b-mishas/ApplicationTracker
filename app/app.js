@@ -6,7 +6,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const statuses=STATUS_VALUES;
 const statusFilters=statuses.flatMap(status=>status==='Rejected'?[status,REJECTED_AFTER_INTERVIEW]:[status]);
 const fields=[['fit','Fit'],['company','Company'],['group','Group'],['title','Position'],['star','Actions'],['country','Country'],['city','City'],['workMode','Work mode'],['status','Status'],['applicationDate','Applied on'],['seniority','Seniority'],['firstSeen','First found'],['postedDate','Posted'],['assessmentBasis','Assessment']];
-let settings={exportLanguage:'en'},settingsRevision;
+let settings={exportLanguage:'en'},settingsRevision,startupState;
 let supportedCountries=new Set();
 let data,revision,sort='star',direction=-1,open=null,filterKey=null,pendingSave=false,lastUndo;
 // Fixed class names keep application-stage styling independent of sorting.
@@ -502,11 +502,18 @@ function selectStatusPreset(event){
 $('status-presets').onclick=selectStatusPreset;
 document.querySelector('.overview').onclick=selectStatusPreset;
 
-$('settings-open').onclick=()=>{
+$('settings-open').onclick=async()=>{
  if(!canChangeView())return;
  $('settings-name').value=settings.exportName??'';
  $('settings-language').value=settings.exportLanguage;
- $('settings-result').textContent='';$('settings-dialog').showModal();
+ $('settings-result').textContent='';startupState=undefined;
+ $('settings-startup').checked=false;$('settings-startup').disabled=true;
+ $('settings-startup-help').textContent='Checking startup preference…';$('settings-dialog').showModal();
+ try{
+  const response=await fetch('/api/startup');if(!response.ok)throw Error('Could not read startup preference.');
+  startupState=await response.json();$('settings-startup').checked=startupState.enabled;$('settings-startup').disabled=!startupState.supported;
+  $('settings-startup-help').textContent=startupState.supported?'Starts in the background without opening a browser.':'Automatic startup is available on Windows and macOS.';
+ }catch(error){$('settings-startup-help').textContent=error.message;}
 };
 $('settings-cancel').onclick=()=>$('settings-dialog').close();
 $('settings-form').onsubmit=async event=>{
@@ -515,6 +522,12 @@ $('settings-form').onsubmit=async event=>{
   const next={schemaVersion:1,exportLanguage:$('settings-language').value,exportName:$('settings-name').value};
   const response=await fetch('/api/settings',{method:'PATCH',headers:{Origin:location.origin,'Content-Type':'application/json'},body:JSON.stringify({settings:next,revision:settingsRevision})});
   const result=await response.json();if(!response.ok)throw Error(result.error);
-  settings=result.settings;settingsRevision=result.revision;$('settings-dialog').close();$('message').textContent='Settings saved.';render();
+  settings=result.settings;settingsRevision=result.revision;
+  if(startupState?.supported&&$('settings-startup').checked!==startupState.enabled){
+   const response=await fetch('/api/startup',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:$('settings-startup').checked})});
+   const result=await response.json();if(!response.ok)throw Error('Export settings saved. Startup preference could not be saved: '+result.error);
+   startupState=result;
+  }
+  $('settings-dialog').close();$('message').textContent='Settings saved.';render();
  }catch(error){$('settings-result').textContent=error.message;}finally{button.disabled=false;}
 };

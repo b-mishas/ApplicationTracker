@@ -14,9 +14,11 @@ const targets={
  'mac-intel':{filePart:'-darwin-x64.',runtime:'darwin-x64',os:'mac'},
  'mac-apple-silicon':{filePart:'-darwin-arm64.',runtime:'darwin-arm64',os:'mac'}
 };
+const aliases={'win-x64':'windows-x64','win-arm64':'windows-arm64','mac-x64':'mac-intel','mac-arm64':'mac-apple-silicon'};
 const args=process.argv.slice(2);
-if(args.length&&!(args.length===2&&args[0]==='--target'&&targets[args[1]]))throw Error('Usage: node scripts/build-release.mjs [--target windows-x64|windows-arm64|mac-intel|mac-apple-silicon]');
-const selected=args.length?[args[1]]:['windows-x64','mac-intel'];
+const target=aliases[args[1]]||args[1];
+if(args.length&&!(args.length===2&&args[0]==='--target'&&Object.hasOwn(targets,target)))throw Error('Usage: node scripts/build-release.mjs [--target win-x64|win-arm64|mac-x64|mac-arm64]');
+const selected=args.length?[target]:['windows-x64','mac-intel'];
 const cache=process.env.JOBTRACKER_BUILD_CACHE||path.join(root,'.build-cache');await fs.mkdir(cache,{recursive:true});
 const digest=b=>crypto.createHash('sha256').update(b).digest('hex');
 // Git Bash can put GNU tar first on PATH. Windows tar accepts drive-letter archive paths.
@@ -75,7 +77,7 @@ async function loadRuntime(item){
  console.log('Verified '+item.file);
  return {runtime,name,executable,license};
 }
-for(const name of ['app.js','batch.schema.json','config.mjs','countries.json','employer-workbook.mjs','export-applications.mjs','group-colours.mjs','import-discoveries.mjs','index.html','inventory.schema.json','initialize.mjs','jsonschema.mjs','launch.mjs','print-applications.mjs','README.md','SEARCH_WORKFLOW.md','self-check.mjs','settings-cli.mjs','server.mjs','settings.mjs','status-history.mjs','store.mjs','style.css','view-model.mjs'])add('app/'+name,await fs.readFile(path.join(root,'app',name)));
+for(const name of ['app.js','batch.schema.json','config.mjs','countries.json','employer-workbook.mjs','export-applications.mjs','group-colours.mjs','import-discoveries.mjs','index.html','inventory.schema.json','initialize.mjs','jsonschema.mjs','launch.mjs','print-applications.mjs','README.md','SEARCH_WORKFLOW.md','self-check.mjs','settings-cli.mjs','server.mjs','settings.mjs','status-history.mjs','startup.mjs','store.mjs','style.css','view-model.mjs'])add('app/'+name,await fs.readFile(path.join(root,'app',name)));
 await tree(path.join(root,'node_modules'),'node_modules');
 for(const name of ['agent','guides','profile'])await tree(path.join(root,'templates',name),name);
 for(const name of ['START_HERE.html','THIRD_PARTY_NOTICES.md','package.json','package-lock.json'])add(name,await fs.readFile(path.join(root,name)));
@@ -93,7 +95,7 @@ for(const target of selected){
  const archive=new JSZip();
  const addFile=(name,data,executable=false)=>archive.file('Application tracker/'+name,data,{unixPermissions:executable?0o100755:0o100644});
  for(const entry of shared)addFile(entry.name,entry.data,entry.executable);
- for(const name of config.os==='windows'?['Start (Windows).cmd','Stop (Windows).cmd']:['Start (Mac).command','Stop (Mac).command']){
+ for(const name of config.os==='windows'?['Start (Windows).cmd','Restart (Windows).cmd','Stop (Windows).cmd']:['Start (Mac).command','Restart (Mac).command','Stop (Mac).command']){
   const content=await fs.readFile(path.join(root,name));
   // Shell scripts need LF even when Windows Git checks out source files with CRLF.
   addFile(name,name.endsWith('.command')?Buffer.from(content.toString().replace(/\r\n/g,'\n')):content,name.endsWith('.command'));

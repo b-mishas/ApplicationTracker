@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
 import crypto from 'node:crypto';
+import net from 'node:net';
 import JSZip from 'jszip';
 import {auditRelease} from './audit-release.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
@@ -36,8 +37,8 @@ try{
   const metadata=JSON.parse(await candidate.file('Application tracker/RUNTIME_CHECKSUMS.json').async('string'));
   assert.equal(metadata.artifacts.length,1,`Expected one checksum entry in ${filename}`);
   assert.equal(metadata.artifacts[0].file.includes(target.os==='windows'?'-win-x64.':'-darwin-x64.'),true);
-  const own=target.os==='windows'?['Start (Windows).cmd','Stop (Windows).cmd']:['Start (Mac).command','Stop (Mac).command'];
-  const other=target.os==='windows'?['Start (Mac).command','Stop (Mac).command']:['Start (Windows).cmd','Stop (Windows).cmd'];
+  const own=target.os==='windows'?['Start (Windows).cmd','Restart (Windows).cmd','Stop (Windows).cmd']:['Start (Mac).command','Restart (Mac).command','Stop (Mac).command'];
+  const other=target.os==='windows'?['Start (Mac).command','Restart (Mac).command','Stop (Mac).command']:['Start (Windows).cmd','Restart (Windows).cmd','Stop (Windows).cmd'];
   for(const name of own)assert(candidate.file('Application tracker/'+name),`${filename} missing ${name}`);
   for(const name of other)assert(!candidate.file('Application tracker/'+name),`${filename} contains ${name}`);
   for(const entry of Object.values(candidate.files))if(!entry.dir&&entry.name.startsWith('Application tracker/app/'))assert.deepEqual(await entry.async('nodebuffer'),await fs.readFile(path.join(root,entry.name.replace('Application tracker/',''))),`Stale release file: ${entry.name}`);
@@ -61,6 +62,7 @@ try{
  directory=path.join(temp,'Application tracker');
  const env={...process.env,PATH:process.platform==='win32'?path.join(process.env.SystemRoot,'System32'):'/usr/bin:/bin',JOBTRACKER_NO_BROWSER:'1'};
  delete env.JOBTRACKER_DATA_DIR;delete env.JOBTRACKER_SETTINGS_FILE;
+ const probe=net.createServer();await new Promise(resolve=>probe.listen(0,'127.0.0.1',resolve));env.JOBTRACKER_PORT=String(probe.address().port);await new Promise(resolve=>probe.close(resolve));
  const runtime=path.join(directory,'runtime',`${process.platform==='win32'?'win':'darwin'}-${process.arch}`,process.platform==='win32'?'node.exe':'node');
  const invoke=(script,args=[])=>{const r=spawnSync(runtime,[path.join(directory,'app',script),...args],{env,encoding:'utf8',timeout:30000,windowsHide:true});assert.equal(r.status,0,r.stderr||r.stdout);return r.stdout;};
  const starter=process.platform==='win32'?'Start (Windows).cmd':'Start (Mac).command';
@@ -74,8 +76,7 @@ try{
  assert.deepEqual((await(await fetch(state.url+'/api/jobs',{signal:AbortSignal.timeout(10000)})).json()).data.jobs,[]);
  const repeatedOutput=start();
  const repeated=JSON.parse(await fs.readFile(path.join(directory,'data/logs/server.json'),'utf8'));
- if(process.platform==='win32')assert.match(repeatedOutput,/Application tracker stopped\./);
- else assert.equal(repeated.url,state.url);
+ assert(!repeatedOutput.includes('Application tracker stopped.'));assert.equal(repeated.url,state.url);
  assert.match(await (await fetch(repeated.url,{signal:AbortSignal.timeout(10000)})).text(),/Application tracker/);
  assert.match(invoke('self-check.mjs'),/OK Excel export/);
  assert.equal((await fetch(repeated.url+'/api/export/applications.xlsx',{signal:AbortSignal.timeout(10000)})).status,200);
