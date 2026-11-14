@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import {filterAndSort,choicesFor,EMPTY,REJECTED_AFTER_INTERVIEW} from './view-model.mjs';
-import {STATUS_VALUES,isRejectedAfterInterview} from './status-history.mjs';
+import {filterAndSort,choicesFor,EMPTY,REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL} from './view-model.mjs';
+import {STATUS_VALUES,isRejectedAfterInterview,hasSentApplication} from './status-history.mjs';
 const jobs=[
  {id:'a',company:'Alpha',title:'Lead',group:'ELN/LIMS',countries:['DE'],status:'New',fit:2,firstSeen:'2026-11-02'},
  {id:'b',company:'Beta',title:'Scientist',group:'Computational',countries:['CH','DE'],status:'Shortlisted',fit:4,firstSeen:'2026-11-03'},
@@ -67,7 +67,7 @@ const rejectionJobs=[
 ];
 const afterInterview=['after-interview','old-outcome','old-history','unknown-interview-date'];
 assert.deepEqual(rejectionJobs.filter(isRejectedAfterInterview).map(job=>job.id),afterInterview);
-assert.deepEqual(choicesFor(rejectionJobs[1],'status'),['Rejected',REJECTED_AFTER_INTERVIEW]);
+assert.deepEqual(choicesFor(rejectionJobs[1],'status'),['Rejected',REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL]);
 const rejectionIds=selected=>filterAndSort(rejectionJobs,{filters:{status:selected}}).map(job=>job.id);
 assert.deepEqual(rejectionIds([REJECTED_AFTER_INTERVIEW]),afterInterview);
 assert.deepEqual(rejectionIds(['Rejected']),['direct',...afterInterview,'offer-without-interview']);
@@ -86,3 +86,19 @@ for(const key of ['group','country','fit','status','workMode','assessmentBasis',
 assert.deepEqual(rejectionIds([]),rejectionIds(STATUS_VALUES));
 assert.deepEqual(ids({filters:{group:[],country:['DE']}}),ids({filters:{country:['DE']}}));
 console.log('PASS: unchecked/default, Clear and All selections are unfiltered; other column filters still apply, including missing values and interview rejections.');
+
+const sentJobs=[
+ {id:'new',status:'New'}, {id:'shortlisted',status:'Shortlisted'},
+ ...['Applied','Interview','Offer','Rejected','Withdrawn'].map(status=>({id:status,status})),
+ {id:'dismissed',status:'Dismissed'},
+ {id:'dated',status:'Dismissed',applicationDate:'2026-11-01'},
+ {id:'history',status:'New',statusHistory:[{status:'Applied',date:'2026-11-01'}]},
+ {id:'interview-history',status:'Dismissed',interviewDate:''},
+ {id:'empty-date',status:'New',applicationDate:''}
+];
+const sentIds=['Applied','Interview','Offer','Rejected','Withdrawn','dated','history','interview-history'];
+assert.deepEqual(sentJobs.filter(hasSentApplication).map(job=>job.id),sentIds);
+assert.deepEqual(new Set(filterAndSort(sentJobs,{filters:{status:[APPLIED_TOTAL]}}).map(job=>job.id)),new Set(sentIds));
+assert.deepEqual(filterAndSort(sentJobs,{filters:{status:[APPLIED_TOTAL]},search:'nothing'}),[]);
+assert.equal(filterAndSort(sentJobs,{filters:{status:STATUS_VALUES}}).length,sentJobs.length);
+console.log('PASS: total sent applications include all outcomes and historic records, exclude unsent entries and respect other filters.');

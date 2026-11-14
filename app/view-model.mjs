@@ -1,6 +1,7 @@
-import {effectiveStatus,isRejectedAfterInterview} from './status-history.mjs';
+import {effectiveStatus,isRejectedAfterInterview,hasSentApplication} from './status-history.mjs';
 // Keep filtering/sorting independent of the DOM so priority rules can be tested.
 export const EMPTY='__empty__';
+export const APPLIED_TOTAL='Applied in total';
 export const REJECTED_AFTER_INTERVIEW='Rejected after Interview';
 export function choicesFor(job,key){
  if(key==='country')return job.countries?.length?job.countries:[EMPTY];
@@ -9,8 +10,13 @@ export function choicesFor(job,key){
   if(job.urgent)choices.unshift('Urgent');
   return choices;
  }
- if(key==='status'&&isRejectedAfterInterview(job))return ['Rejected',REJECTED_AFTER_INTERVIEW];
- const v=key==='status'?effectiveStatus(job):job[key];return [v==null||v===''?EMPTY:String(v)];
+ const v=key==='status'?effectiveStatus(job):job[key];
+ const choices=[v==null||v===''?EMPTY:String(v)];
+ if(key==='status'){
+  if(isRejectedAfterInterview(job))choices.push(REJECTED_AFTER_INTERVIEW);
+  if(hasSentApplication(job))choices.push(APPLIED_TOTAL);
+ }
+ return choices;
 }
 export function filterAndSort(jobs,{filters={},search='',sort='fit',direction=-1}={}){
  const query=search.toLocaleLowerCase();

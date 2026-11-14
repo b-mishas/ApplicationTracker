@@ -28,6 +28,13 @@ export function effectiveStatus(job) {
  return INTERVIEW_OUTCOMES.includes(interviewOutcome) ? interviewOutcome : job.status;
 }
 
+// Older application records may have a stage/history but no application date.
+export function hasSentApplication(job) {
+ const sentStages=['Applied','Interview','Offer','Rejected','Withdrawn'];
+ return Boolean(job.applicationDate)||sentStages.includes(effectiveStatus(job))||interviewDetails(job).hasInterview
+  ||(job.statusHistory||[]).some(event=>sentStages.includes(event?.status));
+}
+
 export function isRejectedAfterInterview(job) {
  return effectiveStatus(job) === 'Rejected' && interviewDetails(job).hasInterview;
 }

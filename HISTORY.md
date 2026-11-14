@@ -154,3 +154,8 @@
 - Start reuses the running tracker on both platforms; separate Restart files restart it explicitly. A fixed local port (default 8765) is saved per installation, including adoption of older running servers. Concurrent starts are serialized; conflicts fail without random fallback. A different port can be selected with --port or JOBTRACKER_PORT.
 - Settings offers opt-in background startup at login through a per-user Windows shortcut or macOS LaunchAgent, independent of agent scheduling and export preferences. Cancel leaves registration unchanged. Updated START_HERE, interface/docs and release file lists/checks; no ZIP rebuilt.
 - Isolated Windows checks passed for Start/Restart/Stop, port persistence/conflicts, legacy adoption, origin checks, real temporary shortcut creation/removal and its silent login command. Chrome verified Settings save/Cancel, registration state and desktop/390 px layouts; API and 15 portable regressions passed. Actual OS login and macOS execution remain acceptance checks.
+
+## 2026-11-14 — total applications counter
+
+- Ported ClaudeCodeLocal edc13d6: clickable total sent-applications counter and Applied (pending)/(total) Status choices. Totals include later outcomes and legacy application/interview history, using existing JSON fields. Other filters, All/Reset and view persistence remain compatible.
+- Model regressions and synthetic Chrome checks passed for outcomes, unsent exclusions, search, reload, neutral All and normal-column restoration after In progress.
