@@ -8,6 +8,15 @@ import JSZip from 'jszip';
 import {auditRelease} from './audit-release.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const manifest=JSON.parse(await fs.readFile(new URL('./runtime-manifest.json',import.meta.url),'utf8'));
+const targets={
+ 'windows-x64':{filePart:'-win-x64.',runtime:'win-x64',os:'windows'},
+ 'windows-arm64':{filePart:'-win-arm64.',runtime:'win-arm64',os:'windows'},
+ 'mac-intel':{filePart:'-darwin-x64.',runtime:'darwin-x64',os:'mac'},
+ 'mac-apple-silicon':{filePart:'-darwin-arm64.',runtime:'darwin-arm64',os:'mac'}
+};
+const args=process.argv.slice(2);
+if(args.length&&!(args.length===2&&args[0]==='--target'&&targets[args[1]]))throw Error('Usage: node scripts/build-release.mjs [--target windows-x64|windows-arm64|mac-intel|mac-apple-silicon]');
+const selected=args.length?[args[1]]:['windows-x64','mac-intel'];
 const cache=process.env.JOBTRACKER_BUILD_CACHE||path.join(root,'.build-cache');await fs.mkdir(cache,{recursive:true});
 const digest=b=>crypto.createHash('sha256').update(b).digest('hex');
 // Git Bash can put GNU tar first on PATH. Windows tar accepts drive-letter archive paths.
@@ -31,8 +40,9 @@ async function refreshCheckoutRuntime(directory,name,executable,license){
  }
  await fs.writeFile(path.join(directory,'LICENSE'),license);
 }
-const archive=new JSZip();
-const add=(name,data,executable=false)=>archive.file('Application tracker/'+name,data,{unixPermissions:executable?0o100755:0o100644});
+// Common buffers are read once and reused by each platform archive.
+const shared=[];
+const add=(name,data,executable=false)=>shared.push({name,data,executable});
 async function tree(source,destination){
  for(const entry of await fs.readdir(source,{withFileTypes:true})){
   if(entry.isSymbolicLink())throw Error(`Unexpected symlink: ${source}/${entry.name}`);
@@ -40,7 +50,7 @@ async function tree(source,destination){
   if(entry.isDirectory())await tree(from,to);else add(to,await fs.readFile(from),entry.name.endsWith('.command'));
  }
 }
-for(const item of manifest.artifacts){
+async function loadRuntime(item){
  const cached=path.join(cache,item.file);
  let bytes=await fs.readFile(cached).catch(()=>null);
  if(!bytes||digest(bytes)!==item.sha256){
@@ -60,24 +70,45 @@ for(const item of manifest.artifacts){
   executable=await fs.readFile(path.join(destination,'bin/node'));license=await fs.readFile(path.join(destination,'LICENSE'));
  }
  const runtime=`runtime/${platform}-${arch}`,name=platform==='win'?'node.exe':'node';
- add(runtime+'/'+name,executable,true);add(runtime+'/LICENSE',license);
  // Also make the source checkout's starters usable without a global Node install.
  await refreshCheckoutRuntime(path.join(root,runtime),name,executable,license);
  console.log('Verified '+item.file);
+ return {runtime,name,executable,license};
 }
 for(const name of ['app.js','batch.schema.json','config.mjs','countries.json','employer-workbook.mjs','export-applications.mjs','group-colours.mjs','import-discoveries.mjs','index.html','inventory.schema.json','initialize.mjs','jsonschema.mjs','launch.mjs','print-applications.mjs','README.md','SEARCH_WORKFLOW.md','self-check.mjs','settings-cli.mjs','server.mjs','settings.mjs','status-history.mjs','store.mjs','style.css','view-model.mjs'])add('app/'+name,await fs.readFile(path.join(root,'app',name)));
 await tree(path.join(root,'node_modules'),'node_modules');
 for(const name of ['agent','guides','profile'])await tree(path.join(root,'templates',name),name);
-for(const name of ['Start (Windows).cmd','Start (Mac).command','Stop Windows.cmd','Stop macOS.command','START_HERE.html','THIRD_PARTY_NOTICES.md','package.json','package-lock.json'])add(name,await fs.readFile(path.join(root,name)),name.endsWith('.command'));
+for(const name of ['START_HERE.html','THIRD_PARTY_NOTICES.md','package.json','package-lock.json'])add(name,await fs.readFile(path.join(root,name)));
 add('settings/tracker.json',JSON.stringify({schemaVersion:1,exportLanguage:'en'},null,2)+'\n');
 add('data/jobs.json',JSON.stringify({schemaVersion:1,jobs:[]},null,2)+'\n');
-for(const sub of ['incoming/imported','reports','backups','exports'])archive.folder('Application tracker/data/'+sub);
-add('RUNTIME_CHECKSUMS.json',JSON.stringify(manifest,null,2));
-const names=Object.keys(archive.files);
-if(names.some(n=>/^Application tracker\/(?:\.git(?:\/|$)|(?:CLAUDE|HANDOFF|PLAN|HISTORY|PORTABILITY)\.md$|agent\/ROUTINE_PROMPT\.filled\.md$|profile\/cv\/(?!README\.txt$))/.test(n)&&!n.endsWith('/')))throw Error('Private/developer content in release.');
 const denyTerms=process.env.JOBTRACKER_RELEASE_DENY_TERMS_FILE?JSON.parse(await fs.readFile(process.env.JOBTRACKER_RELEASE_DENY_TERMS_FILE,'utf8')):[];
-console.log('Release audit: '+JSON.stringify(await auditRelease(archive,{denyTerms})));
-const dist=path.join(root,'dist');await fs.mkdir(dist,{recursive:true});const output=path.join(dist,'Application-tracker.zip');
-await fs.writeFile(output,await archive.generateAsync({type:'nodebuffer',platform:'UNIX',compression:'DEFLATE',compressionOptions:{level:6}}));
-await fs.writeFile(output+'.sha256',digest(await fs.readFile(output))+'  Application-tracker.zip\n');
-console.log('Release: '+output);
+const dist=path.join(root,'dist');await fs.mkdir(dist,{recursive:true});
+await fs.rm(path.join(dist,'Application-tracker.zip'),{force:true});
+await fs.rm(path.join(dist,'Application-tracker.zip.sha256'),{force:true});
+for(const target of selected){
+ const config=targets[target];
+ const item=manifest.artifacts.find(entry=>entry.file.includes(config.filePart));
+ if(!item)throw Error('Missing manifest entry for '+target);
+ const runtime=await loadRuntime(item);
+ const archive=new JSZip();
+ const addFile=(name,data,executable=false)=>archive.file('Application tracker/'+name,data,{unixPermissions:executable?0o100755:0o100644});
+ for(const entry of shared)addFile(entry.name,entry.data,entry.executable);
+ for(const name of config.os==='windows'?['Start (Windows).cmd','Stop Windows.cmd']:['Start (Mac).command','Stop macOS.command']){
+  const content=await fs.readFile(path.join(root,name));
+  // Shell scripts need LF even when Windows Git checks out source files with CRLF.
+  addFile(name,name.endsWith('.command')?Buffer.from(content.toString().replace(/\r\n/g,'\n')):content,name.endsWith('.command'));
+ }
+ addFile(runtime.runtime+'/'+runtime.name,runtime.executable,true);
+ addFile(runtime.runtime+'/LICENSE',runtime.license);
+ for(const sub of ['incoming/imported','reports','backups','exports'])archive.folder('Application tracker/data/'+sub);
+ addFile('RUNTIME_CHECKSUMS.json',JSON.stringify({version:manifest.version,artifacts:[item]},null,2)+'\n');
+ const names=Object.keys(archive.files);
+ if(names.some(n=>/^Application tracker\/(?:\.git(?:\/|$)|(?:CLAUDE|HANDOFF|PLAN|HISTORY|PORTABILITY)\.md$|agent\/ROUTINE_PROMPT\.filled\.md$|profile\/cv\/(?!README\.txt$))/.test(n)&&!n.endsWith('/')))throw Error('Private/developer content in release.');
+ console.log(target+' release audit: '+JSON.stringify(await auditRelease(archive,{denyTerms})));
+ const filename=`Application-tracker-${target}.zip`;
+ const output=path.join(dist,filename);
+ const contents=await archive.generateAsync({type:'nodebuffer',platform:'UNIX',compression:'DEFLATE',compressionOptions:{level:6}});
+ await fs.writeFile(output,contents);
+ await fs.writeFile(output+'.sha256',digest(contents)+'  '+filename+'\n');
+ console.log('Release: '+output);
+}

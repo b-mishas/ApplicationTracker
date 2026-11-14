@@ -4,7 +4,6 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import JSZip from 'jszip';
-const root=fileURLToPath(new URL('../',import.meta.url));
 export async function auditRelease(zip,{denyTerms=[]}={}){
  const failures=[];let textFiles=0,workbooks=0;
  const checkText=(name,text)=>{
@@ -31,6 +30,7 @@ export async function auditRelease(zip,{denyTerms=[]}={}){
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2),index=args.indexOf('--deny-terms');
  const denyTerms=index<0?[]:JSON.parse(await fs.readFile(args[index+1],'utf8'));
- const file=args.find((v,i)=>!v.startsWith('--')&&(index<0||i!==index+1))||path.join(root,'dist/Application-tracker.zip');
+ const file=args.find((v,i)=>!v.startsWith('--')&&(index<0||i!==index+1));
+ if(!file)throw Error('Usage: node scripts/audit-release.mjs ZIP_PATH [--deny-terms JSON_PATH]');
  try{console.log(JSON.stringify(await auditRelease(await JSZip.loadAsync(await fs.readFile(file)),{denyTerms}),null,2));}catch(e){console.error(e.message);process.exitCode=1;}
 }

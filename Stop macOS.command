@@ -10,10 +10,11 @@ if [ ! -x "$tracker_node" ]; then
   chmod u+x "$tracker_node" 2>/dev/null
 fi
 if [ ! -x "$tracker_node" ]; then
-  tracker_node="$(command -v node)"
-fi
-if [ -z "$tracker_node" ]; then
-  printf 'Bundled Node is missing. Download and extract the complete Application tracker ZIP.\n'
+  if [ "$tracker_arch" = arm64 ]; then
+    printf 'No Application tracker package exists yet for Apple silicon Macs.\n'
+  else
+    printf 'Mac Intel runtime missing. Download and extract Application-tracker-mac-intel.zip again.\n'
+  fi
   read -r tracker_reply
   exit 1
 fi
