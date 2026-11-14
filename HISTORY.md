@@ -164,3 +164,8 @@
 
 - Ported ClaudeCodeLocal 19a25bd: clickable Interviews held counter across recorded current/legacy interviews and later outcomes; Status choices distinguish Interview (pending)/(total). Renamed the sent-applications counter to Applications sent, matching the source feature.
 - Model and synthetic Chrome checks passed for legacy/outcome membership, pending-only filtering, search, reload, All/Reset and live counters after status autosave and Undo.
+
+## 2026-11-14 — grouped overview counters
+
+- Ported ClaudeCodeLocal 1299faf: application overview groups Positions collected, Applications sent, Interviews held and Applications in progress; a separate priorities group holds Shortlisted, Urgent and New. A shared parent delegates all seven click filters; groups wrap with a 12 px gap.
+- Synthetic Chrome checks passed for group order, all click actions, unchanged four toolbar presets, neutral button styling and no page overflow at 390/900/1280/1800 px. Desktop/narrow rendering inspected; existing save/Undo/export API regressions passed.

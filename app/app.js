@@ -504,7 +504,7 @@ function selectStatusPreset(event){
  render();refreshOpenFilter();
 }
 $('status-presets').onclick=selectStatusPreset;
-document.querySelector('.overview').onclick=selectStatusPreset;
+document.querySelector('.overview-row').onclick=selectStatusPreset;
 
 $('settings-open').onclick=async()=>{
  if(!canChangeView())return;
