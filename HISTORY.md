@@ -131,3 +131,8 @@
 
 - Ported ClaudeCodeLocal 0b3b974 manual status-text behaviour: exact wording or an intentional blank replaces generated history in the editor and saved-data Excel/PDF exports. Notes preserve it; real stage/date changes regenerate defaults unless explicitly overridden. Date changes preview defaults; drafts and Undo remain supported.
 - API/export regressions and synthetic Chrome checks passed for exact/blank text, notes, reload, date/stage changes, manual draft precedence, calendar clear/Cancel and Undo. Existing heading/layout retained; no new JSON fields.
+
+## 2026-11-14 — Reset sorting
+
+- Confirmed and ported ClaudeCodeLocal 8d636ce: Reset restores normal columns before setting Actions descending, so remembered In progress/column sorts cannot override the default. Search clearing, default status exclusions and draft protection remain.
+- Synthetic Chrome checks passed for reversed Actions, ascending In progress dates, restored custom columns, cleared filters, Urgent/Shortlisted priority, reload and rejected draft discard.
