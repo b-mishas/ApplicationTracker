@@ -9,7 +9,7 @@ import {readSettings,settingsFile,saveSettings,ready,countryCodes,isCountryCode}
 import crypto from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 import {calendarDate} from './settings.mjs';
-import {updateStage,validStageDate,validateMilestones,effectiveStatus,StatusHistoryError} from './status-history.mjs';
+import {updateStage,validStageDate,validateMilestones,effectiveStatus,interviewDetails,StatusHistoryError} from './status-history.mjs';
 const root=path.dirname(fileURLToPath(import.meta.url));
 let port=Number(process.env.PORT??8765), origin=`http://127.0.0.1:${port}`;
 const installation=crypto.createHash('sha256').update(root+'\0'+dataRoot).digest('hex');
@@ -133,7 +133,7 @@ const server=http.createServer(async(req,res)=>{
       if(input.notes!==undefined)job.notes=input.notes;
       if(input.applicationDate!==undefined)job.applicationDate=input.applicationDate;
       if(input.applicationStatusText!==undefined)job.applicationStatusText=input.applicationStatusText;
-      else if(previousStatus!==effectiveStatus(job))delete job.applicationStatusText;
+      else if(previousStatus!==effectiveStatus(job)||before.applicationDate!==job.applicationDate||!isDeepStrictEqual(interviewDetails(before),interviewDetails(job)))delete job.applicationStatusText;
      }
      if(job.status==='Dismissed'&&before.status!=='Dismissed'&&job.urgent)job.urgent=false;
      if(isDeepStrictEqual(job,before))return {skipWrite:true,job};

@@ -19,7 +19,7 @@ export function planApplications(history,jobs,language='en'){
   const key=[job.company,city,job.title,job.applicationDate].map(v=>String(v).normalize('NFKC').trim().replace(/\s+/g,' ').toLowerCase()).join('|');
   if(seen.has(key)){issues.push(`${job.company} — ${job.title}: duplicate application/date; resolve before exporting.`);continue;}seen.add(key);
   const historyText=interviewHistoryText(job,words[language]);
-  const statusText=historyText ? [historyText,job.applicationStatusText].filter(Boolean).join(' — ') : job.applicationStatusText||words[language]?.[status]||status;
+  const statusText=job.applicationStatusText??(historyText||words[language]?.[status]||status);
   rows.push({date:job.applicationDate,closed:['Rejected','Withdrawn','Dismissed'].includes(status),values:[new Date(job.applicationDate+'T00:00:00Z'),job.company,city,job.title,statusText]});
  }
  if(issues.length){const error=Error(issues.join('\n'));error.code='EXPORT_INPUT';throw error;}

@@ -68,15 +68,8 @@ function stageFields(job,saved=interviewDetails(job)){
   interviewOutcomeDate:application&&job.status!=='Applied'&&['Rejected','Withdrawn'].includes(saved.interviewOutcome)};
 }
 function applicationText(job){
- return [interviewHistoryText(job),job.applicationStatusText].filter(Boolean).join(' — ');
-}
-function customApplicationText(job,value){
- const history=interviewHistoryText(job);
- if(!history)return value;
- if(value===history)return '';
- const prefix=history+' — ';
- if(value.startsWith(prefix))return value.slice(prefix.length);
- return value.startsWith(history)?value.slice(history.length).trimStart():value;
+ // A saved manual value, including an empty string, replaces generated history.
+ return job.applicationStatusText??interviewHistoryText(job);
 }
 const hiddenUnless=visible=>visible?'':' hidden';
 const canApply=job=>['New','Shortlisted'].includes(effectiveStatus(job));
@@ -86,7 +79,7 @@ function stageControls(job){
   +'<label>Status <select class="edit-status" title="Status saves automatically">'+statuses.map(status=>'<option'+(status===effectiveStatus(job)?' selected':'')+'>'+status+'</option>').join('')+'</select></label>'
   +'<button type="button" class="apply-status" title="Mark this position as Applied"'+hiddenUnless(canApply(job))+'>Applied</button>'
   +dateInput('Application date','applicationDate',job.applicationDate||'',visible.application)+'</div>'
-  +'<label data-application-status'+hiddenUnless(visible.application)+'>Application status text <input type="text" class="edit-application-status" value="'+esc(applicationText(job))+'" placeholder="Optional detail for Excel"></label>'
+  +'<label data-application-status'+hiddenUnless(visible.application)+'>Application status text <input type="text" class="edit-application-status" value="'+esc(applicationText(job))+'" placeholder="Optional status text for export"></label>'
   +'<div class="stage-row" data-interview-row'+hiddenUnless(visible.interview)+'>'
   +milestoneInput('Interview date','interviewDate',saved.interviewDate)
   +'<label>Interview outcome <select class="edit-interview-outcome" title="Outcome saves automatically"><option value="">Pending</option>'+INTERVIEW_OUTCOMES.map(outcome=>'<option'+(outcome===saved.interviewOutcome?' selected':'')+'>'+outcome+'</option>').join('')+'</select></label></div>'
@@ -311,7 +304,10 @@ $('body').onclick=async e=>{
  const section=save.closest('section'),message=section.querySelector('.save-state'),status=section.querySelector('select').value,notes=section.querySelector('textarea').value,applicationDate=section.querySelector('.edit-application-date').value,applicationStatusText=section.querySelector('.edit-application-status').value;
  const job=data.jobs.find(item=>item.id===save.dataset.id);
  const milestones=milestoneDraft(section,job);
- const applicationFields=stageFields(job).application?{applicationDate,...(applicationStatusText!==applicationText(job)?{applicationStatusText:customApplicationText(job,applicationStatusText)}:{})}:{};
+ const datesChanged=applicationDate!==(job.applicationDate||'')||Object.keys(milestones).length>0;
+ const generatedText=interviewHistoryText({...job,applicationDate,...milestones});
+ const manualText=(applicationStatusText!==applicationText(job)||datesChanged)&&(!datesChanged||applicationStatusText!==generatedText);
+ const applicationFields=stageFields(job).application?{applicationDate,...(manualText?{applicationStatusText}:{})}:{};
  const controls=[...section.querySelectorAll('button,input,select,textarea')];
  setPendingSave(true);controls.forEach(control=>control.disabled=true);message.textContent='Saving…';
  try{
@@ -434,7 +430,7 @@ async function saveStatus(select){
  try{
   const saved=await saveJobEdit(payload);
   syncStageControls(section,saved,milestoneDraft(section,job,{includeHidden:true}));
-  text.value=text.value===oldText?applicationText(saved):applicationText({...saved,applicationStatusText:customApplicationText(job,text.value)});
+  if(text.value===oldText)text.value=applicationText(saved);
   if(autoDate&&date.value===dateBefore)date.value=saved.applicationDate||autoDate;
   const row=section.closest('tr').previousElementSibling,detailRow=section.closest('tr');
   for(const element of [row,detailRow]){element.classList.remove(...stageClasses.values());element.classList.toggle('urgent',Boolean(saved.urgent));element.classList.toggle('rejected-after-interview',isRejectedAfterInterview(saved));const stage=rowStage(effectiveStatus(saved));if(stage)element.classList.add(stage);}
@@ -447,7 +443,16 @@ async function saveStatus(select){
  }catch(error){select.value=previous;indicator.textContent='Status not saved: '+error.message;}
  finally{setPendingSave(false);disabled.forEach(({control,wasDisabled})=>control.disabled=wasDisabled);refreshEditorButtons();if(focused===select&&document.activeElement===document.body)select.focus();}
 }
-$('body').addEventListener('change',event=>{if(event.target.matches('.edit-status,.edit-interview-outcome'))saveStatus(event.target);else if(event.target.closest('.detail'))refreshEditorButtons();});
+$('body').addEventListener('change',event=>{
+ if(event.target.matches('.edit-status,.edit-interview-outcome'))saveStatus(event.target);
+ else if(event.target.closest('.detail')){
+  if(event.target.matches('input[type=date]')&&!event.target.validity.badInput&&validStageDate(event.target.value)){
+   const job=data.jobs.find(job=>job.id===open),section=event.target.closest('section');
+   section.querySelector('.edit-application-status').value=interviewHistoryText({...job,applicationDate:section.querySelector('.edit-application-date').value,...milestoneDraft(section,job)});
+  }
+  refreshEditorButtons();
+ }
+});
 $('body').addEventListener('input',event=>{if(event.target.closest('.detail'))refreshEditorButtons();});
 $('undo-edit').onclick=async()=>{
  if(!lastUndo||pendingSave)return;

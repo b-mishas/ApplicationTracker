@@ -5,6 +5,7 @@ import path from 'node:path';
 import {spawn} from 'node:child_process';
 import assert from 'node:assert/strict';
 import {fixtureData,fixtureSettings} from './test-fixtures.mjs';
+import {planApplications} from './export-applications.mjs';
 import {fileURLToPath} from 'node:url';
 const fixtures=fixtureData();
 const dir=await mkdtemp(path.join(tmpdir(),'position-desk-'));
@@ -124,6 +125,28 @@ try{
  assert.equal((await undo(last)).status,409);
  assert.deepEqual(JSON.parse(await readFile(inventoryFile,'utf8')),newer);
  console.log('PASS: one-step undo restores status, milestones, notes, dates, text and flags, and rejects stale writes and token reuse.');
+ // Manual text is a complete replacement, including a deliberately empty value.
+ const manual=await update({status:'Interview',interviewOutcome:'',applicationDate:'2026-11-03',interviewDate:'2026-11-05',applicationStatusText:'My exact wording'});
+ assert.equal(manual.job.applicationStatusText,'My exact wording');
+ for(const language of ['en','de'])assert.equal(planApplications([],[manual.job],language).rows[0].values[4],'My exact wording');
+ const exactWorkbook=new ExcelJS.Workbook();const exactExport=await fetch(base+'/api/export/applications.xlsx');assert.equal(exactExport.status,200);await exactWorkbook.xlsx.load(Buffer.from(await exactExport.arrayBuffer()));assert.equal(exactWorkbook.worksheets[0].getCell('E2').value,'My exact wording');
+ const exactPrint=await fetch(base+'/export/applications/print');assert.equal(exactPrint.status,200);assert((await exactPrint.text()).includes('<td>My exact wording</td>'));
+ const noteOnly=await update({status:'Interview',notes:'Notes must not regenerate status text'});
+ assert.equal(noteOnly.job.applicationStatusText,'My exact wording');
+ const emptyText=await update({status:'Interview',applicationStatusText:''});
+ assert.equal(emptyText.job.applicationStatusText,'');for(const language of ['en','de'])assert.equal(planApplications([],[emptyText.job],language).rows[0].values[4],'');
+ const blankWorkbook=new ExcelJS.Workbook();const blankExport=await fetch(base+'/api/export/applications.xlsx');assert.equal(blankExport.status,200);await blankWorkbook.xlsx.load(Buffer.from(await blankExport.arrayBuffer()));assert.equal(blankWorkbook.worksheets[0].getCell('E2').text,'');
+ const blankPrint=await fetch(base+'/export/applications/print');assert.equal(blankPrint.status,200);assert((await blankPrint.text()).includes('<td></td></tr>'));
+ const dated=await update({status:'Interview',interviewDate:'2026-11-06'});
+ assert.equal(dated.job.applicationStatusText,undefined);assert.equal(planApplications([],[dated.job]).rows[0].values[4],'Interview 06.11.2026');
+ const datedManual=await update({status:'Interview',interviewDate:'2026-11-07',applicationStatusText:'Date and exact wording'});
+ assert.equal(datedManual.job.applicationStatusText,'Date and exact wording');
+ const appliedDate=await update({status:'Interview',applicationDate:'2026-11-04'});
+ assert.equal(appliedDate.job.applicationStatusText,undefined);
+ const beforeStage=await update({status:'Interview',applicationStatusText:'Before offer'});
+ const newStage=await update({status:'Offer'});assert.equal(newStage.job.applicationStatusText,undefined);
+ const restoreText=await undo(newStage);assert.equal(restoreText.status,200);assert.equal((await restoreText.json()).job.applicationStatusText,beforeStage.job.applicationStatusText);
+ console.log('PASS: exact manual/empty status text in storage and export, notes leave it intact, dates/status regenerate only without an explicit override, Undo restores manual text.');
  const module=await fetch(base+'/view-model.mjs');assert.equal(module.status,200);assert(module.headers.get('content-type').includes('javascript'));
  console.log('PASS: save/revision/origin checks; reversible and idempotent quick dismissal; notes/date/German detail preserved; frontend module served.');
 }finally{if(child){child.kill();await new Promise(resolve=>child.once('exit',resolve));}await rm(dir,{recursive:true,force:true});}

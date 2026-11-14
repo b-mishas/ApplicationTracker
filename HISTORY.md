@@ -122,3 +122,8 @@
 
 - Ported ClaudeCodeLocal 19d042e: accessible clear crosses beside Application, Interview, Offer and Outcome dates. Clears remain drafts until Save; Cancel restores them. Empty and pending-save controls are disabled; native calendars remain.
 - Offer date matches one picker-column width, with consistent 10 px gaps above standalone dates. Renamed Your next step to Application steps. Synthetic-data Chrome verified keyboard/focus, 32 px geometry, half-width Offer, draft/Cancel, pending saves, reload persistence and stage visibility.
+
+## 2026-11-14 — manual application wording
+
+- Ported ClaudeCodeLocal 0b3b974 manual status-text behaviour: exact wording or an intentional blank replaces generated history in the editor and saved-data Excel/PDF exports. Notes preserve it; real stage/date changes regenerate defaults unless explicitly overridden. Date changes preview defaults; drafts and Undo remain supported.
+- API/export regressions and synthetic Chrome checks passed for exact/blank text, notes, reload, date/stage changes, manual draft precedence, calendar clear/Cancel and Undo. Existing heading/layout retained; no new JSON fields.

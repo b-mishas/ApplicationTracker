@@ -72,7 +72,8 @@
           "description": "Actual application date, YYYY-MM-DD, or empty when unknown."
         },
         "applicationStatusText": {
-          "type": "string"
+          "type": "string",
+          "description": "Complete manual replacement for generated status wording. An empty string is intentionally blank; an absent field uses generated history."
         },
         "statusHistory": {
           "type": "array",
