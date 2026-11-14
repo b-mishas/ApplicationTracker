@@ -70,7 +70,8 @@ try{
  assert.equal((await fetch(base+'/flags/jp.svg')).status,200);assert.equal((await fetch(base+'/api/export/applications.xlsx')).status,200);assert.match(await (await fetch(base+'/')).text(),/Application tracker/);assert.equal((await fs.readdir(path.join(temp,'backups'))).length>0,true);ok('Settings API rejects foreign origins/stale revisions, backs up changes and serves extended flags/export');
  const printUrl=base+'/export/applications/print';
  const emptyPrint=await fetch(printUrl);assert.equal(emptyPrint.status,200);assert.match(emptyPrint.headers.get('content-type'),/^text\/html/);assert.match(await emptyPrint.text(),/Keine Bewerbungen zum Exportieren/);
- const fixturePrint={...applications[0],title:'<img src=x onerror="alert(1)">',status:'Interview',interviewDate:'2026-11-05',interviewOutcome:'Rejected',interviewOutcomeDate:'2026-11-12'};
+ // Earlier checks use a manual status note; this fixture checks generated interview history.
+ const fixturePrint={...applications[0],applicationStatusText:undefined,title:'<img src=x onerror="alert(1)">',status:'Interview',interviewDate:'2026-11-05',interviewOutcome:'Rejected',interviewOutcomeDate:'2026-11-12'};
  const jobsFile=path.join(root,'jobs.json');
  const germanSettings=await (await fetch(base+'/api/settings')).json();
  const exportName='Alexandra Müller-Roth <Sample Surname>';
