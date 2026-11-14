@@ -36,8 +36,8 @@ try{
   const metadata=JSON.parse(await candidate.file('Application tracker/RUNTIME_CHECKSUMS.json').async('string'));
   assert.equal(metadata.artifacts.length,1,`Expected one checksum entry in ${filename}`);
   assert.equal(metadata.artifacts[0].file.includes(target.os==='windows'?'-win-x64.':'-darwin-x64.'),true);
-  const own=target.os==='windows'?['Start (Windows).cmd','Stop Windows.cmd']:['Start (Mac).command','Stop macOS.command'];
-  const other=target.os==='windows'?['Start (Mac).command','Stop macOS.command']:['Start (Windows).cmd','Stop Windows.cmd'];
+  const own=target.os==='windows'?['Start (Windows).cmd','Stop (Windows).cmd']:['Start (Mac).command','Stop (Mac).command'];
+  const other=target.os==='windows'?['Start (Mac).command','Stop (Mac).command']:['Start (Windows).cmd','Stop (Windows).cmd'];
   for(const name of own)assert(candidate.file('Application tracker/'+name),`${filename} missing ${name}`);
   for(const name of other)assert(!candidate.file('Application tracker/'+name),`${filename} contains ${name}`);
   for(const entry of Object.values(candidate.files))if(!entry.dir&&entry.name.startsWith('Application tracker/app/'))assert.deepEqual(await entry.async('nodebuffer'),await fs.readFile(path.join(root,entry.name.replace('Application tracker/',''))),`Stale release file: ${entry.name}`);
@@ -81,7 +81,7 @@ try{
  assert.equal((await fetch(repeated.url+'/api/export/applications.xlsx',{signal:AbortSignal.timeout(10000)})).status,200);
  assert.deepEqual(JSON.parse(await fs.readFile(path.join(directory,'settings/tracker.json'),'utf8')),{schemaVersion:1,exportLanguage:'en'});
  assert(!Object.keys(zip.files).some(n=>/^Application tracker\/(?:HANDOFF|PLAN|HISTORY|CLAUDE)\.md$/.test(n)));
- const stopCommand=process.platform==='win32'?'Stop Windows.cmd':'Stop macOS.command';
+ const stopCommand=process.platform==='win32'?'Stop (Windows).cmd':'Stop (Mac).command';
  const stopArgs=process.platform==='win32'?['/d','/s','/c',`""${path.join(directory,stopCommand)}""`]:[path.join(directory,stopCommand)];
  const stopped=spawnSync(command,stopArgs,{env,encoding:'utf8',timeout:30000,windowsHide:true,windowsVerbatimArguments:process.platform==='win32'});
  assert.equal(stopped.status,0,stopped.stderr||stopped.stdout);

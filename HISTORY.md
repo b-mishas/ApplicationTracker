@@ -2,6 +2,11 @@
 
 [PLAN.md](PLAN.md) lists remaining work. [HANDOFF.md](HANDOFF.md) records the latest verification details.
 
+## 2026-11-14 — matching Stop names and build targets
+
+- Renamed the source Stop launchers to `Stop (Windows).cmd` and `Stop (Mac).command`, and updated release build/test references. The four-target `--target` option already existed; README.md now names its accepted values.
+- Kept START_HERE.html's explicit Windows and Mac starter names after review, avoiding confusion with the guide's own filename. Script syntax, launcher/reference presence and guide wording checks passed. The distribution ZIPs were not rebuilt, so they still contain the prior Stop names.
+
 ## 2026-11-14 — platform release archives
 
 - The default release build now creates Windows x64 and Mac Intel ZIPs, each with one pinned Node runtime, its own Start/Stop files, reduced runtime checksums and a .sha256 sidecar. The old combined ZIP and checksum were removed. ARM64 manifest entries remain available for explicit targets, but no ARM64 package is built by default. Starters on ARM64 report that no package exists yet; emulation was not verified.

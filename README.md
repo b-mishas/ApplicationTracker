@@ -27,7 +27,16 @@ The self-check verifies installation, schema, inventory, temporary storage/backu
 
     npm run build
 
-The default build verifies pinned Node runtimes for Windows x64 and macOS Intel, then produces dist/Application-tracker-windows-x64.zip and dist/Application-tracker-mac-intel.zip, each with one runtime and a .sha256 checksum. ARM64 runtimes remain pinned in scripts/runtime-manifest.json but are not built by default. Use `node scripts/build-release.mjs --target TARGET` for an individual target. Initial build needs internet and the system tar utility. The builder uses templates/ for agent, guide and profile files, never data/ or a customized profile. Runtime downloads are cached in .build-cache/; runtime/, dist/ and the cache stay outside Git. Refresh pristine templates deliberately when maintaining the source docs.
+The default build verifies pinned Node runtimes for Windows x64 and macOS Intel, then produces dist/Application-tracker-windows-x64.zip and dist/Application-tracker-mac-intel.zip, each with one runtime and a .sha256 checksum. ARM64 runtimes remain pinned in scripts/runtime-manifest.json but are not built by default.
+
+Use `node scripts/build-release.mjs --target TARGET` for one target:
+
+- `windows-x64`
+- `windows-arm64`
+- `mac-intel`
+- `mac-apple-silicon`
+
+Initial build needs internet and the system tar utility. The builder uses templates/ for agent, guide and profile files, never data/ or a customized profile. Runtime downloads are cached in .build-cache/; runtime/, dist/ and the cache stay outside Git. Refresh pristine templates deliberately when maintaining the source docs.
 
 ## Maintenance
 
