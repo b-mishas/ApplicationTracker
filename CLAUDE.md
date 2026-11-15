@@ -16,6 +16,6 @@ At the start, read `HANDOFF.md`. After a meaningful verified milestone, before a
 
 Include UTC update time, agent, objective, branch/HEAD/upstream, changed files and intent, completed work, exact tests/results, known failures, untested platforms, next action, and active operations. Mark remote/CI state as unverified unless checked. Replace stale information and link durable docs instead of repeating them. Never include credentials or raw transcripts.
 
-Keep `PLAN.md` for upcoming work and design decisions, `HISTORY.md` for verified accomplished steps, and `HANDOFF.md` for the latest operational snapshot. Do not mark planned work as accomplished.
+Keep `PLAN.md` for upcoming work and design decisions, `HISTORY.md` for verified accomplished steps, and `HANDOFF.md` for the latest operational snapshot. Do not mark planned work as accomplished. `HISTORY.md` is newest first: insert new entries directly below the 20-hyphen separator line under its introduction, above older entries.
 
 Updating the handoff does not authorize committing, pushing, stashing, switching branches or stopping another agent's process. Do not commit or push unless the user asks. If the handoff cannot be written, say so and provide the snapshot in chat.

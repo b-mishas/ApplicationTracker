@@ -28,7 +28,7 @@ Run checks appropriate to the change. For UI changes, inspect actual browser ren
 
 Rewrite HANDOFF.md as a compact current snapshot (about 200–400 words) after a meaningful verified milestone, before an agent switch and before ending a turn that changed code or project state. Include UTC update time, agent, scope/objective, branch/HEAD/upstream, changed files and intent, verification/results, failures/untested platforms, next action and active operations. Mark remote/CI unverified unless checked. Coalesce rather than append a diary.
 
-Maintain PLAN.md for future work/design decisions and HISTORY.md for verified accomplishments. Updating these files does not authorize committing, pushing, stashing, switching branches or stopping another agent's process.
+Maintain PLAN.md for future work/design decisions and HISTORY.md for verified accomplishments. HISTORY.md is newest first: insert new entries directly below the 20-hyphen separator line under its introduction, above older entries. Updating these files does not authorize committing, pushing, stashing, switching branches or stopping another agent's process.
 
 ## Communication
 
