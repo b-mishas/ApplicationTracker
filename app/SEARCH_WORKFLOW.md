@@ -82,6 +82,7 @@ If the workbook cannot be updated, record employer check dates/career URLs in da
 - `employers` records successful check dates and career URLs under the exact workbook company name, including when workbook writes are unavailable.
 - `linkedinAccess` is an object with `attemptedAt` (UTC Z), `browser`, `status` (`ok` or `failed`), `postingsRead`, `postingsFailed` and `reason`. It records the observed browser-access result for the run.
 - `dropped` is an array of candidates dropped by the agent that are not in jobs.json. Each entry has `provider`, `providerJobId`, `url`, `company`, `title`, `reason` and `droppedAt` (YYYY-MM-DD). Keep existing entries and remove only those older than 60 days. This memory is separate from the user's Dismissed status in the tracker.
+- `recheck` is an array counting re-check attempts for saved "Title only" or Unverified records. Each entry has `jobId`, `attempts` and `lastAttempt` (YYYY-MM-DD). Remove an entry when its record is resolved or no longer New/Shortlisted; stop re-checking after three attempts.
 - `unfinished` holds only work that failed with an observed tool error; remove an entry only after completing it. Standing user rules belong in the candidate profile.
 
 The agent writes this file directly; do not submit these fields to the discovery importer or add them to jobs.json.
