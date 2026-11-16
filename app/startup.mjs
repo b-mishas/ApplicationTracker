@@ -8,6 +8,7 @@ import {promisify} from 'node:util';
 import {fileURLToPath} from 'node:url';
 import {dataRoot} from './config.mjs';
 import {settingsFile} from './settings.mjs';
+import {writeJsonAtomic} from './store.mjs';
 const run=promisify(execFile);
 const launcher=fileURLToPath(new URL('./launch.mjs',import.meta.url));
 const ps=value=>"'"+String(value).replaceAll("'","''")+"'";
@@ -18,19 +19,38 @@ export function startupRegistration({platform=process.platform,home=os.homedir()
  const label='local.applicationtracker.'+id;
  const directory=platform==='win32'?appData&&path.join(appData,'Microsoft','Windows','Start Menu','Programs','Startup'):path.join(home,'Library','LaunchAgents');
  const file=directory&&path.join(directory,platform==='win32'?'ApplicationTracker-'+id+'.lnk':label+'.plist');
- return {supported:supported&&Boolean(directory),platform,label,file,executable,launch,data,settings};
+ // Outside the Startup folder, where Windows would open every file at login.
+ const registry=platform==='win32'?appData&&path.join(appData,'ApplicationTracker','login-entries.json'):path.join(home,'Library','Application Support','ApplicationTracker','login-entries.json');
+ return {supported:supported&&Boolean(directory),platform,label,file,executable,launch,data,settings,registry};
+}
+// The registry maps each login entry to the launcher it starts, so entries of moved or deleted folders can be removed.
+async function loginEntries(r){try{const all=JSON.parse(await fs.readFile(r.registry,'utf8'));return all&&typeof all==='object'&&!Array.isArray(all)?all:{};}catch{return {};}}
+async function remember(r,keep){
+ const all=await loginEntries(r);if(keep)all[r.file]=r.launch;else delete all[r.file];
+ await fs.mkdir(path.dirname(r.registry),{recursive:true});await writeJsonAtomic(r.registry,all);
+}
+export async function removeStaleStartup(options){
+ const r=startupRegistration(options);if(!r.supported)return;
+ const all=await loginEntries(r);let changed=false;
+ for(const [file,launch] of Object.entries(all)){
+  if(typeof launch==='string'&&await fs.access(launch).then(()=>true,()=>false))continue;
+  // Delete only this app's own entries in the login folder, whatever the registry file says.
+  if(path.dirname(file)===path.dirname(r.file)&&/^(?:ApplicationTracker-[0-9a-f]{16}\.lnk|local\.applicationtracker\.[0-9a-f]{16}\.plist)$/.test(path.basename(file)))await fs.rm(file,{force:true});
+  delete all[file];changed=true;
+ }
+ if(changed)await writeJsonAtomic(r.registry,all);
 }
 export async function readStartup(options){
  const registration=startupRegistration(options);
  let enabled=false;
  if(registration.supported){try{await fs.access(registration.file);enabled=true;}catch(error){if(error.code!=='ENOENT')throw error;}}
- return {supported:registration.supported,enabled};
+ return {supported:registration.supported,enabled,offered:registration.supported&&registration.platform==='win32'};
 }
 export async function saveStartup(enabled,options){
  if(typeof enabled!=='boolean')throw Error('Start at login must be true or false.');
  const r=startupRegistration(options);
  if(!r.supported)throw Error('Automatic startup is available on Windows and macOS.');
- if(!enabled){await fs.rm(r.file,{force:true});return readStartup(options);}
+ if(!enabled){await fs.rm(r.file,{force:true});await remember(r,false);return readStartup(options);}
  await fs.access(r.executable);await fs.access(r.launch);
  await fs.mkdir(path.dirname(r.file),{recursive:true});
  if(r.platform==='win32'){
@@ -51,5 +71,6 @@ export async function saveStartup(enabled,options){
   const contents='<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0"><dict><key>Label</key><string>'+r.label+'</string><key>ProgramArguments</key><array>'+args+'</array><key>RunAtLoad</key><true/><key>EnvironmentVariables</key><dict><key>JOBTRACKER_DATA_DIR</key><string>'+xml(r.data)+'</string><key>JOBTRACKER_SETTINGS_FILE</key><string>'+xml(r.settings)+'</string></dict><key>StandardOutPath</key><string>'+xml(path.join(r.data,'logs','login.log'))+'</string><key>StandardErrorPath</key><string>'+xml(path.join(r.data,'logs','login.log'))+'</string></dict></plist>\n';
   await fs.writeFile(r.file,contents,{mode:0o600});
  }
+ await remember(r,true);
  return readStartup(options);
 }

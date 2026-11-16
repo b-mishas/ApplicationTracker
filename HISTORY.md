@@ -4,6 +4,12 @@
 
 --------------------
 
+## 2026-11-16 — start at login: Windows only, stale entries removed (Claude)
+
+- Settings no longer offers "Start server at login" on macOS: the API reports it as unsupported there and refuses changes, because the LaunchAgent has never run on a Mac and is expected to be blocked for folders in Documents, Desktop or Downloads. The registration code and its data-only test remain. START_HERE.html and the Settings hint say "Windows only for now".
+- Each login entry is recorded with its launcher path in a per-user file outside the Startup folder (`%APPDATA%/ApplicationTracker/login-entries.json`). Every start removes entries whose launcher no longer exists, so a moved or deleted folder leaves no broken login command. Only this app's own entry names in the login folder can be deleted.
+- npm test passed with new assertions: a live entry stays, a moved folder's entry is removed, a tampered registry cannot delete another file, macOS is not offered. Entries created before this change are not in the registry and are not cleaned.
+
 ## 2026-11-16 — login-start limit, Apple silicon package, launcher fixes (Claude)
 
 - Start at login on Windows: the shortcut command omits the data and settings overrides when they are the folders next to app/, and saving is refused with a plain message when the arguments would exceed 1023 characters. Windows cuts shortcut arguments there without an error (measured with WScript.Shell on Windows 11), which previously left an enabled-looking but broken login command for install paths over about 50 characters.

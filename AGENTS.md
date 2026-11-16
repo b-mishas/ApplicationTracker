@@ -33,3 +33,5 @@ Maintain PLAN.md for future work/design decisions and HISTORY.md for verified ac
 ## Communication
 
 The user is a programming novice at approximately CS50 introductory level. Briefly explain commands and flags when giving commands to the user, and explain relevant code/algorithm choices when useful. For responses covering multiple steps or topics, use clear formatted headings, numbering and occasional helpful emojis. Keep focused updates concise.
+
+Commit subjects start with `[Prompt]` for changes to the agent prompts, guides and profile templates (`agent/`, `guides/`, `profile/`, `templates/`), and with `[Wrapper]` for the tracker app, launchers, tests and packaging. The text after the prefix starts with a capital letter (Sentence case), for example `[Prompt] Add link finder`.

@@ -19,3 +19,5 @@ Include UTC update time, agent, objective, branch/HEAD/upstream, changed files a
 Keep `PLAN.md` for upcoming work and design decisions, `HISTORY.md` for verified accomplished steps, and `HANDOFF.md` for the latest operational snapshot. Do not mark planned work as accomplished. `HISTORY.md` is newest first: insert new entries directly below the 20-hyphen separator line under its introduction, above older entries.
 
 Updating the handoff does not authorize committing, pushing, stashing, switching branches or stopping another agent's process. Do not commit or push unless the user asks. If the handoff cannot be written, say so and provide the snapshot in chat.
+
+Commit subjects start with `[Prompt]` for changes to the agent prompts, guides and profile templates (`agent/`, `guides/`, `profile/`, `templates/`), and with `[Wrapper]` for the tracker app, launchers, tests and packaging. The text after the prefix starts with a capital letter (Sentence case), for example `[Prompt] Add link finder`.

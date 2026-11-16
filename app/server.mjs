@@ -74,11 +74,15 @@ const server=http.createServer(async(req,res)=>{
    let body='';for await(const chunk of req){body+=chunk;if(body.length>1000)return reply(413,{error:'Port setting too large.'});}
    try{const input=JSON.parse(body);return reply(200,await savePortSettings(input.port,input.revision,port));}catch(error){return reply(error instanceof ConflictError?409:400,{error:error.message});}
   }
-  if(url.pathname==='/api/startup'&&req.method==='GET')return reply(200,await readStartup());
+  if(url.pathname==='/api/startup'&&req.method==='GET'){const state=await readStartup();return reply(200,{supported:state.offered,enabled:state.enabled});}
   if(url.pathname==='/api/startup'&&req.method==='PATCH'){
    if(req.headers.origin!==origin||!req.headers['content-type']?.startsWith('application/json'))return reply(403,{error:'Save from the tracker page.'});
    let body='';for await(const chunk of req){body+=chunk;if(body.length>1000)return reply(413,{error:'Startup setting too large.'});}
-   try{return reply(200,await saveStartup(JSON.parse(body).enabled));}catch(error){return reply(400,{error:error.message});}
+   try{
+    // Not offered on macOS until login start has been verified on a real Mac.
+    if(!(await readStartup()).offered)throw Error('Automatic startup is available on Windows only for now.');
+    const state=await saveStartup(JSON.parse(body).enabled);return reply(200,{supported:state.offered,enabled:state.enabled});
+   }catch(error){return reply(400,{error:error.message});}
   }
   if(url.pathname==='/api/settings'&&req.method==='GET'){const settings=await readSettings();return reply(200,{settings,revision:revision(await readFile(settingsFile,'utf8')),ready:ready(settings)});}
   if(url.pathname==='/api/settings'&&req.method==='PATCH'){

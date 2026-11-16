@@ -519,7 +519,7 @@ $('settings-open').onclick=async()=>{
  try{
   const response=await fetch('/api/startup');if(!response.ok)throw Error('Could not read startup preference.');
   startupState=await response.json();$('settings-startup').checked=startupState.enabled;$('settings-startup').disabled=!startupState.supported;
-  $('settings-startup-help').textContent=startupState.supported?'Starts in the background without opening a browser.':'Automatic startup is available on Windows and macOS.';
+  $('settings-startup-help').textContent=startupState.supported?'Starts in the background without opening a browser.':'Automatic startup is available on Windows only for now.';
  }catch(error){$('settings-startup-help').textContent=error.message;}
  try{
   const response=await fetch('/api/port-settings');

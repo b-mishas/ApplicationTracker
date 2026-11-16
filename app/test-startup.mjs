@@ -7,7 +7,7 @@ import net from 'node:net';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {fileURLToPath} from 'node:url';
-import {readStartup,saveStartup,startupRegistration} from './startup.mjs';
+import {readStartup,saveStartup,startupRegistration,removeStaleStartup} from './startup.mjs';
 import {readStoredPort} from './port-settings.mjs';
 const execute=promisify(execFile),launch=fileURLToPath(new URL('./launch.mjs',import.meta.url));
 const temp=await fs.mkdtemp(path.join(os.tmpdir(),"Tracker's login & test-"));
@@ -57,7 +57,7 @@ try{
  await invoke(['--restart','--port',String(otherPort)]);state=JSON.parse(await fs.readFile(metadata,'utf8'));assert.equal(state.url,'http://127.0.0.1:'+otherPort);
  console.log('PASS: Restart/Stop preserve the bookmark; an explicit new port is validated, saved and requires Restart while running.');
  const request=(method,body,origin=state.url)=>fetch(state.url+'/api/startup',{method,headers:{Origin:origin,'Content-Type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)})});
- assert.deepEqual(await(await request('GET')).json(),{supported:['win32','darwin'].includes(process.platform),enabled:false});
+ assert.deepEqual(await(await request('GET')).json(),{supported:process.platform==='win32',enabled:false});
  assert.equal((await request('PATCH',{enabled:true},'http://example.com')).status,403);
  assert.equal((await request('PATCH',{enabled:'yes'})).status,400);
  // On Windows, this creates only a temporary shortcut; it is never registered
@@ -89,7 +89,20 @@ try{
  const mac={...options,platform:'darwin'};assert.equal((await readStartup(mac)).enabled,false);
  await saveStartup(true,mac);const plist=await fs.readFile(startupRegistration(mac).file,'utf8');
  assert(plist.includes('<key>RunAtLoad</key><true/>'));assert(plist.includes('<string>--foreground</string>'));assert(!plist.includes('KeepAlive'));assert(plist.includes('&apos;'));assert(plist.includes('&amp;'));
+ assert.equal((await readStartup(mac)).offered,false);
  await saveStartup(false,mac);assert.equal((await readStartup(mac)).enabled,false);
+ // A login entry whose folder was moved or deleted is removed at the next start; a live one stays.
+ const moved=path.join(temp,'moved','app');await fs.mkdir(moved,{recursive:true});await fs.writeFile(path.join(moved,'launch.mjs'),'');
+ const gone={...mac,launch:path.join(moved,'launch.mjs')};
+ await saveStartup(true,gone);await saveStartup(true,mac);await removeStaleStartup(mac);
+ assert.equal((await readStartup(gone)).enabled,true);
+ await fs.rm(path.join(temp,'moved'),{recursive:true});await removeStaleStartup(mac);
+ assert.equal((await readStartup(gone)).enabled,false);assert.equal((await readStartup(mac)).enabled,true);
+ const stray=path.join(temp,'keep-me.txt');await fs.writeFile(stray,'x');
+ await fs.writeFile(startupRegistration(mac).registry,JSON.stringify({[stray]:path.join(temp,'missing','launch.mjs')}));
+ await removeStaleStartup(mac);await fs.access(stray);
+ await saveStartup(false,mac);
+ console.log('PASS: login entries of moved or deleted folders are removed, live ones kept, and a tampered registry cannot delete other files.');
  assert.equal((await readStartup({...options,platform:'linux'})).supported,false);
  await invoke(['--stop']);
  const attached=invoke(['--background','--foreground']);

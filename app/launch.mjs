@@ -8,6 +8,7 @@ import {createInterface} from 'node:readline';
 import {dataRoot} from './config.mjs';
 import {writeJsonAtomic,withLock} from './store.mjs';
 import {readStoredPort,validatePort,configuredPort,assertPortAvailable} from './port-settings.mjs';
+import {removeStaleStartup} from './startup.mjs';
 const here=path.dirname(fileURLToPath(import.meta.url));
 const installation=crypto.createHash('sha256').update(here+'\0'+dataRoot).digest('hex');
 async function main(){
@@ -20,6 +21,8 @@ async function main(){
  const requestedPort=portIndex>=0?validatePort(args[portIndex+1]):undefined;
  const logDir=path.join(dataRoot,'logs');
  await import('./initialize.mjs');await mkdir(logDir,{recursive:true});
+ // A login entry left behind by a moved or deleted folder must not block or fail this start.
+ await removeStaleStartup().catch(()=>{});
  const metadata=path.join(logDir,'server.json'),portFile=path.join(dataRoot,'server-port.json');
  function browse(url){
   if(background)return;

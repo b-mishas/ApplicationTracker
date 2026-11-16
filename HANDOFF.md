@@ -1,36 +1,31 @@
 # Application tracker checkpoint
 
-Updated 2026-11-16 17:55 UTC by Claude. Checkout C:/Users/misha/Claude/ApplicationTracker, main at the [Wrapper] commit that follows bfe28a2, three commits ahead of the local origin/main ref (5e43c8b; not fetched). Remote/CI unverified. No operations active. Nothing pushed.
+Updated 2026-11-16 19:10 UTC by Claude. Checkout C:/Users/misha/Claude/ApplicationTracker, main four commits ahead of the local origin/main ref (5e43c8b; not fetched): bc6de61, bfe28a2, 7a4728f and the latest [Wrapper] commit holding this file. Remote/CI unverified. No operations active. Nothing pushed.
 
-## Committed this session
+## Committed this session (Claude, at the user's request, including app code)
 
-bfe28a2: routine Part B gains a link-finder subagent, a `recheck` list in coverage.json (stop after three attempts), Hard rules and Completion sections at the top, and link-finder/re-check counts in the Coverage line. INTERFACE_FOR_TRACKER.md and app/SEARCH_WORKFLOW.md name `recheck`. PLAN.md (draggable/resizable columns) went into the same commit at the user's request. agent/ equals templates/agent/. The routine has not been run in this form, nor with the model split from d6d880e.
+- bfe28a2 [Prompt]: routine Part B gains a link-finder subagent, a `recheck` list in coverage.json (stop after three attempts), Hard rules and Completion sections at the top, and link-finder/re-check counts in the Coverage line. agent/ equals templates/agent/.
+- 7a4728f [Wrapper]: Windows login shortcut refuses arguments over 1023 characters (Windows truncates silently; measured) and omits default overrides; default build and release test add mac-apple-silicon; damaged server-port.json falls back to the default; failed `--background` start logs to data/logs/login.log.
+- Latest [Wrapper]: start at login is offered on Windows only (API reports unsupported on macOS and refuses changes; registration code kept). Login entries are recorded in `%APPDATA%/ApplicationTracker/login-entries.json`; app/launch.mjs removes entries whose launcher no longer exists at every start. CLAUDE.md and AGENTS.md gain the commit-prefix rule: `[Prompt]` or `[Wrapper]`, then Sentence case.
 
-## Committed code changes by Claude ([Wrapper] commit after bfe28a2)
-
-- app/startup.mjs: Windows login shortcut omits default data/settings overrides and refuses arguments over 1023 characters (Windows truncates silently there; measured).
-- app/port-settings.mjs: damaged server-port.json falls back to the default port.
-- app/launch.mjs: a failed `--background` start appends its error to data/logs/login.log.
-- Start/Restart/Stop (Mac).command: messages name the needed package; Stop says "Stop failed".
-- scripts/build-release.mjs, scripts/test-release.mjs: mac-apple-silicon built and tested by default.
-- app/test-startup.mjs: assertions for the refused long path and the damaged port file.
-- README.md, app/README.md, app/SEARCH_WORKFLOW.md, PORTABILITY.md: three packages named. HISTORY.md: two entries.
+Details are in HISTORY.md (three entries dated 2026-11-16).
 
 ## Verification
 
-npm test: exit 0. npm run build: three ZIPs (Windows x64 47 MB, Mac Intel 53 MB, Mac Apple silicon 51 MB), audits ok. node scripts/test-release.mjs: exit 0; all three archives checked statically, Windows x64 package extracted and run. dist/ now holds test builds made before the commit from the same tree, not an approved release.
+npm test: exit 0 after the last change. npm run build and node scripts/test-release.mjs passed before the last change (three ZIPs; Windows x64 package extracted and run); not repeated since, so dist/ lacks the last commit. dist/ holds test builds, not an approved release.
 
 ## Not tested, known gaps
 
-- No Mac package has run on a Mac. macOS start at login is expected to hit the privacy protection for Documents/Desktop/Downloads; unverified and unfixed.
-- Moving the folder after enabling start at login leaves the old shortcut or LaunchAgent behind; unfixed.
-- Windows ARM64: no package, starter says so.
+- No Mac package has run on a Mac. START_HERE.html does not yet explain the first-launch approval for unsigned files.
+- The routine has not been run with the model split (d6d880e) or the link finder and re-checks (bfe28a2).
+- Login entries created before the registry existed are not cleaned. An unplugged external drive counts as a missing folder.
+- Windows ARM64: no package; the starter says so.
 - START_HERE.html does not say which ZIP to choose; that happens before download.
 
 ## Other local state
 
-design/ (untracked wrapper sketches, user review pending) and the Codex worktree at C:/Users/misha/.codex/worktrees/new-count-boxes/ApplicationTracker are unchanged; see HISTORY.md for the counter merge. The manual scheduled task `rehearsal-daily-job-search` still holds an old Part B.
+design/ (untracked wrapper sketches, user review pending) and the Codex worktree at C:/Users/misha/.codex/worktrees/new-count-boxes/ApplicationTracker are unchanged. The manual scheduled task `rehearsal-daily-job-search` still holds an old Part B.
 
 ## Next
 
-A Codex rehearsal of the routine from a fresh ZIP. Remaining release items are in PLAN.md.
+Rebuild dist on request, then a Codex rehearsal of the routine from a fresh ZIP (automation on Terra). A Mac owner should try a Mac package once. Remaining release items are in PLAN.md.
