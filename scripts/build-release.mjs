@@ -18,7 +18,7 @@ const aliases={'win-x64':'windows-x64','win-arm64':'windows-arm64','mac-x64':'ma
 const args=process.argv.slice(2);
 const target=aliases[args[1]]||args[1];
 if(args.length&&!(args.length===2&&args[0]==='--target'&&Object.hasOwn(targets,target)))throw Error('Usage: node scripts/build-release.mjs [--target win-x64|win-arm64|mac-x64|mac-arm64]');
-const selected=args.length?[target]:['windows-x64','mac-intel'];
+const selected=args.length?[target]:['windows-x64','mac-intel','mac-apple-silicon'];
 const cache=process.env.JOBTRACKER_BUILD_CACHE||path.join(root,'.build-cache');await fs.mkdir(cache,{recursive:true});
 const digest=b=>crypto.createHash('sha256').update(b).digest('hex');
 // Git Bash can put GNU tar first on PATH. Windows tar accepts drive-letter archive paths.

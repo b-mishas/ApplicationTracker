@@ -17,7 +17,8 @@ try{
  const privateFixture=new JSZip();privateFixture.file('Application tracker/example.md','PRIVATE_FIXTURE_VALUE');await assert.rejects(()=>auditRelease(privateFixture,{denyTerms:['PRIVATE_FIXTURE_VALUE']}),/forbidden private marker/);
  const targets=[
   {name:'windows-x64',runtime:'win-x64',os:'windows'},
-  {name:'mac-intel',runtime:'darwin-x64',os:'mac'}
+  {name:'mac-intel',runtime:'darwin-x64',os:'mac'},
+  {name:'mac-apple-silicon',runtime:'darwin-arm64',os:'mac'}
  ];
  let zip;
  for(const target of targets){
@@ -36,7 +37,7 @@ try{
   assert.equal(runtimeFiles.filter(name=>/\/(?:node|node\.exe)$/.test(name)).length,1,`Expected one Node executable in ${filename}`);
   const metadata=JSON.parse(await candidate.file('Application tracker/RUNTIME_CHECKSUMS.json').async('string'));
   assert.equal(metadata.artifacts.length,1,`Expected one checksum entry in ${filename}`);
-  assert.equal(metadata.artifacts[0].file.includes(target.os==='windows'?'-win-x64.':'-darwin-x64.'),true);
+  assert.equal(metadata.artifacts[0].file.includes('-'+target.runtime+'.'),true);
   const own=target.os==='windows'?['Start (Windows).cmd','Restart (Windows).cmd','Stop (Windows).cmd']:['Start (Mac).command','Restart (Mac).command','Stop (Mac).command'];
   const other=target.os==='windows'?['Start (Mac).command','Restart (Mac).command','Stop (Mac).command']:['Start (Windows).cmd','Restart (Windows).cmd','Stop (Windows).cmd'];
   for(const name of own)assert(candidate.file('Application tracker/'+name),`${filename} missing ${name}`);
@@ -44,7 +45,7 @@ try{
   for(const entry of Object.values(candidate.files))if(!entry.dir&&entry.name.startsWith('Application tracker/app/'))assert.deepEqual(await entry.async('nodebuffer'),await fs.readFile(path.join(root,entry.name.replace('Application tracker/',''))),`Stale release file: ${entry.name}`);
   if(target.os==='mac'){
    assert.equal(candidate.file('Application tracker/Start (Mac).command').unixPermissions&0o777,0o755);
-   assert.equal(candidate.file('Application tracker/runtime/darwin-x64/node').unixPermissions&0o777,0o755);
+   assert.equal(candidate.file(`Application tracker/runtime/${target.runtime}/node`).unixPermissions&0o777,0o755);
    for(const name of own)assert(!((await candidate.file('Application tracker/'+name).async('string')).includes('\r')),`${filename} contains CRLF in ${name}`);
   }
   console.log(`PASS: ${filename} audit, checksum, current app files, one runtime, platform starters${target.os==='mac'?', Mac executable permissions':''}.`);

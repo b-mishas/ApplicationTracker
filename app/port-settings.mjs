@@ -10,7 +10,8 @@ export function validatePort(value){
 }
 export async function readStoredPort(root=dataRoot){
  let raw='';try{raw=await fs.readFile(path.join(root,'server-port.json'),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}
- return {port:raw?validatePort(JSON.parse(raw).port):undefined,revision:revision(raw)};
+ let port;try{if(raw)port=validatePort(JSON.parse(raw).port);}catch{ /* Damaged file: use the default port. */ }
+ return {port,revision:revision(raw)};
 }
 export function configuredPort(stored,currentPort,env=process.env){return validatePort(env.JOBTRACKER_PORT??stored.port??currentPort??8765);}
 export async function assertPortAvailable(value,currentPort){

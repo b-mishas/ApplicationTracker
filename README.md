@@ -4,7 +4,7 @@ A local job tracker and daily search-agent package. The GitHub/source repository
 
 ## Recipient
 
-Download Application-tracker-windows-x64.zip for Windows x64 or Application-tracker-mac-intel.zip for an Intel Mac. Extract it into the folder you want to keep and open START_HERE.html. Open the included `Start` file; the tracker opens in a browser and runs locally in the background. Node, flags and Excel support are included; no package installation is needed. Give your assistant this whole folder and follow agent/SETUP_PROMPT.md; it helps define your search profile after interviewing you; groups and countries are assigned in position JSON.
+Download Application-tracker-windows-x64.zip for Windows x64 Application-tracker-mac-apple-silicon.zip for a Mac with an Apple chip (M1 or newer), or Application-tracker-mac-intel.zip for an older Intel Mac. Extract it into the folder you want to keep and open START_HERE.html. Open the included `Start` file; the tracker opens in a browser and runs locally in the background. Node, flags and Excel support are included; no package installation is needed. Give your assistant this whole folder and follow agent/SETUP_PROMPT.md; it helps define your search profile after interviewing you; groups and countries are assigned in position JSON.
 
 Runtime information lives in data/, settings/tracker.json, customized profile/ and agent/ROUTINE_PROMPT.filled.md. Back up those together. Do not share a customized installation as a distribution.
 
@@ -31,7 +31,7 @@ The self-check verifies installation, schema, inventory, temporary storage/backu
 
     npm run build
 
-The default build verifies pinned Node runtimes for Windows x64 and macOS Intel, then produces dist/Application-tracker-windows-x64.zip and dist/Application-tracker-mac-intel.zip, each with one runtime and a .sha256 checksum. ARM64 runtimes remain pinned in scripts/runtime-manifest.json but are not built by default.
+The default build verifies pinned Node runtimes for Windows x64, macOS Intel and macOS Apple silicon, then produces dist/Application-tracker-windows-x64.zip, dist/Application-tracker-mac-intel.zip and dist/Application-tracker-mac-apple-silicon.zip, each with one runtime and a .sha256 checksum. The Windows ARM64 runtime remains pinned in scripts/runtime-manifest.json but is not built by default.
 
 Use `node scripts/build-release.mjs --target TARGET` for one target. Short names are listed first; the existing names still work:
 

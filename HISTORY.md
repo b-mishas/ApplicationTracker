@@ -4,6 +4,16 @@
 
 --------------------
 
+## 2026-11-16 — login-start limit, Apple silicon package, launcher fixes (Claude)
+
+- Start at login on Windows: the shortcut command omits the data and settings overrides when they are the folders next to app/, and saving is refused with a plain message when the arguments would exceed 1023 characters. Windows cuts shortcut arguments there without an error (measured with WScript.Shell on Windows 11), which previously left an enabled-looking but broken login command for install paths over about 50 characters.
+- The default build and scripts/test-release.mjs now cover Application-tracker-mac-apple-silicon.zip; Mac starters name the package the processor needs. A damaged data/server-port.json falls back to the default port. A failed `--background` start appends its error to data/logs/login.log. Stop (Mac).command reports "Stop failed".
+- npm test passed (new assertions for the refused long path and the damaged port file). npm run build produced three ZIPs with passing audits; node scripts/test-release.mjs passed for all three and ran the Windows x64 package. No Mac package has run on a Mac.
+
+## 2026-11-16 — routine: link finder, re-check counter, hard rules (Claude)
+
+- Ported from the live JobTracker routine into Part B (bfe28a2): link-finder subagent, `recheck` list in coverage.json with a three-attempt stop, Hard rules and Completion sections at the top, link-finder and re-check counts in the Coverage line. INTERFACE_FOR_TRACKER.md and app/SEARCH_WORKFLOW.md name `recheck`. Text change only; no run performed.
+
 ## 2026-11-14 — grouped overview counters
 
 - Ported ClaudeCodeLocal 1299faf: application overview groups Positions collected, Applications sent, Interviews held and Applications in progress; a separate priorities group holds Shortlisted, Urgent and New. A shared parent delegates all seven click filters; groups wrap with a 12 px gap.

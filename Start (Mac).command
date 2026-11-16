@@ -11,9 +11,9 @@ if [ ! -x "$tracker_node" ]; then
 fi
 if [ ! -x "$tracker_node" ]; then
   if [ "$tracker_arch" = arm64 ]; then
-    printf 'No Application tracker package exists yet for Apple silicon Macs.\n'
+    printf 'Apple silicon runtime missing. This Mac needs Application-tracker-mac-apple-silicon.zip.\n'
   else
-    printf 'Mac Intel runtime missing. Download and extract Application-tracker-mac-intel.zip again.\n'
+    printf 'Mac Intel runtime missing. This Mac needs Application-tracker-mac-intel.zip.\n'
   fi
   read -r tracker_reply
   exit 1

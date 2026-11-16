@@ -8,6 +8,7 @@ import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {fileURLToPath} from 'node:url';
 import {readStartup,saveStartup,startupRegistration} from './startup.mjs';
+import {readStoredPort} from './port-settings.mjs';
 const execute=promisify(execFile),launch=fileURLToPath(new URL('./launch.mjs',import.meta.url));
 const temp=await fs.mkdtemp(path.join(os.tmpdir(),"Tracker's login & test-"));
 const root=path.join(temp,'data'),settings=path.join(temp,'settings','tracker.json');
@@ -77,6 +78,13 @@ try{
   assert.deepEqual(JSON.parse(await fs.readFile(settings,'utf8')),{schemaVersion:1,exportLanguage:'en'});
   console.log('PASS: same-origin Settings enables/disables an isolated Windows shortcut; its actual silent login command starts the saved address, including paths with apostrophes, spaces and &.');
  }
+ // Windows cuts shortcut arguments at 1023 characters; a long folder must be refused, not half-registered.
+ const deep=path.join(temp,'L'.repeat(120),'app');await fs.mkdir(deep,{recursive:true});await fs.writeFile(path.join(deep,'launch.mjs'),'');
+ const long={...options,platform:'win32',launch:path.join(deep,'launch.mjs')};
+ await assert.rejects(()=>saveStartup(true,long),/too long for automatic startup/);assert.equal((await readStartup(long)).enabled,false);
+ const damaged=path.join(temp,'damaged');await fs.mkdir(damaged);await fs.writeFile(path.join(damaged,'server-port.json'),'{oops');
+ assert.equal((await readStoredPort(damaged)).port,undefined);
+ console.log('PASS: an over-long Windows login command is refused before any shortcut is written; a damaged port file falls back to the default.');
  // Verify macOS registration data without activating launchd on the host.
  const mac={...options,platform:'darwin'};assert.equal((await readStartup(mac)).enabled,false);
  await saveStartup(true,mac);const plist=await fs.readFile(startupRegistration(mac).file,'utf8');

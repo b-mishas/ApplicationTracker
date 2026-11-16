@@ -1,6 +1,6 @@
 import {spawn,fork} from 'node:child_process';
 import {readFile,mkdir} from 'node:fs/promises';
-import {openSync,closeSync} from 'node:fs';
+import {openSync,closeSync,appendFileSync} from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import crypto from 'node:crypto';
@@ -100,4 +100,8 @@ async function main(){
  }}
  if(foreground&&child&&child.exitCode===null)await new Promise(resolve=>child.once('exit',resolve));
 }
-try{await main();}catch(error){console.error('Application tracker: '+error.message);process.exitCode=1;}
+try{await main();}catch(error){
+ console.error('Application tracker: '+error.message);process.exitCode=1;
+ // The login start has no window; record why it failed.
+ if(process.argv.includes('--background'))try{appendFileSync(path.join(dataRoot,'logs','login.log'),new Date().toISOString()+' '+error.message+'\n');}catch{ /* Log folder unavailable. */ }
+}

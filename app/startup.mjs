@@ -36,9 +36,13 @@ export async function saveStartup(enabled,options){
  if(r.platform==='win32'){
   // A hidden PowerShell shortcut avoids a terminal window at login. Values are
   // quoted as literals; folder names containing spaces, apostrophes or & work.
-  const command=["$env:JOBTRACKER_DATA_DIR="+ps(r.data),"$env:JOBTRACKER_SETTINGS_FILE="+ps(r.settings),"& "+ps(r.executable)+' '+ps(r.launch)+" '--background'"].join('; ');
+  // Folders next to app/ are the launcher's defaults and need no override.
+  const beside=name=>path.resolve(path.dirname(r.launch),'..',name);
+  const command=[...(path.resolve(r.data)===beside('data')?[]:["$env:JOBTRACKER_DATA_DIR="+ps(r.data)]),...(path.resolve(r.settings)===beside(path.join('settings','tracker.json'))?[]:["$env:JOBTRACKER_SETTINGS_FILE="+ps(r.settings)]),"& "+ps(r.executable)+' '+ps(r.launch)+" '--background'"].join('; ');
   const encoded=Buffer.from(command,'utf16le').toString('base64');
   const powershell=path.join(process.env.SystemRoot||'C:/Windows','System32','WindowsPowerShell','v1.0','powershell.exe');
+  // Windows silently cuts shortcut arguments at 1023 characters, which would leave a broken login command.
+  if(('-NoProfile -NonInteractive -WindowStyle Hidden -EncodedCommand '+encoded).length>1023)throw Error('The Application tracker folder path is too long for automatic startup. Move the folder to a shorter path, for example directly into Documents.');
   const script=["$ErrorActionPreference='Stop'","$shell=New-Object -ComObject WScript.Shell","$shortcut=$shell.CreateShortcut("+ps(r.file)+')',"$shortcut.TargetPath="+ps(powershell),"$shortcut.Arguments="+ps('-NoProfile -NonInteractive -WindowStyle Hidden -EncodedCommand '+encoded),"$shortcut.WorkingDirectory="+ps(path.dirname(r.launch)),"$shortcut.WindowStyle=7","$shortcut.Description='Application tracker background server'","$shortcut.Save()"].join('; ');
   await run(powershell,['-NoProfile','-NonInteractive','-EncodedCommand',Buffer.from(script,'utf16le').toString('base64')],{windowsHide:true,timeout:15000});
  }else{
