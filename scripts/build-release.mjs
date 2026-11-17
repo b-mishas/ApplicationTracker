@@ -105,7 +105,7 @@ for(const target of selected){
  for(const sub of ['incoming/imported','reports','backups','exports'])archive.folder('Application tracker/data/'+sub);
  addFile('RUNTIME_CHECKSUMS.json',JSON.stringify({version:manifest.version,artifacts:[item]},null,2)+'\n');
  const names=Object.keys(archive.files);
- if(names.some(n=>/^Application tracker\/(?:\.git(?:\/|$)|(?:CLAUDE|HANDOFF|PLAN|HISTORY|PORTABILITY)\.md$|agent\/ROUTINE_PROMPT\.filled\.md$|profile\/cv\/(?!README\.txt$))/.test(n)&&!n.endsWith('/')))throw Error('Private/developer content in release.');
+ if(names.some(n=>/^Application tracker\/(?:\.git(?:\/|$)|(?:CLAUDE|HANDOFF(?:_AGENT|_WRAPPER)?|PLAN|HISTORY|PORTABILITY)\.md$|agent\/ROUTINE_PROMPT\.filled\.md$|profile\/cv\/(?!README\.txt$))/.test(n)&&!n.endsWith('/')))throw Error('Private/developer content in release.');
  console.log(target+' release audit: '+JSON.stringify(await auditRelease(archive,{denyTerms})));
  const filename=`Application-tracker-${target}.zip`;
  const output=path.join(dist,filename);

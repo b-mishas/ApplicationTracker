@@ -1,6 +1,6 @@
 # Application tracker — plan
 
-[HISTORY.md](HISTORY.md) records completed milestones. [HANDOFF.md](HANDOFF.md) records verification and checkout status.
+[HISTORY.md](HISTORY.md) records completed milestones. [HANDOFF_AGENT.md](HANDOFF_AGENT.md) and [HANDOFF_WRAPPER.md](HANDOFF_WRAPPER.md) record verification and checkout status.
 
 ## Before shipping
 

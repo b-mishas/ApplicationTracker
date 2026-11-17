@@ -13,7 +13,7 @@ The routine prompt (`agent/ROUTINE_PROMPT.md`, Part B) relies on exactly these p
 | `agent/SETUP_PROMPT.md`, `agent/ROUTINE_PROMPT.md`, `agent/CUSTOMIZE.md` | setup prompt, routine (Part A placeholders + fixed Part B), customization rules | agent package |
 | `guides/` | Claude, Codex, Gmail alerts | agent package |
 
-Not shipped: `AGENTS.md`, `CLAUDE.md`, `HANDOFF.md`, `PLAN.md`, `HISTORY.md`, `PORTABILITY.md`, this file, tests, `.git`, any filled profile, CV, `ROUTINE_PROMPT.filled.md`, or data from a real installation. Build from pristine templates, never from a customized folder.
+Not shipped: `AGENTS.md`, `CLAUDE.md`, `HANDOFF_AGENT.md`, `HANDOFF_WRAPPER.md`, `PLAN.md`, `HISTORY.md`, `PORTABILITY.md`, this file, tests, `.git`, any filled profile, CV, `ROUTINE_PROMPT.filled.md`, or data from a real installation. Build from pristine templates, never from a customized folder.
 
 ## Implemented tracker interface
 - Settings: settings/tracker.json contains schemaVersion, exportLanguage and optional exportName. Use Settings or settings-cli.mjs --check/--apply for export preferences. Profile-defined groups and country codes arrive in position JSON; no search whitelist or tracker timezone is configured. The importer validates recognized country codes independently of settings. Old settings fields are ignored on read and dropped on explicit save.
@@ -22,7 +22,7 @@ Not shipped: `AGENTS.md`, `CLAUDE.md`, `HANDOFF.md`, `PLAN.md`, `HISTORY.md`, `P
 - Local startup: Start reuses a fixed local address; Restart restarts explicitly. Optional startup at login is controlled in tracker Settings and registered per-user on the computer, independently of agent scheduling. Advanced Settings exposes the local port/address; port changes apply on explicit Restart, which checks availability before stopping. Start/Restart files offer port-conflict recovery. These local preferences are not part of settings/tracker.json or the position database.
 - Node: each platform ZIP contains one runtime; the default build targets Windows x64 and Mac Intel. Exact paths are documented in app/SEARCH_WORKFLOW.md; Linux agents need Linux Node in their environment.
 - Workbook helper: employer-workbook.mjs read/replace/update provides deterministic setup and maintenance without Python; read SEARCH_WORKFLOW.md for input fields and fallback.
-- Runtime/package and integration verification: see HANDOFF.md and HISTORY.md in the development repository; they are not distributed. macOS needs a real-machine acceptance check.
+- Runtime/package and integration verification: see HANDOFF_WRAPPER.md and HISTORY.md in the development repository; they are not distributed. macOS needs a real-machine acceptance check.
 
 ## Folder layout (relative to ROOT)
 | Path | Owner | Agent access |

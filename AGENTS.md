@@ -2,7 +2,13 @@
 
 ## Start with the current checkout
 
-Verify the actual working directory and Git root, then read HANDOFF.md, PLAN.md, HISTORY.md and INTERFACE_FOR_TRACKER.md. Check branch, HEAD, upstream and staged/unstaged/untracked changes. Read CLAUDE.md for coordinated repository conventions. Verify implementation against code; plans are not completed features. Do not rerun full checks solely for onboarding.
+Verify the actual working directory and Git root, then read the relevant handoff, PLAN.md, HISTORY.md and INTERFACE_FOR_TRACKER.md. Check branch, HEAD, upstream and staged/unstaged/untracked changes. Read CLAUDE.md for coordinated repository conventions. Verify implementation against code; plans are not completed features. Do not rerun full checks solely for onboarding.
+
+Select the handoff by function, regardless of which assistant performs the work:
+- `HANDOFF_AGENT.md`: search orchestration, API fetching, extraction, filtering, discovery-batch preparation, prompts, setup/customization workflows, guides, profiles and their pristine templates. Supporting scripts such as `fetch-boards.mjs` belong here regardless of their directory.
+- `HANDOFF_WRAPPER.md`: tracker UI, batch import/validation/storage, settings, Excel helpers, exports, tests, launchers and packaging.
+
+Read the relevant handoff at the start. Read both when scope is unclear, work spans both areas, or the shared interface is affected. Verify the actual checkout state; either snapshot may describe an earlier branch or HEAD.
 
 ## Scope and collaboration
 
@@ -26,9 +32,15 @@ Run checks appropriate to the change. For UI changes, inspect actual browser ren
 
 ## Handoff and durable records
 
-Rewrite HANDOFF.md as a compact current snapshot (about 200–400 words) after a meaningful verified milestone, before an agent switch and before ending a turn that changed code or project state. Include UTC update time, agent, scope/objective, branch/HEAD/upstream, changed files and intent, verification/results, failures/untested platforms, next action and active operations. Mark remote/CI unverified unless checked. Coalesce rather than append a diary.
+Maintain `HANDOFF_AGENT.md` and `HANDOFF_WRAPPER.md` as separate operational snapshots. Update only the handoff relevant to work performed. For work spanning both areas, update both, keeping each focused on its own area and cross-referencing shared dependencies instead of duplicating detailed accounts. Do not rewrite the other area's handoff merely because its timestamp or Git HEAD is older.
 
-Maintain PLAN.md for future work/design decisions and HISTORY.md for verified accomplishments. HISTORY.md is newest first: insert new entries directly below the 20-hyphen separator line under its introduction, above older entries. Updating these files does not authorize committing, pushing, stashing, switching branches or stopping another agent's process.
+After a meaningful verified milestone, before handing work to another assistant, and before ending a turn that changed code or project state, rewrite the relevant handoff as a compact current snapshot (about 200–400 words). Coalesce updates; do not append a session diary.
+
+Include UTC update time, assistant, scope/objective, branch/HEAD/upstream, changed files and intent, completed work, verification/results, known failures, untested platforms, next action and active operations. Distinguish proposals from implemented changes. Mark remote/CI state as unverified unless checked. Replace stale information within the relevant scope and link durable documents instead of repeating them. Never include credentials or raw transcripts.
+
+Keep `PLAN.md` shared for future work/design decisions and `HISTORY.md` shared for verified accomplishments. Do not mark planned work as accomplished. HISTORY.md is newest first: insert new entries directly below the 20-hyphen separator line under its introduction, above older entries. Separate handoffs do not authorize concurrent editing of the same checkout; only one assistant should edit a checkout at a time.
+
+Updating these files does not authorize committing, pushing, stashing, switching branches or stopping another assistant's process. Do not commit or push unless the user asks. If a required handoff cannot be written, explain why and provide the snapshot in chat.
 
 ## Communication
 

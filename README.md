@@ -44,7 +44,7 @@ Initial build needs internet and the system tar utility. The builder uses templa
 
 ## Maintenance
 
-Read CLAUDE.md, HANDOFF.md, PLAN.md, HISTORY.md and INTERFACE_FOR_TRACKER.md before changing the contract. Settings schema and commands are documented in app/SEARCH_WORKFLOW.md. See THIRD_PARTY_NOTICES.md for bundled software.
+Read CLAUDE.md, HANDOFF_AGENT.md, HANDOFF_WRAPPER.md, PLAN.md, HISTORY.md and INTERFACE_FOR_TRACKER.md before changing the contract. Settings schema and commands are documented in app/SEARCH_WORKFLOW.md. See THIRD_PARTY_NOTICES.md for bundled software.
 
 Windows verification and macOS acceptance are distinct. See the latest handoff for actual test results. The project does not upload data automatically. Repository commits/pushes are explicit developer actions.
 

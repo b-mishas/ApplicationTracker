@@ -1,8 +1,13 @@
 # Application tracker — history
 
-[PLAN.md](PLAN.md) lists remaining work. [HANDOFF.md](HANDOFF.md) records the latest verification details. Entries are newest first; add new ones directly below the separator line.
+[PLAN.md](PLAN.md) lists remaining work. [HANDOFF_AGENT.md](HANDOFF_AGENT.md) and [HANDOFF_WRAPPER.md](HANDOFF_WRAPPER.md) record the latest verification details. Entries are newest first; add new ones directly below the separator line.
 
 --------------------
+
+## 2026-11-18 — separate agent and wrapper handoffs (Codex)
+
+- Replaced the shared checkpoint with HANDOFF_AGENT.md and HANDOFF_WRAPPER.md; preserved the latest routine-cost review and unfinished wrapper context. Both assistants now select handoffs by function, including API extraction scripts under agent work, and update both only when work spans both areas. PLAN/HISTORY remain shared; the one-editor rule remains.
+- Updated documentation references and release builder/audit/test exclusions. Matching-rule and link checks, all three JavaScript syntax checks, and git diff --check passed. Synthetic in-memory archive checks accepted neutral content and rejected legacy and both new handoff names; builder/test guards also matched all three. No ZIP build, runtime/platform acceptance, commit or push; existing unfinished implementation was preserved.
 
 ## 2026-11-17 — START_HERE.html: Windows/Mac views, Mac first-start steps (Claude)
 

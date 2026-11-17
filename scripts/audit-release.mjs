@@ -13,7 +13,7 @@ export async function auditRelease(zip,{denyTerms=[]}={}){
  for(const entry of Object.values(zip.files)){
   if(entry.dir)continue;
   if(/(?:^|\/)(?:AGENTS|CLAUDE)\.md$/i.test(entry.name)||/(?:^|\/)(?:\.git|\.codex|\.claude)\//i.test(entry.name))failures.push(`${entry.name}: developer instruction/metadata file`);
-  if(/^Application tracker\/(?:HANDOFF|PLAN|HISTORY|PORTABILITY|INTERFACE_FOR_TRACKER)\.md$/i.test(entry.name))failures.push(`${entry.name}: maintainer document`);
+  if(/^Application tracker\/(?:HANDOFF(?:_AGENT|_WRAPPER)?|PLAN|HISTORY|PORTABILITY|INTERFACE_FOR_TRACKER)\.md$/i.test(entry.name))failures.push(`${entry.name}: maintainer document`);
   if(/\.(?:md|txt|html|json|js|mjs|xml|cmd|command|css|svg)$/i.test(entry.name))checkText(entry.name,await entry.async('string'));
   if(/\.xlsx$/i.test(entry.name)){
    workbooks++;const workbook=await JSZip.loadAsync(await entry.async('nodebuffer'));

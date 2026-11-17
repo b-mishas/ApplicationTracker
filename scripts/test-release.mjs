@@ -82,7 +82,7 @@ try{
  assert.match(invoke('self-check.mjs'),/OK Excel export/);
  assert.equal((await fetch(repeated.url+'/api/export/applications.xlsx',{signal:AbortSignal.timeout(10000)})).status,200);
  assert.deepEqual(JSON.parse(await fs.readFile(path.join(directory,'settings/tracker.json'),'utf8')),{schemaVersion:1,exportLanguage:'en'});
- assert(!Object.keys(zip.files).some(n=>/^Application tracker\/(?:HANDOFF|PLAN|HISTORY|CLAUDE)\.md$/.test(n)));
+ assert(!Object.keys(zip.files).some(n=>/^Application tracker\/(?:HANDOFF(?:_AGENT|_WRAPPER)?|PLAN|HISTORY|CLAUDE)\.md$/.test(n)));
  const stopCommand=process.platform==='win32'?'Stop (Windows).cmd':'Stop (Mac).command';
  const stopArgs=process.platform==='win32'?['/d','/s','/c',`""${path.join(directory,stopCommand)}""`]:[path.join(directory,stopCommand)];
  const stopped=spawnSync(command,stopArgs,{env,encoding:'utf8',timeout:30000,windowsHide:true,windowsVerbatimArguments:process.platform==='win32'});
