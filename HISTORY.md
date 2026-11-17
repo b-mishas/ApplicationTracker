@@ -4,6 +4,12 @@
 
 --------------------
 
+## 2026-11-17 — START_HERE.html: Windows/Mac views, Mac first-start steps (Claude)
+
+- A Windows | Mac switch in step 1 preselects the reader's system from the browser; system-specific lines carry `data-os` and the other system's lines are hidden. Without JavaScript both are shown.
+- The Mac view has a "First start on a Mac" block: Done, then System Settings → Privacy & Security → Open Anyway, then Open (macOS 15+), with the Control-click route for macOS 14 and older, and the same approval for Stop and Restart. "If something is blocked" links to it. The Windows view drops the "(Windows only for now)" remarks; the Mac view says start at login is not available. The copy fallback names only the reader's shortcut. Copy messages appear in the prompt header left of the Copy button instead of a line below the prompt, so copying no longer changes the box height (measured 107 px before and after). After a successful copy the prompt text dims to 45% opacity at once, together with "Copied", for 0.5 s, then fades back over 0.2 s.
+- Checked in the built-in browser (Chromium, Windows): Windows preselected, switch shows only the Mac lines. The macOS steps are written from macOS 15 behaviour and have not been checked on a Mac with this package.
+
 ## 2026-11-16 — start at login: Windows only, stale entries removed (Claude)
 
 - Settings no longer offers "Start server at login" on macOS: the API reports it as unsupported there and refuses changes, because the LaunchAgent has never run on a Mac and is expected to be blocked for folders in Documents, Desktop or Downloads. The registration code and its data-only test remain. START_HERE.html and the Settings hint say "Windows only for now".

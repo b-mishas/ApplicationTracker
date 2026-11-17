@@ -21,11 +21,25 @@ button:focus-visible{outline:2px solid #177464;outline-offset:3px}
 .prompt-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 12px;border-bottom:1px solid #d8e0d3;background:#e8eee2;font-size:13px;font-weight:600}
 .prompt-header button{flex-shrink:0;min-width:78px;padding:4px 10px;font-size:13px;background:#fafcf8}
 .prompt pre{margin:0;padding:16px;white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace}
+.prompt pre{transition:opacity .2s}
+.prompt.copied pre{opacity:.45;transition:none}
 .prompt pre code{padding:0;border-radius:0;background:none;font:inherit}
-.copy-status{margin:0;padding:0 16px 12px;font-size:13px;color:#48613f}
+.copy-status{margin:0 0 0 auto;font-size:12px;font-weight:400;color:#48613f}
 .copy-status:empty{display:none}
+.os-win [data-os=mac],.os-mac [data-os=win]{display:none}
+.os-switch{display:none;gap:2px;padding:3px;border:1px solid #cbd5c6;border-radius:9px;background:#f0f3ec}
+.os-win .os-switch,.os-mac .os-switch{display:inline-flex}
+.os-switch button{padding:4px 16px;border:0;border-radius:6px;background:transparent;font-size:15px}
+.os-switch button:hover{background:#e0e8da}
+.os-switch button[aria-pressed=true]{background:#177464;color:#fff}
+.mac-first{margin:16px 0;padding:4px 20px 8px;border:1px solid #cbd5c6;border-radius:9px;background:#f0f3ec}
+.mac-first h3{margin:14px 0 4px}
 @media(max-width:480px){body{margin:24px auto;padding:0 16px}.prompt pre{padding:12px}.prompt-header{padding:8px 10px}}
 </style>
+<script>
+// Show the steps for the reader's system; without JavaScript both stay visible.
+document.documentElement.className=/mac/i.test(navigator.userAgentData?.platform||navigator.platform)?'os-mac':'os-win';
+</script>
 </head>
 <body>
 <h1>Application tracker</h1>
@@ -42,16 +56,26 @@ button:focus-visible{outline:2px solid #177464;outline-offset:3px}
 </section>
 
 <h2>1. Extract and open</h2>
+<div class="os-switch" role="group" aria-label="Instructions for"><button type="button" data-os-pick="win">Windows</button><button type="button" data-os-pick="mac">Mac</button></div>
 <p>Extract the <strong>entire ZIP</strong> into a folder you want to keep, such as Documents/Application tracker. Then start using:</p>
-<ul><li><strong>Windows:</strong> <code>Start (Windows).cmd</code> file</li><li><strong>Mac:</strong> <code>Start (Mac).command</code> file</li></ul>
+<ul><li data-os="win"><strong>Windows:</strong> <code>Start (Windows).cmd</code> file</li><li data-os="mac"><strong>Mac:</strong> <code>Start (Mac).command</code> file</li></ul>
+<section class="mac-first" id="mac-first" data-os="mac" aria-labelledby="mac-first-heading">
+<h3 id="mac-first-heading">First start on a Mac</h3>
+<p>macOS blocks downloaded files until you approve them once:</p>
+<ol>
+<li>Double-click <code>Start (Mac).command</code>. macOS says it could not verify the file. Click <strong>Done</strong>.</li>
+<li>Open <strong>System Settings → Privacy &amp; Security</strong> and scroll down to <strong>Security</strong>. Next to the message about <code>Start (Mac).command</code>, click <strong>Open Anyway</strong> and confirm with your password or Touch ID.</li>
+<li>Double-click <code>Start (Mac).command</code> again and click <strong>Open</strong>.</li>
+</ol>
+<p class="note">macOS 14 or older: Control-click the file, choose <strong>Open</strong>, then <strong>Open</strong> again. Approve the <code>Stop</code> and <code>Restart</code> files the same way the first time you use them.</p>
+</section>
 <p>Your browser opens an empty tracker. Keep all the extracted files together. The <code>Start</code> file reopens the tracker if it is already running. Use the <code>Restart</code> file after an update, or the <code>Stop</code> file to shut down the background server. Use the files matching your system.</p>
 
 <h2>2. Set up job search with LLM assistant</h2>
 <p>Open Claude or Codex in a desktop environment that can work with local folders. Give it access to the <strong>whole extracted folder</strong>. Start a new chat and paste this prompt:</p>
 <div class="prompt">
-<div class="prompt-header"><span>Setup instruction</span><button type="button" data-copy="setup-prompt" aria-label="Copy setup instruction">Copy</button></div>
+<div class="prompt-header"><span>Setup instruction</span><p class="copy-status" role="status"></p><button type="button" data-copy="setup-prompt" aria-label="Copy setup instruction">Copy</button></div>
 <pre><code id="setup-prompt">Read agent/SETUP_PROMPT.md in this folder and guide me through setting up Application tracker. Treat this folder as ROOT. Follow the setup steps with me, ask for my background and preferences, and do not assume any personal information.</code></pre>
-<p class="copy-status" role="status"></p>
 </div>
 <p>The assistant helps you:</p>
 <ul>
@@ -71,7 +95,8 @@ button:focus-visible{outline:2px solid #177464;outline-offset:3px}
 <h2>3. Daily routine</h2>
 <ul>
 <li>Open the <code>Start</code> file once, then bookmark the tracker’s address. It normally uses <code>http://127.0.0.1:8765</code> and keeps the same address after restarting. Closing the browser leaves the tracker running.</li>
-<li>In <strong>Settings</strong>, optionally enable <strong>Start server at login</strong> (Windows only for now) and save. From your next login, the tracker starts quietly; open your bookmark when needed. Otherwise, open the <code>Start</code> file once after logging in.</li>
+<li data-os="win">In <strong>Settings</strong>, optionally enable <strong>Start server at login</strong> and save. From your next login, the tracker starts quietly; open your bookmark when needed. Otherwise, open the <code>Start</code> file once after logging in.</li>
+<li data-os="mac">Open the <code>Start</code> file once after logging in. Starting at login is not available on Mac yet.</li>
 <li>Keep the computer awake and the AI app running for local scheduled searches.</li>
 <li>You can export your applications as Excel or PDF using the corresponding buttons at the top right.</li>
 </ul>
@@ -80,26 +105,25 @@ button:focus-visible{outline:2px solid #177464;outline-offset:3px}
 <h3>Change your search later</h3>
 <p>Return to your setup chat, which already has access to the Application tracker folder, and paste:</p>
 <div class="prompt">
-<div class="prompt-header"><span>Change your search</span><button type="button" data-copy="customize-prompt" aria-label="Copy search customization instruction">Copy</button></div>
+<div class="prompt-header"><span>Change your search</span><p class="copy-status" role="status"></p><button type="button" data-copy="customize-prompt" aria-label="Copy search customization instruction">Copy</button></div>
 <pre><code id="customize-prompt">Read agent/CUSTOMIZE.md, then help me change my search.</code></pre>
-<p class="copy-status" role="status"></p>
 </div>
 <ul>
 <li><strong>Profile:</strong> search tracks and geography.</li>
 <li><strong>Settings → Excel language (for export):</strong> language for both Excel and PDF.</li>
 <li><strong>Settings → Name:</strong> name in exported report titles.</li>
 <li><strong>Settings → Advanced → Local port:</strong> change the address only if needed. Save, then use the <code>Restart</code> file to apply it and update your bookmark. The current local address is shown alongside it.</li>
-<li><strong>Settings → Start server at login</strong> (Windows only for now)<strong>:</strong> starts this tracker on your computer, independently of the assistant’s search schedule. Disable and save before moving or deleting the folder; enable it again after moving.</li>
+<li data-os="win"><strong>Settings → Start server at login:</strong> starts this tracker on your computer, independently of the assistant’s search schedule. Disable and save before moving or deleting the folder; enable it again after moving.</li>
 </ul>
 
 <h3>If something is blocked</h3>
-<p class="note">Downloaded starters or runtimes may need operating-system approval. Review the package source and follow the system's displayed instructions; do not disable protections.</p>
+<p class="note" data-os="win">Downloaded starters or runtimes may need operating-system approval. Review the package source and follow the system's displayed instructions; do not disable protections.</p>
+<p class="note" data-os="mac">If macOS blocks a file, approve it as described in <a href="#mac-first">First start on a Mac</a>. Do not disable macOS protections.</p>
 <p>If the local address is already used by another program, the <code>Start</code> file asks for another port number, such as <code>8766</code>. Enter a free port to continue, or press Enter without a number to cancel. The chosen address is saved; bookmark it afterwards. A conflicting port change leaves any running tracker open.</p>
 <p>For startup problems, copy this to your assistant:</p>
 <div class="prompt">
-<div class="prompt-header"><span>Startup help</span><button type="button" data-copy="startup-prompt" aria-label="Copy startup help instruction">Copy</button></div>
+<div class="prompt-header"><span>Startup help</span><p class="copy-status" role="status"></p><button type="button" data-copy="startup-prompt" aria-label="Copy startup help instruction">Copy</button></div>
 <pre><code id="startup-prompt">Read data/logs/server.log in this folder and help me fix the tracker startup problem.</code></pre>
-<p class="copy-status" role="status"></p>
 </div>
 <p class="note">The tracker stores records locally. Connected AI services process material you give them access to. Platform-specific instructions are in guides/.</p>
 
@@ -109,24 +133,33 @@ for(const button of document.querySelectorAll('[data-copy]')){
  let reset;
  button.addEventListener('click',async()=>{
   const text=document.getElementById(button.dataset.copy);
-  const status=button.closest('.prompt').querySelector('.copy-status');
+  const prompt=button.closest('.prompt');
+  const status=prompt.querySelector('.copy-status');
   clearTimeout(reset);
   try{
    if(!navigator.clipboard?.writeText)throw Error('Clipboard unavailable');
    await navigator.clipboard.writeText(text.textContent);
    button.textContent='Copied';
    status.textContent='Copied to clipboard.';
-   reset=setTimeout(()=>{button.textContent='Copy';status.textContent='';},2500);
+   prompt.classList.add('copied');
+   reset=setTimeout(()=>{button.textContent='Copy';status.textContent='';prompt.classList.remove('copied');},500);
   }catch{
    // Local-file/browser permissions can block clipboard access. Selecting the
    // read-only text still lets the user copy it with the usual keyboard shortcut.
    const range=document.createRange();range.selectNodeContents(text);
    const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);
    button.textContent='Copy';
-   status.textContent='Text selected. Press Ctrl+C (Windows) or Command+C (Mac) to copy.';
+   prompt.classList.remove('copied');
+   status.textContent=document.documentElement.classList.contains('os-mac')?'Text selected. Press Command+C to copy.':'Text selected. Press Ctrl+C to copy.';
   }
  });
 }
+const showOs=os=>{
+ document.documentElement.className='os-'+os;
+ for(const button of document.querySelectorAll('[data-os-pick]'))button.setAttribute('aria-pressed',button.dataset.osPick===os);
+};
+for(const button of document.querySelectorAll('[data-os-pick]'))button.addEventListener('click',()=>showOs(button.dataset.osPick));
+showOs(document.documentElement.classList.contains('os-mac')?'mac':'win');
 </script>
 </body>
 </html>

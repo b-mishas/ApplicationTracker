@@ -1,6 +1,10 @@
 # Application tracker checkpoint
 
-Updated 2026-11-16 19:10 UTC by Claude. Checkout C:/Users/misha/Claude/ApplicationTracker, main four commits ahead of the local origin/main ref (5e43c8b; not fetched): bc6de61, bfe28a2, 7a4728f and the latest [Wrapper] commit holding this file. Remote/CI unverified. No operations active. Nothing pushed.
+Updated 2026-11-17 08:45 UTC by Claude. Checkout C:/Users/misha/Claude/ApplicationTracker, main five commits ahead of the local origin/main ref (5e43c8b; not fetched): bc6de61, bfe28a2, 7a4728f, 3a5da92 and the START_HERE commit holding this file. Remote/CI unverified. No operations active. Nothing pushed.
+
+## Latest commit (Claude, 2026-11-17, [Wrapper] after 3a5da92)
+
+START_HERE.html: Windows | Mac switch (preselected from the browser, `data-os` lines hidden for the other system, both shown without JavaScript) and a "First start on a Mac" block with the Open Anyway steps. Copy messages moved into the prompt header, left of the Copy button (no height change on copy); the copied text dims to 45% at once for 0.5 s, then fades back. Checked in the built-in browser on Windows; macOS steps not checked on a Mac. HISTORY.md entry added. Not built into dist/.
 
 ## Committed this session (Claude, at the user's request, including app code)
 
@@ -16,7 +20,7 @@ npm test: exit 0 after the last change. npm run build and node scripts/test-rele
 
 ## Not tested, known gaps
 
-- No Mac package has run on a Mac. START_HERE.html does not yet explain the first-launch approval for unsigned files.
+- No Mac package has run on a Mac, so the START_HERE Mac approval steps are unconfirmed. Windows may also warn about a downloaded `.cmd`; the release test extracts in code, so that is untested.
 - The routine has not been run with the model split (d6d880e) or the link finder and re-checks (bfe28a2).
 - Login entries created before the registry existed are not cleaned. An unplugged external drive counts as a missing folder.
 - Windows ARM64: no package; the starter says so.
