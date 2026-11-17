@@ -4,6 +4,13 @@
 
 --------------------
 
+## 2026-11-18 — sidebar navigation and application shortcuts (Codex)
+
+- Pipeline and Statistics replace the overview and toolbar presets. Applied retains the former In progress membership and dated layout. Interview invites requires a valid interview date. Offers follows current effective Offer status, including undated offers, and appears only above zero.
+- Added Applied-stage Rejected and Interview shortcuts using autosave, draft preservation and Undo. Standardized Application steps spacing, simplified Status checklist labels and renamed the export-language setting. On narrow screens, Pipeline and Statistics sit above the results.
+- Clearing a milestone date writes an empty string that overrides legacy history. Moving back to New, Shortlisted or Applied clears later milestones. Five local mock scenarios cover legacy, cleared and later-stage histories. The ten mock records remain in ignored runtime data.
+- Focused model and isolated API tests passed, including milestone correction, reload, exports and Undo. Earlier Chromium checks covered all eight sidebar views, shortcuts, desktop and 390 px rendering. The final Offers check displayed exactly one current offer in the ten-mock inventory.
+
 ## 2026-11-18 — separate agent and wrapper handoffs (Codex)
 
 - Replaced the shared checkpoint with HANDOFF_AGENT.md and HANDOFF_WRAPPER.md; preserved the latest routine-cost review and unfinished wrapper context. Both assistants now select handoffs by function, including API extraction scripts under agent work, and update both only when work spans both areas. PLAN/HISTORY remain shared; the one-editor rule remains.

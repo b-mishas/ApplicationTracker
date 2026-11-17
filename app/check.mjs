@@ -147,6 +147,24 @@ try{
  const newStage=await update({status:'Offer'});assert.equal(newStage.job.applicationStatusText,undefined);
  const restoreText=await undo(newStage);assert.equal(restoreText.status,200);assert.equal((await restoreText.json()).job.applicationStatusText,beforeStage.job.applicationStatusText);
  console.log('PASS: exact manual/empty status text in storage and export, notes leave it intact, dates/status regenerate only without an explicit override, Undo restores manual text.');
+ // Correcting stages/dates must change saved statistics and survive reload/Undo.
+ const {interviewDetails,hasCurrentOffer}=await import('./status-history.mjs');
+ const offered=await update({status:'Offer',offerDate:'2026-11-17'});
+ const rolledBack=await update({status:'Applied'});
+ assert.equal(rolledBack.job.interviewDate,'');assert.equal(rolledBack.job.offerDate,'');
+ assert.equal(interviewDetails(rolledBack.job).hasInterview,false);assert.equal(hasCurrentOffer(rolledBack.job),false);
+ const restoredMilestones=await undo(rolledBack);assert.equal(restoredMilestones.status,200);
+ assert.deepEqual(withoutTimestamp((await restoredMilestones.json()).job),withoutTimestamp(offered.job));
+ await update({status:'Interview',interviewDate:'2026-11-17'});
+ const cleared=await update({status:'Interview',interviewDate:''});
+ assert.equal(interviewDetails(cleared.job).hasInterview,false);
+ const noteAfterClear=await update({status:'Interview',notes:'Keep cleared milestone empty'});
+ assert.equal(noteAfterClear.job.interviewDate,'');
+ const loadedAfterClear=(await(await fetch(base+'/api/jobs')).json()).data.jobs.find(item=>item.id===job.id);
+ assert.equal(interviewDetails(loadedAfterClear).hasInterview,false);
+ // The primary stage stays visible, but no dated interview sequence is generated.
+ assert.equal(planApplications([],[loadedAfterClear]).rows[0].values[4],'Interview');
+ console.log('PASS: milestone rollback, date clearing, notes/reload, generated export wording and Undo preserve date-based membership.');
  const module=await fetch(base+'/view-model.mjs');assert.equal(module.status,200);assert(module.headers.get('content-type').includes('javascript'));
  console.log('PASS: save/revision/origin checks; reversible and idempotent quick dismissal; notes/date/German detail preserved; frontend module served.');
 }finally{if(child){child.kill();await new Promise(resolve=>child.once('exit',resolve));}await rm(dir,{recursive:true,force:true});}

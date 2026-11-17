@@ -245,3 +245,30 @@ tr.job.urgent>td:first-child,tr.detail.urgent>td{box-shadow:inset var(--row-edge
 #settings-form #settings-port{max-width:140px}
 #settings-address{overflow-wrap:anywhere}
 #settings-port-help{font-size:12px}
+
+/* Content-sized navigation: the longest label sets the width, with a 20 px count gap. */
+.workspace{display:flex;flex:1;min-height:0;gap:20px}
+.sidebar{flex:0 0 auto;width:max-content;max-width:240px;overflow-y:auto;padding:8px 14px 8px 0;border-right:1px solid var(--control-border)}
+.sidebar h2{margin:0 10px 9px;color:#718079;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.sidebar section{display:grid;gap:4px}
+.sidebar .sidebar-statistics{margin-top:30px}
+.sidebar button{display:flex;align-items:center;justify-content:space-between;gap:20px;width:100%;padding:9px 10px;border:0;border-radius:6px;background:transparent;font-size:13px;text-align:left;white-space:nowrap}
+.sidebar button[hidden]{display:none}
+.sidebar button:hover{background:#edf4ee}
+.sidebar button[aria-pressed=true]{background:#e1ecde;color:#155c49;box-shadow:inset 3px 0 #177464}
+.sidebar-count{font-size:calc(13px + 1pt);font-weight:400;font-variant-numeric:tabular-nums}
+.sidebar-count.has-new{font-weight:700}
+.results{display:flex;flex-direction:column;flex:1;min-width:0;min-height:0;gap:12px}
+.results .search-control{max-width:65%}
+/* A shared gap separates each top-level row of application fields. */
+.application-steps>label,.application-steps>.stage-row,.application-steps>.date-field,.application-steps>.applied-shortcuts{margin-top:12px}
+.application-steps>h3+.stage-row{margin-top:0}
+.application-steps .stage-row{gap:10px}
+.detail .application-steps .date-control,.detail .application-steps input[type=text],.detail .application-steps textarea{margin-bottom:0}
+.application-steps .edit-status,.application-steps .edit-interview-outcome{display:block;width:100%;margin-top:5px}
+.applied-shortcuts{display:flex;gap:8px}
+.applied-shortcuts[hidden]{display:none}
+.applied-shortcuts button{height:32px;padding:4px 12px;font-size:12px}
+.application-steps>.save,.application-steps>.cancel{margin-top:12px}
+@media(max-width:850px){.workspace{gap:12px}.sidebar{padding-right:8px}.sidebar button{padding-inline:8px}.results .search-control{max-width:none}.results{gap:10px}}
+@media(max-width:580px){.workspace{flex-direction:column;gap:12px}.sidebar{width:100%;max-width:none;max-height:210px;display:flex;gap:20px;border-right:0;border-bottom:1px solid var(--control-border);padding:0 0 10px}.sidebar section{flex:1;align-content:start}.sidebar .sidebar-statistics{margin-top:0}.sidebar button{white-space:normal;gap:20px}.sidebar h2{margin-inline:8px}}

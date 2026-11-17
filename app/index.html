@@ -11,74 +11,17 @@
  <a class="export" href="/export/applications/print" target="_blank" rel="noopener" id="export-applications-pdf">PDF</a>
 </div> <a class="export" href="#" id="export" title="Export position database as JSON" aria-label="Export position database as JSON">JSON ↗</a>
 <button type="button" id="settings-open" class="export">Settings</button></div></header>
-<div class="overview-row">
-        <section class="overview" aria-label="Application overview">
-          <button
-            type="button"
-            data-status-preset="All"
-            aria-pressed="false"
-            title="Show all positions"
-          >
-            <strong id="total">—</strong>
-            <span>Positions collected</span>
-          </button>
-          <button
-            type="button"
-            data-status-preset="Applied in total"
-            aria-pressed="false"
-            title="Show all sent applications, regardless of outcome"
-          >
-            <strong id="applied-total">—</strong>
-            <span>Applications sent</span>
-          </button>
-          <button
-            type="button"
-            data-status-preset="Interviews in total"
-            aria-pressed="false"
-            title="Show all positions with a recorded interview, regardless of outcome"
-          >
-            <strong id="interview-total">—</strong>
-            <span>Interviews held</span>
-          </button>
-          <button
-            type="button"
-            data-status-preset="In progress"
-            aria-pressed="false"
-            title="Show Applied, Interview and Offer"
-          >
-            <strong id="active">—</strong>
-            <span>Applications in progress</span>
-          </button>
-        </section>
-        <section class="overview" aria-label="Position priorities">
-          <button
-            type="button"
-            data-status-preset="Shortlisted"
-            aria-pressed="false"
-            title="Show shortlisted positions"
-          >
-            <strong id="shortlist">—</strong>
-            <span>Shortlisted</span>
-          </button>
-          <button
-            type="button"
-            data-status-preset="Urgent"
-            aria-pressed="false"
-            title="Show urgent positions"
-          >
-            <strong id="urgent">—</strong>
-            <span>Urgent</span>
-          </button>
-          <button
-            type="button"
-            data-status-preset="New"
-            aria-pressed="false"
-            title="Show new positions"
-          >
-            <strong id="new-count">—</strong>
-            <span>New</span>
-          </button>
-        </section>
-      </div>
-<section class="toolbar" aria-label="Search and quick filters"><div class="search-control"><input id="search" type="search" maxlength="2000" placeholder="Search companies, titles, assessments…" aria-label="Search positions"><button type="button" id="search-clear" aria-label="Clear search" title="Clear search" hidden><span aria-hidden="true">×</span></button></div><div id="status-presets" class="status-presets" role="group" aria-label="Quick position filters"><button type="button" data-status-preset="New" aria-pressed="false" title="Show new positions">New</button><button type="button" data-status-preset="Shortlisted" aria-pressed="false" title="Show shortlisted positions">Shortlisted</button><button type="button" data-status-preset="In progress" aria-pressed="false" title="Show Applied, Interview and Offer">In progress</button><button type="button" data-status-preset="All" aria-pressed="false" title="Show positions in every status">All</button></div><span id="count" class="result-count" role="status">Loading positions…</span><div class="toolbar-actions"><button id="reset">Reset</button><details class="columns"><summary>Columns</summary><div id="columns"></div></details></div></section>
-<div id="message" role="alert"></div><div class="table-wrap"><table><colgroup id="colgroup"></colgroup><thead><tr id="head"></tr></thead><tbody id="body"></tbody></table></div><footer><span>Fit is an assessment, not a probability. ◌ = title-only assessment.</span><span id="imported"></span></footer><div id="column-filter" class="filter-panel" role="dialog" aria-label="Column filter" hidden></div></main><dialog id="settings-dialog"><form id="settings-form"><h2>Settings</h2><label>Name<input type="text" id="settings-name" autocomplete="name" maxlength="100"></label><label>Excel language (for export)<select id="settings-language"><option value="en">English</option><option value="de">Deutsch</option></select></label><label class="startup-setting"><input type="checkbox" id="settings-startup" disabled>Start server at login</label><p id="settings-startup-help" class="muted">Starts in the background without opening a browser.</p><details id="settings-advanced"><summary>Advanced</summary><div class="advanced-settings"><label for="settings-port">Local port</label><input type="number" id="settings-port" min="1024" max="65535" step="1" required disabled aria-describedby="settings-port-help"><div>Local address: <a id="settings-address" target="_blank" rel="noopener"></a></div><p id="settings-port-help" class="muted">Changes apply after Restart. Update your bookmark if you change the port.</p></div></details><p id="settings-result" role="alert"></p><div class="settings-actions"><button type="button" id="settings-cancel">Cancel</button><button id="settings-save">Save settings</button></div></form></dialog><script src="app.js" type="module"></script></body></html>
+<div class="workspace"><nav class="sidebar" id="status-presets" aria-label="Position views">
+<section aria-labelledby="pipeline-heading"><h2 id="pipeline-heading">Pipeline</h2>
+<button type="button" data-status-preset="New" aria-pressed="false"><span>New</span><span class="sidebar-count" id="new-count">0</span></button>
+<button type="button" data-status-preset="Shortlisted" aria-pressed="false"><span>Shortlisted</span><span class="sidebar-count" id="shortlist">0</span></button>
+<button type="button" data-status-preset="Urgent" aria-pressed="false"><span>Urgent</span><span class="sidebar-count" id="urgent">0</span></button>
+<button type="button" data-status-preset="In progress" aria-pressed="false"><span>Applied</span><span class="sidebar-count" id="active">0</span></button>
+</section><section class="sidebar-statistics" aria-labelledby="statistics-heading"><h2 id="statistics-heading">Statistics</h2>
+<button type="button" data-status-preset="All" aria-pressed="false"><span>All positions</span><span class="sidebar-count" id="total">0</span></button>
+<button type="button" data-status-preset="Applied in total" aria-pressed="false"><span>Applications sent</span><span class="sidebar-count" id="applied-total">0</span></button>
+<button type="button" data-status-preset="Interviews in total" aria-pressed="false"><span>Interview invites</span><span class="sidebar-count" id="interview-total">0</span></button>
+<button type="button" data-status-preset="Offers in total" aria-pressed="false" id="offers-preset" hidden><span>Offers</span><span class="sidebar-count" id="offer-total">0</span></button>
+</section></nav><div class="results">
+<section class="toolbar" aria-label="Search and quick filters"><div class="search-control"><input id="search" type="search" maxlength="2000" placeholder="Search companies, titles, assessments…" aria-label="Search positions"><button type="button" id="search-clear" aria-label="Clear search" title="Clear search" hidden><span aria-hidden="true">×</span></button></div><span id="count" class="result-count" role="status">Loading positions…</span><div class="toolbar-actions"><button id="reset">Reset</button><details class="columns"><summary>Columns</summary><div id="columns"></div></details></div></section>
+<div id="message" role="alert"></div><div class="table-wrap"><table><colgroup id="colgroup"></colgroup><thead><tr id="head"></tr></thead><tbody id="body"></tbody></table></div></div></div><footer><span>Fit is an assessment, not a probability. ◌ = title-only assessment.</span><span id="imported"></span></footer><div id="column-filter" class="filter-panel" role="dialog" aria-label="Column filter" hidden></div></main><dialog id="settings-dialog"><form id="settings-form"><h2>Settings</h2><label>Name<input type="text" id="settings-name" autocomplete="name" maxlength="100"></label><label>Language for export<select id="settings-language"><option value="en">English</option><option value="de">Deutsch</option></select></label><label class="startup-setting"><input type="checkbox" id="settings-startup" disabled>Start server at login</label><p id="settings-startup-help" class="muted">Starts in the background without opening a browser.</p><details id="settings-advanced"><summary>Advanced</summary><div class="advanced-settings"><label for="settings-port">Local port</label><input type="number" id="settings-port" min="1024" max="65535" step="1" required disabled aria-describedby="settings-port-help"><div>Local address: <a id="settings-address" target="_blank" rel="noopener"></a></div><p id="settings-port-help" class="muted">Changes apply after Restart. Update your bookmark if you change the port.</p></div></details><p id="settings-result" role="alert"></p><div class="settings-actions"><button type="button" id="settings-cancel">Cancel</button><button id="settings-save">Save settings</button></div></form></dialog><script src="app.js" type="module"></script></body></html>

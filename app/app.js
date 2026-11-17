@@ -1,11 +1,10 @@
-import {STATUS_VALUES, INTERVIEW_OUTCOMES, MILESTONE_DATES, interviewDetails, effectiveStatus, interviewHistoryText, validStageDate, isRejectedAfterInterview, hasSentApplication} from './status-history.mjs';
-import {filterAndSort,choicesFor,EMPTY,REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL,INTERVIEW_TOTAL} from './view-model.mjs';
+import {STATUS_VALUES, INTERVIEW_OUTCOMES, MILESTONE_DATES, interviewDetails, effectiveStatus, interviewHistoryText, validStageDate, isRejectedAfterInterview, hasSentApplication, hasCurrentOffer} from './status-history.mjs';
+import {filterAndSort,choicesFor,EMPTY,REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL,INTERVIEW_TOTAL,OFFER_TOTAL} from './view-model.mjs';
 import {groupColour,ensureGroupColours} from './group-colours.mjs';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const statuses=STATUS_VALUES;
-const statusFilters=statuses.flatMap(status=>status==='Applied'?[status,APPLIED_TOTAL]:status==='Interview'?[status,INTERVIEW_TOTAL]:status==='Rejected'?[status,REJECTED_AFTER_INTERVIEW]:[status]);
-const statusFilterLabels={Applied:'Applied (pending)',[APPLIED_TOTAL]:'Applied (total)',Interview:'Interview (pending)',[INTERVIEW_TOTAL]:'Interview (total)'};
+const statusFilters=statuses.flatMap(status=>status==='Rejected'?[status,REJECTED_AFTER_INTERVIEW]:[status]);
 const fields=[['fit','Fit'],['company','Company'],['group','Group'],['title','Position'],['star','Actions'],['country','Country'],['city','City'],['workMode','Work mode'],['status','Status'],['applicationDate','Applied on'],['seniority','Seniority'],['firstSeen','First found'],['postedDate','Posted'],['assessmentBasis','Assessment']];
 let settings={exportLanguage:'en'},settingsRevision,startupState,portState;
 let supportedCountries=new Set();
@@ -16,7 +15,7 @@ const rowStage=status=>stageClasses.get(status)||'';
 const defaultStatusFilter=()=>statuses.filter(status=>!['Rejected','Dismissed','Withdrawn'].includes(status));
 const filters={status:defaultStatusFilter()};
 const inProgressStatuses=['Applied','Interview','Offer'];
-const statusPresets={New:['New'],Shortlisted:['Shortlisted'],Urgent:statuses,'In progress':inProgressStatuses,[APPLIED_TOTAL]:[APPLIED_TOTAL],[INTERVIEW_TOTAL]:[INTERVIEW_TOTAL],All:statuses};
+const statusPresets={New:['New'],Shortlisted:['Shortlisted'],Urgent:statuses,'In progress':inProgressStatuses,[APPLIED_TOTAL]:[APPLIED_TOTAL],[INTERVIEW_TOTAL]:[INTERVIEW_TOTAL],[OFFER_TOTAL]:[OFFER_TOTAL],All:statuses};
 const visible=new Set(fields.slice(0,9).map(x=>x[0]));
 let standardLayout;
 const dateMonths=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -81,6 +80,7 @@ function stageControls(job){
   +'<button type="button" class="apply-status" title="Mark this position as Applied"'+hiddenUnless(canApply(job))+'>Applied</button>'
   +dateInput('Application date','applicationDate',job.applicationDate||'',visible.application)+'</div>'
   +'<label data-application-status'+hiddenUnless(visible.application)+'>Application status text <input type="text" class="edit-application-status" value="'+esc(applicationText(job))+'" placeholder="Optional status text for export"></label>'
+  +'<div class="applied-shortcuts"'+hiddenUnless(effectiveStatus(job)==='Applied')+'><button type="button" data-next-status="Rejected">Rejected</button><button type="button" data-next-status="Interview">Interview</button></div>'
   +'<div class="stage-row" data-interview-row'+hiddenUnless(visible.interview)+'>'
   +milestoneInput('Interview date','interviewDate',saved.interviewDate)
   +'<label>Interview outcome <select class="edit-interview-outcome" title="Outcome saves automatically"><option value="">Pending</option>'+INTERVIEW_OUTCOMES.map(outcome=>'<option'+(outcome===saved.interviewOutcome?' selected':'')+'>'+outcome+'</option>').join('')+'</select></label></div>'
@@ -102,6 +102,7 @@ function syncStageControls(section,job,draft){
  const saved=interviewDetails(job),visible=stageFields(job,saved);
  section.querySelector('.edit-status').value=effectiveStatus(job);
  section.querySelector('.apply-status').hidden=!canApply(job);
+ section.querySelector('.applied-shortcuts').hidden=effectiveStatus(job)!=='Applied';
  section.querySelector('.edit-interview-outcome').value=saved.interviewOutcome;
  section.querySelector('[data-interview-row]').hidden=!visible.interview;
  for(const key of MILESTONE_DATES){
@@ -112,7 +113,7 @@ function syncStageControls(section,job,draft){
  section.querySelector('[data-application-date]').hidden=!visible.application;
  section.querySelector('[data-application-status]').hidden=!visible.application;
 }
-function detail(j){return `<tr class="detail ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}"><td colspan="${visible.size+1}"><div class="detail-grid"><section><h3>Why it fits</h3><p>${esc(j.reasoning||'No assessment yet.')}</p><h3>Gaps</h3><p>${esc(j.gaps||'No caveats recorded.')}</p></section><section><h3>Evidence & location</h3><p>Assessment: <b>${esc(j.assessmentBasis)}</b>\nSeniority: ${esc(j.seniority||'Unknown')}\nLocation as recorded: ${esc(j.locationRaw)}\nFirst found: ${esc(j.firstSeen)}\nPosted: ${esc(j.postedDate||'Unknown')}\nAvailability: ${esc(j.availability||'Unverified')}</p><h3>Sources</h3>${j.sources.map(s=>`<p>${esc(s.label)}${safeUrl(s.url)?` · <a target="_blank" rel="noopener noreferrer" href="${safeUrl(s.url)}">${j.linkType==='search'?'Open search':'Open listing'} ↗</a>`:''}<br><span class="muted">${esc(s.file)}</span></p>`).join('')}</section><section><h3>Application steps</h3>${stageControls(j)}<label>Notes<textarea class="edit-notes" placeholder="Questions, follow-ups, application notes…">${esc(j.notes)}</textarea></label><button class="save" data-id="${esc(j.id)}" disabled>Save changes</button> <button type="button" class="cancel" disabled title="Discard unsaved edits; saved status changes are kept">Cancel</button><span class="save-state" role="status"></span></section></div></td></tr>`;}
+function detail(j){return `<tr class="detail ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}"><td colspan="${visible.size+1}"><div class="detail-grid"><section><h3>Why it fits</h3><p>${esc(j.reasoning||'No assessment yet.')}</p><h3>Gaps</h3><p>${esc(j.gaps||'No caveats recorded.')}</p></section><section><h3>Evidence & location</h3><p>Assessment: <b>${esc(j.assessmentBasis)}</b>\nSeniority: ${esc(j.seniority||'Unknown')}\nLocation as recorded: ${esc(j.locationRaw)}\nFirst found: ${esc(j.firstSeen)}\nPosted: ${esc(j.postedDate||'Unknown')}\nAvailability: ${esc(j.availability||'Unverified')}</p><h3>Sources</h3>${j.sources.map(s=>`<p>${esc(s.label)}${safeUrl(s.url)?` · <a target="_blank" rel="noopener noreferrer" href="${safeUrl(s.url)}">${j.linkType==='search'?'Open search':'Open listing'} ↗</a>`:''}<br><span class="muted">${esc(s.file)}</span></p>`).join('')}</section><section class="application-steps"><h3>Application steps</h3>${stageControls(j)}<label>Notes<textarea class="edit-notes" placeholder="Questions, follow-ups, application notes…">${esc(j.notes)}</textarea></label><button class="save" data-id="${esc(j.id)}" disabled>Save changes</button> <button type="button" class="cancel" disabled title="Discard unsaved edits; saved status changes are kept">Cancel</button><span class="save-state" role="status"></span></section></div></td></tr>`;}
 function dirty(){
  const area=document.querySelector('.edit-notes');if(!area)return false;
  const job=data.jobs.find(item=>item.id===open),section=area.closest('section');
@@ -129,7 +130,7 @@ function refreshStatusPresets(){
  const selectedFilters=filters.status?.length?filters.status:statuses;
  // The interview subgroup is redundant when all rejections are selected.
  const withoutSubgroup=selectedFilters.includes('Rejected')?selectedFilters.filter(status=>status!==REJECTED_AFTER_INTERVIEW):selectedFilters;
- const selected=statuses.every(status=>withoutSubgroup.includes(status))?withoutSubgroup.filter(status=>![APPLIED_TOTAL,INTERVIEW_TOTAL].includes(status)):withoutSubgroup;
+ const selected=statuses.every(status=>withoutSubgroup.includes(status))?withoutSubgroup.filter(status=>![APPLIED_TOTAL,INTERVIEW_TOTAL,OFFER_TOTAL].includes(status)):withoutSubgroup;
  const urgentView=hasUrgentFilter()&&selected.length===statuses.length&&statuses.every(status=>selected.includes(status));
  for(const button of document.querySelectorAll('[data-status-preset]')){
   const name=button.dataset.statusPreset,preset=statusPresets[name];
@@ -145,6 +146,10 @@ function refreshOverview(){
  $('new-count').textContent=data.jobs.filter(j=>j.status==='New').length;
  $('urgent').textContent=data.jobs.filter(j=>j.urgent).length;
  $('active').textContent=data.jobs.filter(j=>inProgressStatuses.includes(effectiveStatus(j))).length;
+ $('new-count').classList.toggle('has-new',Number($('new-count').textContent)>0);
+ const offers=data.jobs.filter(hasCurrentOffer).length;
+ $('offer-total').textContent=offers;
+ $('offers-preset').hidden=offers===0;
 }
 function refreshUndoButton(){
  const button=$('undo-edit');
@@ -293,11 +298,11 @@ $('body').onclick=async e=>{
   input.focus({preventScroll:true});
   return;
  }
- const apply=e.target.closest('.apply-status');
+ const apply=e.target.closest('.apply-status,[data-next-status]');
  if(apply){
   if(apply.disabled||pendingSave)return;
   const select=apply.closest('section').querySelector('.edit-status');
-  select.value='Applied';
+  select.value=apply.dataset.nextStatus||'Applied';
   await saveStatus(select);
   return;
  }
@@ -381,7 +386,7 @@ function populateFilter(){
  if(checkboxFields.has(key)){
   const values=checkboxValues(key);
   const selected=filters[key]||[];
-  controls=values.map(value=>`<label class="filter-choice"><input type="checkbox" data-value="${esc(value)}" ${selected.includes(value)?'checked':''}>${key==='country'&&value!==EMPTY?flagGraphic(value):''}<span>${value===EMPTY?(key==='fit'?'Not assessed':'Not specified'):esc(key==='status'?(statusFilterLabels[value]||value):value)}</span></label>`).join('');
+  controls=values.map(value=>`<label class="filter-choice"><input type="checkbox" data-value="${esc(value)}" ${selected.includes(value)?'checked':''}>${key==='country'&&value!==EMPTY?flagGraphic(value):''}<span>${value===EMPTY?(key==='fit'?'Not assessed':'Not specified'):esc(value)}</span></label>`).join('');
  }else{
   const dateFilter=['firstSeen','applicationDate'].includes(key);
   const prompt=key==='firstSeen'?'Found since':key==='applicationDate'?'Applied on or after':'Contains';
@@ -433,7 +438,7 @@ async function saveStatus(select){
  const autoDate=status==='Applied'&&!job.applicationDate&&!dateBefore&&!date.validity.badInput?localToday():undefined;
  const payload={id:job.id,status,statusDate:localToday(),...(outcomeControl?{interviewOutcome:select.value}:{}),...(autoDate?{applicationDate:autoDate}:{})};
  // Keep native editor calendars stable by leaving date inputs enabled.
- const controls=[...section.querySelectorAll('button,select'),...document.querySelectorAll('.overview button,.toolbar input:not([type=date]),.toolbar button,.toolbar select,#head button,#settings-open')];
+ const controls=[...section.querySelectorAll('button,select'),...document.querySelectorAll('.sidebar button,.toolbar input:not([type=date]),.toolbar button,.toolbar select,#head button,#settings-open')];
  const focused=document.activeElement;
  const disabled=controls.map(control=>({control,wasDisabled:control.disabled}));
  setPendingSave(true);disabled.forEach(({control})=>control.disabled=true);indicator.textContent='Saving status…';$('message').textContent='';
@@ -504,7 +509,7 @@ function selectStatusPreset(event){
  render();refreshOpenFilter();
 }
 $('status-presets').onclick=selectStatusPreset;
-document.querySelector('.overview-row').onclick=selectStatusPreset;
+
 
 $('settings-open').onclick=async()=>{
  if(!canChangeView())return;

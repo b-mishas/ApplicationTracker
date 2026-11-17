@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import {filterAndSort,choicesFor,EMPTY,REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL,INTERVIEW_TOTAL} from './view-model.mjs';
-import {STATUS_VALUES,isRejectedAfterInterview,hasSentApplication} from './status-history.mjs';
+import {filterAndSort,choicesFor,EMPTY,REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL,INTERVIEW_TOTAL,OFFER_TOTAL} from './view-model.mjs';
+import {STATUS_VALUES,isRejectedAfterInterview,hasSentApplication,hasCurrentOffer,interviewDetails,updateStage,interviewHistoryText} from './status-history.mjs';
 const jobs=[
  {id:'a',company:'Alpha',title:'Lead',group:'ELN/LIMS',countries:['DE'],status:'New',fit:2,firstSeen:'2026-11-02'},
  {id:'b',company:'Beta',title:'Scientist',group:'Computational',countries:['CH','DE'],status:'Shortlisted',fit:4,firstSeen:'2026-11-03'},
@@ -65,12 +65,12 @@ const rejectionJobs=[
  {id:'reapplied',status:'Applied',interviewDate:'2026-11-03',interviewOutcome:'Rejected'},
  {id:'withdrawn-after-interview',status:'Withdrawn',interviewDate:'2026-11-03',interviewOutcome:'Withdrawn'}
 ];
-const afterInterview=['after-interview','old-outcome','old-history','unknown-interview-date'];
+const afterInterview=['after-interview','old-history'];
 assert.deepEqual(rejectionJobs.filter(isRejectedAfterInterview).map(job=>job.id),afterInterview);
 assert.deepEqual(choicesFor(rejectionJobs[1],'status'),['Rejected',REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL,INTERVIEW_TOTAL]);
 const rejectionIds=selected=>filterAndSort(rejectionJobs,{filters:{status:selected}}).map(job=>job.id);
 assert.deepEqual(rejectionIds([REJECTED_AFTER_INTERVIEW]),afterInterview);
-assert.deepEqual(rejectionIds(['Rejected']),['direct',...afterInterview,'offer-without-interview']);
+assert.deepEqual(rejectionIds(['Rejected']),['direct','after-interview','old-outcome','old-history','unknown-interview-date','offer-without-interview']);
 assert.deepEqual(rejectionIds(['Rejected',REJECTED_AFTER_INTERVIEW]),rejectionIds(['Rejected']));
 assert.deepEqual(rejectionIds(STATUS_VALUES),rejectionJobs.map(job=>job.id));
 assert.deepEqual(rejectionIds([...STATUS_VALUES,REJECTED_AFTER_INTERVIEW]),rejectionIds(STATUS_VALUES));
@@ -96,7 +96,7 @@ const sentJobs=[
  {id:'interview-history',status:'Dismissed',interviewDate:''},
  {id:'empty-date',status:'New',applicationDate:''}
 ];
-const sentIds=['Applied','Interview','Offer','Rejected','Withdrawn','dated','history','interview-history'];
+const sentIds=['Applied','Interview','Offer','Rejected','Withdrawn','dated','history'];
 assert.deepEqual(sentJobs.filter(hasSentApplication).map(job=>job.id),sentIds);
 assert.deepEqual(new Set(filterAndSort(sentJobs,{filters:{status:[APPLIED_TOTAL]}}).map(job=>job.id)),new Set(sentIds));
 assert.deepEqual(filterAndSort(sentJobs,{filters:{status:[APPLIED_TOTAL]},search:'nothing'}),[]);
@@ -115,9 +115,57 @@ const interviewJobs=[
  {id:'only-applied',status:'Applied'}
 ];
 const interviewIds=selected=>filterAndSort(interviewJobs,{filters:{status:selected}}).map(job=>job.id);
-assert.deepEqual(new Set(interviewIds([INTERVIEW_TOTAL])),new Set(['pending','rejected','offer','withdrawn','legacy','reapplied']));
+assert.deepEqual(new Set(interviewIds([INTERVIEW_TOTAL])),new Set(['rejected','legacy','reapplied']));
 assert.deepEqual(interviewIds(['Interview']),['pending']);
 assert.equal(interviewIds(STATUS_VALUES).length,interviewJobs.length);
 assert.equal(interviewIds([...STATUS_VALUES,APPLIED_TOTAL,INTERVIEW_TOTAL,REJECTED_AFTER_INTERVIEW]).length,interviewJobs.length);
 assert.deepEqual(filterAndSort(interviewJobs,{filters:{status:[INTERVIEW_TOTAL],company:'absent'}}),[]);
 console.log('PASS: total interviews include recorded current/legacy interviews across outcomes, retain pending-only filtering and exclude unrecorded interviews.');
+
+const offerJobs=[
+ {id:'current',status:'Offer',offerDate:''},
+ {id:'outcome',status:'Interview',interviewOutcome:'Offer'},
+ {id:'withdrawn',status:'Withdrawn',offerDate:'2026-11-14'},
+ {id:'legacy',status:'Dismissed',statusHistory:[{status:'Offer',date:'2026-11-14'}]},
+ {id:'empty',status:'Applied',offerDate:''},
+ {id:'interview-only',status:'Interview'},
+ {id:'new',status:'New'}
+];
+const offered=['current','outcome'];
+assert.deepEqual(offerJobs.filter(hasCurrentOffer).map(job=>job.id),offered);
+assert.deepEqual(new Set(filterAndSort(offerJobs,{filters:{status:[OFFER_TOTAL]}}).map(job=>job.id)),new Set(offered));
+assert.deepEqual(filterAndSort(offerJobs,{filters:{status:[OFFER_TOTAL]},search:'no-match'}),[]);
+assert.equal(filterAndSort(offerJobs,{filters:{status:STATUS_VALUES}}).length,offerJobs.length);
+console.log('PASS: Offers includes current Offer even without a date, excludes historical/withdrawn offers and respects search/All.');
+
+// A modern cleared date overrides old dated history, including later outcomes.
+const legacyMilestones={status:'Rejected',statusHistory:[{status:'Interview',date:'2026-11-10'},{status:'Offer',date:'2026-11-12'}]};
+assert.equal(interviewDetails(legacyMilestones).hasInterview,true);
+assert.equal(hasCurrentOffer(legacyMilestones),false);
+const clearedMilestones={...legacyMilestones,interviewDate:'',offerDate:''};
+assert.equal(interviewDetails(clearedMilestones).hasInterview,false);
+assert.equal(hasCurrentOffer(clearedMilestones),false);
+assert.equal(isRejectedAfterInterview(clearedMilestones),false);
+assert.equal(interviewHistoryText(clearedMilestones),'');
+for(const status of ['New','Shortlisted','Applied']){
+ const job={...legacyMilestones};
+ updateStage(job,{status},'2026-11-17');
+ assert.equal(job.interviewDate,'');assert.equal(job.offerDate,'');
+ assert.equal(interviewDetails(job).hasInterview,false);assert.equal(hasCurrentOffer(job),false);
+ assert.equal(filterAndSort([job],{filters:{status:[INTERVIEW_TOTAL,OFFER_TOTAL]}}).length,0);
+}
+const correction={status:'Applied'};
+updateStage(correction,{status:'Interview'},'2026-11-17');
+assert.equal(correction.interviewDate,'2026-11-17');
+updateStage(correction,{status:'Interview',interviewDate:''},'2026-11-17');
+updateStage(correction,{status:'Interview'},'2026-11-18');
+assert.equal(correction.interviewDate,'');assert.equal(interviewDetails(correction).hasInterview,false);
+updateStage(correction,{status:'Applied'},'2026-11-18');
+updateStage(correction,{status:'Interview'},'2026-11-19');
+assert.equal(correction.interviewDate,'2026-11-19');
+updateStage(correction,{status:'Offer'},'2026-11-20');
+updateStage(correction,{status:'Withdrawn'},'2026-11-21');
+assert.equal(hasCurrentOffer(correction),false);
+updateStage(correction,{status:'Withdrawn',offerDate:''},'2026-11-21');
+assert.equal(hasCurrentOffer(correction),false);
+console.log('PASS: empty dates override legacy history; backwards corrections clear milestones; notes do not restore cleared dates; entering a new stage records its date.');
