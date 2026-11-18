@@ -149,7 +149,6 @@ const server=http.createServer(async(req,res)=>{
       const previousStatus=effectiveStatus(job);
       updateStage(job,input,stageDate);
       if(input.notes!==undefined)job.notes=input.notes;
-      if(input.applicationDate!==undefined)job.applicationDate=input.applicationDate;
       if(input.applicationStatusText!==undefined)job.applicationStatusText=input.applicationStatusText;
       else if(previousStatus!==effectiveStatus(job)||before.applicationDate!==job.applicationDate||!isDeepStrictEqual(interviewDetails(before),interviewDetails(job)))delete job.applicationStatusText;
      }

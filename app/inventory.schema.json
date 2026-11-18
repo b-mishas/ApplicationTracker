@@ -86,17 +86,17 @@
         "interviewDate": {
           "type": "string",
           "pattern": "^(?:|[0-9]{4}-[0-9]{2}-[0-9]{2})$",
-          "description": "Interview date. Empty means no recorded interview and overrides legacy history; only a valid non-empty date counts as an invitation."
+          "description": "Interview date. Empty suppresses legacy date fallback. Interview invites counts a valid date OR current Interview status."
         },
         "interviewOutcomeDate": {
           "type": "string",
           "pattern": "^(?:|[0-9]{4}-[0-9]{2}-[0-9]{2})$",
-          "description": "Rejection or withdrawal date after interview. Empty means unknown or unset."
+          "description": "Rejection or withdrawal date for the current terminal status. Empty means unknown or unset."
         },
         "offerDate": {
           "type": "string",
           "pattern": "^(?:|[0-9]{4}-[0-9]{2}-[0-9]{2})$",
-          "description": "Offer date for milestone wording. Empty overrides legacy date history. The Offers view uses current effective status, independently of this date."
+          "description": "Offer date retained after later outcomes. Offers received counts a valid date OR current Offer status. Empty suppresses legacy date fallback."
         },
         "interviewOutcome": {
           "enum": [
@@ -105,7 +105,7 @@
             "Offer",
             "Withdrawn"
           ],
-          "description": "Current interview outcome. While primary status is Interview, this determines the filter status."
+          "description": "Deprecated legacy outcome. Read for compatibility when status is Interview; ordinary saves normalize it into the main status and remove this field."
         }
       },
       "additionalProperties": true

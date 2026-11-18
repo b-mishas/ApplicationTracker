@@ -11,40 +11,38 @@ export function interviewDetails(job) {
  const history = Array.isArray(job.statusHistory) ? job.statusHistory : [];
  const interview = history.findLastIndex(event => event?.status === 'Interview');
  const result = interview < 0 ? undefined : history.slice(interview + 1).findLast(event => INTERVIEW_OUTCOMES.includes(event?.status));
- // An explicit empty date cancels the milestone, even with older history.
+ // An explicit empty date suppresses legacy dates; current status still counts.
  // Only records without the modern field may use a dated legacy event.
  const interviewDate = job.interviewDate ?? (interview < 0 ? '' : history[interview].date);
- const hasInterview = validStageDate(interviewDate,{allowEmpty:false});
- const outcome = job.interviewOutcome ?? (hasInterview ? result?.status ?? (INTERVIEW_OUTCOMES.includes(job.status) ? job.status : '') : '');
+ const hasInterview = effectiveStatus(job) === 'Interview' || validStageDate(interviewDate,{allowEmpty:false});
+ const outcome = hasInterview && INTERVIEW_OUTCOMES.includes(effectiveStatus(job)) ? effectiveStatus(job) : '';
  return {
   hasInterview,
-  interviewDate: hasInterview ? interviewDate : '',
+  interviewDate: validStageDate(interviewDate,{allowEmpty:false}) ? interviewDate : '',
   interviewOutcome: outcome,
   interviewOutcomeDate: job.interviewOutcomeDate ?? (result?.status === outcome && outcome !== 'Offer' ? result?.date || '' : ''),
   offerDate: job.offerDate ?? (result?.status === 'Offer' ? result.date : history.findLast(event => event?.status === 'Offer')?.date || '')
  };
 }
 
+// Compatibility for older records; new saves keep only the main status.
 export function effectiveStatus(job) {
- if (job.status !== 'Interview') return job.status;
- const {interviewOutcome} = interviewDetails(job);
- return INTERVIEW_OUTCOMES.includes(interviewOutcome) ? interviewOutcome : job.status;
+ if (job.status === 'Interview' && INTERVIEW_OUTCOMES.includes(job.interviewOutcome)) return job.interviewOutcome;
+ return job.status;
 }
 
-// Older application records may have a stage/history but no application date.
 export function hasSentApplication(job) {
- const sentStages=['Applied','Interview','Offer','Rejected','Withdrawn'];
- return Boolean(job.applicationDate)||sentStages.includes(effectiveStatus(job))||interviewDetails(job).hasInterview
-  ||(job.statusHistory||[]).some(event=>sentStages.includes(event?.status));
+ const history = Array.isArray(job.statusHistory) ? job.statusHistory : [];
+ const date = job.applicationDate ?? history.findLast(event => event?.status === 'Applied')?.date;
+ return validStageDate(date,{allowEmpty:false}) || ['Applied','Interview','Offer'].includes(effectiveStatus(job));
 }
 
 export function isRejectedAfterInterview(job) {
  return effectiveStatus(job) === 'Rejected' && interviewDetails(job).hasInterview;
 }
 
-// Offers is the current Offer view, not a history of dated offers.
-export function hasCurrentOffer(job) {
- return effectiveStatus(job)==='Offer';
+export function hasReceivedOffer(job) {
+ return effectiveStatus(job)==='Offer' || validStageDate(interviewDetails(job).offerDate,{allowEmpty:false});
 }
 
 export function validateMilestones(fields) {
@@ -55,36 +53,28 @@ export function validateMilestones(fields) {
 }
 
 export function updateStage(job, input, today) {
- const before = interviewDetails(job);
- const oldEffective = effectiveStatus(job);
- const statusChanged = input.status !== oldEffective;
- const explicitOutcome = Object.hasOwn(input, 'interviewOutcome');
- job.status = input.status;
- // Moving backwards corrects the later milestones, not just the visible label.
- // Empty strings suppress legacy fallback without changing the date schema.
- if(statusChanged && ['New','Shortlisted','Applied'].includes(job.status)){
-  for(const key of MILESTONE_DATES)job[key]='';
-  job.interviewOutcome='';
+ const before = interviewDetails(job), oldStatus = effectiveStatus(job);
+ const legacyOutcome = Object.hasOwn(input,'interviewOutcome');
+ if (legacyOutcome && !before.hasInterview && !['Interview','Offer'].includes(input.status)) throw new StatusHistoryError('Record an interview before setting its outcome.');
+ const status = legacyOutcome ? input.interviewOutcome || 'Interview' : input.status;
+ const changed = status !== oldStatus;
+ job.status = status;
+ delete job.interviewOutcome;
+ // A real transition gets a new application date; ordinary saves keep edits/clears.
+ if (Object.hasOwn(input,'applicationDate') || status === 'Applied' && changed) job.applicationDate = input.applicationDate ?? today;
+ // Backward corrections remove later milestones, including their legacy fallbacks.
+ if (changed && ['New','Shortlisted','Applied'].includes(status)) {
+  for (const key of MILESTONE_DATES) job[key]='';
   return;
  }
- if (explicitOutcome && !before.hasInterview && !['Interview','Offer'].includes(job.status)) throw new StatusHistoryError('Record an interview before setting its outcome.');
- const hasInterview = before.hasInterview || job.status === 'Interview' || explicitOutcome || Boolean(input.interviewDate);
- if (hasInterview) {
-  let outcome = before.interviewOutcome;
-  if (statusChanged && job.status === 'Interview') outcome = '';
-  if ((statusChanged || (!before.hasInterview && input.interviewDate)) && INTERVIEW_OUTCOMES.includes(job.status)) outcome = job.status;
-  if (explicitOutcome) outcome = input.interviewOutcome;
-  job.interviewDate = input.interviewDate ?? (before.hasInterview ? before.interviewDate : statusChanged && job.status === 'Interview' ? today : '');
-  job.interviewOutcome = outcome;
-  job.interviewOutcomeDate = outcome && outcome !== 'Offer' ? input.interviewOutcomeDate ?? (outcome === before.interviewOutcome || !statusChanged && !explicitOutcome ? before.interviewOutcomeDate : today) : '';
-  if (explicitOutcome) job.status = outcome || 'Interview';
+ if (before.hasInterview || status === 'Interview' || input.interviewDate) {
+  job.interviewDate = input.interviewDate ?? before.interviewDate;
  }
- if(input.interviewDate===''){
-  job.interviewDate='';job.interviewOutcome='';job.interviewOutcomeDate='';
- }
- if(effectiveStatus(job)==='Interview' && oldEffective!=='Interview')job.offerDate='';
- const becameOffer = effectiveStatus(job) === 'Offer' && oldEffective !== 'Offer';
- if (Object.hasOwn(input,'offerDate') || becameOffer) job.offerDate = input.offerDate ?? (before.offerDate || today);
+ if (['Rejected','Withdrawn'].includes(status)) {
+  job.interviewOutcomeDate = input.interviewOutcomeDate ?? (changed ? today : before.interviewOutcomeDate);
+ } else if (changed) job.interviewOutcomeDate='';
+ if (status === 'Interview' && changed) job.offerDate='';
+ if (Object.hasOwn(input,'offerDate') || status === 'Offer' && changed) job.offerDate = input.offerDate ?? today;
 }
 
 function datedLabel(status, date, labels) {

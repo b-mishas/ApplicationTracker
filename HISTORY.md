@@ -4,6 +4,34 @@
 
 --------------------
 
+## 2026-11-18 — active-only Offer badge and tracker restart (Codex)
+
+- Gold fill/outline now applies only to active Offer; inactive Offer matches the other outcome buttons. Added an active-only decorative dollar circle using the existing badge class, with equal button widths retained.
+- Investigated Rejected not defaulting today: normal server process predated the backend date changes. Restarted this installation at its existing port 56068 using the standard background launcher; before/after inventory/settings hashes matched. No real records changed.
+- Synthetic Chromium verified Rejected defaults to 2026-11-18 even with a blank interview date; active Offer gold/dollar, inactive neutral/no dollar, and no button overflow. Syntax/whitespace checks passed. Test server stopped; normal server remains running current backend. No commit/push/ZIP build; other browsers/platforms untested.
+
+
+## 2026-11-18 — gold Offer outcome button (Codex)
+
+- Matched the Offer shortcut to the status badge: pale-gold fill, dark-yellow outline and dark-gold text, including when selected. Equal sizing and neutral Rejected/Withdrawn selection remain.
+- Synthetic desktop Chromium rendering and computed-color comparison confirmed identical button/badge colors. Whitespace check passed. Temporary test server stopped; no real data/settings changes, commit, push or ZIP build. Other browsers/platforms untested for this CSS-only change.
+
+
+## 2026-11-18 — status date defaults and equal outcome buttons (Codex)
+
+- Made interview outcome buttons equal-width in a three-column grid matching the interview date column, with 3 px side padding and neutral grey selection. Used 11 px single-line labels so Withdrawn fits without wrapping; browser measurements confirmed equal widths and no overflow.
+- Applied now defaults its application date to today on a real status change, including when an older application date exists. Offer, Rejected and Withdrawn also default their dates to today. Interview leaves an unknown date empty. Explicit dates override defaults; same-status saves preserve edited/cleared dates. Centralized application-date assignment in the shared transition helper.
+- Interview dates survive transitions to Offer/Rejected/Withdrawn/Dismissed and clear on New/Shortlisted/Applied. Offer dates survive Rejected/Withdrawn/Dismissed and clear on New/Shortlisted/Applied/Interview. Retained dates remain visible in Dismissed records.
+- Full model transition matrix, date-default/override/clear regressions, isolated API/export/Undo checks and syntax/whitespace checks passed. Synthetic in-app Chromium checks verified today's Applied/Rejection dates, blank Interview default, retained dates on rejection and desktop equal-width/neutral-shading rendering. Temporary test server stopped. Real records/settings unchanged; normal tracker not restarted. Narrow screens, other browsers and physical platforms untested this turn. No commit/push/ZIP rebuild.
+
+
+## 2026-11-18 — unified status actions and milestone totals (Codex)
+
+- Replaced the interview outcome selector with Rejected, Offer and Withdrawn buttons beside the interview date. Buttons use the main status autosave/draft/Undo flow. New ordinary saves normalize legacy interviewOutcome into status and remove the redundant field; older records and deprecated API inputs remain readable. Rejection/withdrawal dates use the existing date field with clearer labels.
+- Applications sent now uses a valid application date OR current Applied/Interview/Offer. Interview invites uses a valid interview date OR current Interview. Offers received uses a valid offer date OR current Offer, retaining dated withdrawn offers. Empty dates suppress legacy date fallback without excluding qualifying current stages. Backward corrections still clear later milestones.
+- Model regressions, isolated API/export/Undo checks, JavaScript syntax and whitespace checks passed. In-app Chromium with synthetic inventory verified dateless Interview/Offer counts, dated withdrawn offers, outcome buttons, note drafts, saving, Undo, reload, Offers filter membership and desktop rendering. Local networking for the API checks required sandbox escalation; the elevated run passed. No real records/settings changed; temporary test server stopped. Other browsers, narrow screens and physical devices were not tested this turn. No commit, push or distribution rebuild.
+
+
 ## 2026-11-18 — sidebar navigation and application shortcuts (Codex)
 
 - Pipeline and Statistics replace the overview and toolbar presets. Applied retains the former In progress membership and dated layout. Interview invites requires a valid interview date. Offers follows current effective Offer status, including undated offers, and appears only above zero.

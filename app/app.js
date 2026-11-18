@@ -1,4 +1,4 @@
-import {STATUS_VALUES, INTERVIEW_OUTCOMES, MILESTONE_DATES, interviewDetails, effectiveStatus, interviewHistoryText, validStageDate, isRejectedAfterInterview, hasSentApplication, hasCurrentOffer} from './status-history.mjs';
+import {STATUS_VALUES, INTERVIEW_OUTCOMES, MILESTONE_DATES, interviewDetails, effectiveStatus, interviewHistoryText, validStageDate, isRejectedAfterInterview, hasSentApplication, hasReceivedOffer} from './status-history.mjs';
 import {filterAndSort,choicesFor,EMPTY,REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL,INTERVIEW_TOTAL,OFFER_TOTAL} from './view-model.mjs';
 import {groupColour,ensureGroupColours} from './group-colours.mjs';
 const $=id=>document.getElementById(id);
@@ -64,8 +64,8 @@ function stageFields(job,saved=interviewDetails(job)){
  const terminal=['Rejected','Withdrawn'].includes(job.status);
  const application=['Applied','Interview','Offer'].includes(job.status)||terminal;
  return {application,interview:job.status==='Interview'||job.status==='Offer'||terminal&&saved.hasInterview,
-  offerDate:effectiveStatus(job)==='Offer'||job.status==='Withdrawn'&&Boolean(saved.offerDate),
-  interviewOutcomeDate:application&&job.status!=='Applied'&&['Rejected','Withdrawn'].includes(saved.interviewOutcome)};
+  offerDate:effectiveStatus(job)==='Offer'||Boolean(saved.offerDate),
+  interviewOutcomeDate:terminal};
 }
 function applicationText(job){
  // A saved manual value, including an empty string, replaces generated history.
@@ -83,9 +83,9 @@ function stageControls(job){
   +'<div class="applied-shortcuts"'+hiddenUnless(effectiveStatus(job)==='Applied')+'><button type="button" data-next-status="Rejected">Rejected</button><button type="button" data-next-status="Interview">Interview</button></div>'
   +'<div class="stage-row" data-interview-row'+hiddenUnless(visible.interview)+'>'
   +milestoneInput('Interview date','interviewDate',saved.interviewDate)
-  +'<label>Interview outcome <select class="edit-interview-outcome" title="Outcome saves automatically"><option value="">Pending</option>'+INTERVIEW_OUTCOMES.map(outcome=>'<option'+(outcome===saved.interviewOutcome?' selected':'')+'>'+outcome+'</option>').join('')+'</select></label></div>'
+  +'<div class="interview-outcomes" role="group" aria-label="Interview outcome"><span>Interview outcome</span><div>'+INTERVIEW_OUTCOMES.map(outcome=>'<button type="button" data-next-status="'+outcome+'" aria-pressed="'+(effectiveStatus(job)===outcome)+'">'+(outcome==='Offer'?'<span class="offer-dollar" aria-hidden="true">$</span>':'')+outcome+'</button>').join('')+'</div></div></div>'
   +milestoneInput('Offer date','offerDate',saved.offerDate,visible.offerDate)
-  +milestoneInput('Outcome date','interviewOutcomeDate',saved.interviewOutcomeDate,visible.interviewOutcomeDate);
+  +milestoneInput(effectiveStatus(job)==='Withdrawn'?'Withdrawal date':'Rejection date','interviewOutcomeDate',saved.interviewOutcomeDate,visible.interviewOutcomeDate);
 }
 function dateInput(label,key,value,visible=true){
  const application=key==='applicationDate',id='step-'+key;
@@ -103,11 +103,17 @@ function syncStageControls(section,job,draft){
  section.querySelector('.edit-status').value=effectiveStatus(job);
  section.querySelector('.apply-status').hidden=!canApply(job);
  section.querySelector('.applied-shortcuts').hidden=effectiveStatus(job)!=='Applied';
- section.querySelector('.edit-interview-outcome').value=saved.interviewOutcome;
+ for(const button of section.querySelectorAll('.interview-outcomes button'))button.setAttribute('aria-pressed',String(button.dataset.nextStatus===effectiveStatus(job)));
  section.querySelector('[data-interview-row]').hidden=!visible.interview;
  for(const key of MILESTONE_DATES){
   const field=section.querySelector('[data-milestone="'+key+'"]');
   field.value=draft[key]??saved[key];
+  if(key==='interviewOutcomeDate'){
+   const label=effectiveStatus(job)==='Withdrawn'?'Withdrawal date':'Rejection date',container=field.closest('.date-field');
+   container.querySelector('label').textContent=label;
+   container.querySelector('.clear-date').setAttribute('aria-label','Clear '+label.toLowerCase());
+   container.querySelector('.clear-date').title='Clear '+label.toLowerCase();
+  }
   if(key!=='interviewDate')field.closest('.date-field').hidden=!visible[key];
  }
  section.querySelector('[data-application-date]').hidden=!visible.application;
@@ -147,7 +153,7 @@ function refreshOverview(){
  $('urgent').textContent=data.jobs.filter(j=>j.urgent).length;
  $('active').textContent=data.jobs.filter(j=>inProgressStatuses.includes(effectiveStatus(j))).length;
  $('new-count').classList.toggle('has-new',Number($('new-count').textContent)>0);
- const offers=data.jobs.filter(hasCurrentOffer).length;
+ const offers=data.jobs.filter(hasReceivedOffer).length;
  $('offer-total').textContent=offers;
  $('offers-preset').hidden=offers===0;
 }
@@ -428,15 +434,14 @@ document.querySelector('.table-wrap').addEventListener('scroll',closeFilter);
 // editor in place so unsaved notes/date/text and edits made while saving survive.
 async function saveStatus(select){
  const job=data.jobs.find(job=>job.id===open);if(!job)return;
- const outcomeControl=select.matches('.edit-interview-outcome');
- const previous=outcomeControl?interviewDetails(job).interviewOutcome:effectiveStatus(job);
+ const previous=effectiveStatus(job);
  if(pendingSave){select.value=previous;return;}
  if(select.value===previous)return;
- const status=outcomeControl?job.status:select.value;
+ const status=select.value;
  const section=select.closest('section'),date=section.querySelector('.edit-application-date'),text=section.querySelector('.edit-application-status'),indicator=section.querySelector('.save-state');
  const dateBefore=date.value,oldText=applicationText(job);
- const autoDate=status==='Applied'&&!job.applicationDate&&!dateBefore&&!date.validity.badInput?localToday():undefined;
- const payload={id:job.id,status,statusDate:localToday(),...(outcomeControl?{interviewOutcome:select.value}:{}),...(autoDate?{applicationDate:autoDate}:{})};
+ const autoDate=status==='Applied'?localToday():undefined;
+ const payload={id:job.id,status,statusDate:localToday(),...(autoDate?{applicationDate:autoDate}:{})};
  // Keep native editor calendars stable by leaving date inputs enabled.
  const controls=[...section.querySelectorAll('button,select'),...document.querySelectorAll('.sidebar button,.toolbar input:not([type=date]),.toolbar button,.toolbar select,#head button,#settings-open')];
  const focused=document.activeElement;
@@ -446,7 +451,7 @@ async function saveStatus(select){
   const saved=await saveJobEdit(payload);
   syncStageControls(section,saved,milestoneDraft(section,job,{includeHidden:true}));
   if(text.value===oldText)text.value=applicationText(saved);
-  if(autoDate&&date.value===dateBefore)date.value=saved.applicationDate||autoDate;
+  if(autoDate&&date.value===dateBefore&&dateBefore===(job.applicationDate||''))date.value=saved.applicationDate||autoDate;
   const row=section.closest('tr').previousElementSibling,detailRow=section.closest('tr');
   for(const element of [row,detailRow]){element.classList.remove(...stageClasses.values());element.classList.toggle('urgent',Boolean(saved.urgent));element.classList.toggle('rejected-after-interview',isRejectedAfterInterview(saved));const stage=rowStage(effectiveStatus(saved));if(stage)element.classList.add(stage);}
   for(const key of ['status','star','applicationDate']){const cellElement=row.querySelector('td.'+key);if(cellElement)cellElement.innerHTML=cell(saved,key);}
@@ -459,7 +464,7 @@ async function saveStatus(select){
  finally{setPendingSave(false);disabled.forEach(({control,wasDisabled})=>control.disabled=wasDisabled);refreshEditorButtons();if(focused===select&&document.activeElement===document.body)select.focus();}
 }
 $('body').addEventListener('change',event=>{
- if(event.target.matches('.edit-status,.edit-interview-outcome'))saveStatus(event.target);
+ if(event.target.matches('.edit-status'))saveStatus(event.target);
  else if(event.target.closest('.detail')){
   if(event.target.matches('input[type=date]')&&!event.target.validity.badInput&&validStageDate(event.target.value)){
    const job=data.jobs.find(job=>job.id===open),section=event.target.closest('section');

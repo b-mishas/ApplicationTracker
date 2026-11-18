@@ -272,3 +272,14 @@ tr.job.urgent>td:first-child,tr.detail.urgent>td{box-shadow:inset var(--row-edge
 .application-steps>.save,.application-steps>.cancel{margin-top:12px}
 @media(max-width:850px){.workspace{gap:12px}.sidebar{padding-right:8px}.sidebar button{padding-inline:8px}.results .search-control{max-width:none}.results{gap:10px}}
 @media(max-width:580px){.workspace{flex-direction:column;gap:12px}.sidebar{width:100%;max-width:none;max-height:210px;display:flex;gap:20px;border-right:0;border-bottom:1px solid var(--control-border);padding:0 0 10px}.sidebar section{flex:1;align-content:start}.sidebar .sidebar-statistics{margin-top:0}.sidebar button{white-space:normal;gap:20px}.sidebar h2{margin-inline:8px}}
+
+.interview-outcomes{min-width:0;font-size:12px}
+.interview-outcomes>span{display:block;margin-bottom:4px}
+.interview-outcomes>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;width:100%}
+.interview-outcomes button{width:100%;min-width:0;min-height:32px;margin:0;padding:4px 3px;font-size:11px;white-space:nowrap}
+.interview-outcomes button[aria-pressed=true]{background:#e5e7eb;font-weight:700}
+
+/* Only an active Offer shortcut uses the gold status-badge colours. */
+.interview-outcomes button[data-next-status=Offer][aria-pressed=true]{display:inline-flex;align-items:center;justify-content:center;gap:3px;background:#fff4d3;border-color:#d6b665;color:#66501c}
+.interview-outcomes .offer-dollar{display:none;flex:0 0 14px;width:14px;height:14px;font-size:11px}
+.interview-outcomes button[aria-pressed=true] .offer-dollar{display:inline-flex}
