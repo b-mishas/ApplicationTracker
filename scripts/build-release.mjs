@@ -7,6 +7,8 @@ import crypto from 'node:crypto';
 import JSZip from 'jszip';
 import {auditRelease} from './audit-release.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
+const packageInfo=JSON.parse(await fs.readFile(path.join(root,'package.json'),'utf8'));
+const buildInfo={version:packageInfo.version,builtAt:new Date().toISOString()};
 const manifest=JSON.parse(await fs.readFile(new URL('./runtime-manifest.json',import.meta.url),'utf8'));
 const targets={
  'windows-x64':{filePart:'-win-x64.',runtime:'win-x64',os:'windows'},
@@ -81,6 +83,7 @@ for(const name of ['app.js','batch.schema.json','config.mjs','countries.json','e
 await tree(path.join(root,'node_modules'),'node_modules');
 for(const name of ['agent','guides','profile'])await tree(path.join(root,'templates',name),name);
 for(const name of ['START_HERE.html','THIRD_PARTY_NOTICES.md','package.json','package-lock.json'])add(name,await fs.readFile(path.join(root,name)));
+add('BUILD_INFO.json',JSON.stringify(buildInfo,null,2)+'\n');
 add('settings/tracker.json',JSON.stringify({schemaVersion:1,exportLanguage:'en'},null,2)+'\n');
 add('data/jobs.json',JSON.stringify({schemaVersion:1,jobs:[]},null,2)+'\n');
 const denyTerms=process.env.JOBTRACKER_RELEASE_DENY_TERMS_FILE?JSON.parse(await fs.readFile(process.env.JOBTRACKER_RELEASE_DENY_TERMS_FILE,'utf8')):[];

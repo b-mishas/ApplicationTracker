@@ -28,6 +28,9 @@ try{
   assert.equal(checksum,crypto.createHash('sha256').update(bytes).digest('hex')+'  '+filename);
   const candidate=await JSZip.loadAsync(bytes);
   await auditRelease(candidate);
+  const build=JSON.parse(await candidate.file('Application tracker/BUILD_INFO.json').async('string'));
+  const pkg=JSON.parse(await candidate.file('Application tracker/package.json').async('string'));
+  assert.equal(build.version,pkg.version);assert(Number.isFinite(Date.parse(build.builtAt)));
   const names=Object.keys(candidate.files).filter(name=>!candidate.files[name].dir);
   const runtimeDirs=Object.keys(candidate.files).filter(name=>/^Application tracker\/runtime\/[^/]+\/$/.test(name));
   assert.deepEqual(runtimeDirs,[`Application tracker/runtime/${target.runtime}/`],`Expected exactly one runtime folder in ${filename}`);

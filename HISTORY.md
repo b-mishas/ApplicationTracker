@@ -4,6 +4,12 @@
 
 --------------------
 
+## 2026-11-18 — visible build version (Codex)
+
+- Footer displays the version from package.json through /api/version. Future release builds add BUILD_INFO.json with version and UTC build time; the footer tooltip identifies that time or a source checkout. ZIP names remain unchanged.
+- Isolated API/export/Undo checks, JavaScript syntax checks and synthetic Chromium footer rendering passed. Release test now checks build metadata; no ZIP was rebuilt, so packaged-build acceptance remains pending.
+
+
 ## 2026-11-18 — routine token-cost changes implemented (Claude)
 
 - ROUTINE_PROMPT Part B, following Codex's review: checklist-based completion with done / not due / deferred / partial / failed states and no unlimited-effort wording; fuller subagents (mails one per started 30, postings ten, employers ten or portals two–three); employers on the smallest model only with a cached method that worked before, otherwise middle; per-source limits of fifteen tool calls or five minutes. Employers due by age (A 3, B 7, C 14 days) unless the profile says otherwise, at most twenty attempts per run in next-due order; missing career URLs five per run. Shortlisted refresh rule and weekly coverage-gap searches with catch-up. coverage.json gains employers[].lastAttempt and method, and refreshed; unfinished also records partial and deferred work.

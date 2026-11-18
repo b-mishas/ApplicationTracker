@@ -13,6 +13,10 @@ import {isDeepStrictEqual} from 'node:util';
 import {calendarDate} from './settings.mjs';
 import {updateStage,validStageDate,validateMilestones,effectiveStatus,interviewDetails,StatusHistoryError} from './status-history.mjs';
 const root=path.dirname(fileURLToPath(import.meta.url));
+// The package is the version authority; release builds additionally stamp their build time.
+const {version}=JSON.parse(await readFile(path.join(root,'../package.json'),'utf8'));
+let builtAt=null;
+try{const build=JSON.parse(await readFile(path.join(root,'../BUILD_INFO.json'),'utf8'));if(build.version===version)builtAt=build.builtAt??null;}catch(error){if(error.code!=='ENOENT')throw error;}
 let port=Number(process.env.PORT??8765), origin=`http://127.0.0.1:${port}`;
 const installation=crypto.createHash('sha256').update(root+'\0'+dataRoot).digest('hex');
 class NotFound extends Error{}
@@ -44,6 +48,7 @@ const server=http.createServer(async(req,res)=>{
  try {
   if(req.headers.host!==`127.0.0.1:${port}`) return reply(403,{error:'Use the local address printed by the launcher.'});
   const url=new URL(req.url,origin);
+  if(url.pathname==='/api/version'&&req.method==='GET')return reply(200,{version,builtAt});
   if(url.pathname==='/api/health'&&req.method==='GET')return reply(200,{app:'ApplicationTracker',installation});
   if(url.pathname==='/api/stop'&&req.method==='POST'){
    if(req.headers.origin!==origin)return reply(403,{error:'Stop from the local launcher.'});

@@ -16,6 +16,8 @@ try{
  child=spawn(process.execPath,[fileURLToPath(new URL('server.mjs',import.meta.url))],{env:{...process.env,PORT:'8766',JOBTRACKER_DATA_DIR:dir,JOBTRACKER_SETTINGS_FILE:path.join(dir,'settings.json')},stdio:['ignore','pipe','pipe']});
  await new Promise((resolve,reject)=>{child.stdout.once('data',resolve);child.once('error',reject);child.stderr.once('data',d=>reject(Error(String(d))));});
  const base='http://127.0.0.1:8766';
+ const {version}=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8'));
+ assert.deepEqual(await (await fetch(base+'/api/version')).json(),{version,builtAt:null});
  const saveView=state=>fetch(base+'/api/view-state',{method:'POST',headers:{'Content-Type':'application/json',Origin:base},body:JSON.stringify(state)});
  const legacyView={search:'fixture',filters:{status:['Applied','Interview','Offer']},updatedAt:1};
  assert.equal((await saveView(legacyView)).status,200);

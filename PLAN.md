@@ -17,6 +17,6 @@
 - **Draggable columns.** Column order can be shulffled by dragging (except the first 'expand' column). Current state is saved in `view-state.json`.
 - **Resizeable columns.** Column width can be adjusted by dragging on column edges. Current state is saved in `view-state.json`.
 - **In-app button tutorial.** Highlight one control at a time against a translucent overlay. Give each a one-sentence explanation and provide Next, Back, Skip and replay. Support keyboard use and narrow screens.
-- **Version number in builds.** Take the version from package.json (now 0.1.0, shown nowhere) when building: put it into the ZIP names, a small version file in the package and the tracker's footer or Settings, so a recipient can say which build they run.
+- **Versioned ZIP names (optional).** The footer now shows package.json version; future packages include BUILD_INFO.json with version and build time. Consider adding the version to archive names too.
 - **Template drift check.** Add a test that fails when agent/, guides/ or profile/ differ from their templates/ copies. The release ships templates/, so an edit to only one copy would silently ship stale instructions.
 - **Later.** Backup recovery and updates that preserve local data, signed launchers, optional structured deadlines and agent urgency suggestions, and possible UK/GB normalization. Coordinate agent-facing schema changes with Claude.

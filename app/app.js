@@ -363,6 +363,15 @@ $('columns').onchange=e=>{if(!canChangeView()){e.target.checked=!e.target.checke
 $('export').onclick=async e=>{e.preventDefault();if(pendingSave){$('message').textContent='Wait for the current save to finish.';return;}try{const r=await fetch('/api/jobs');if(!r.ok)throw Error('Export failed');const {data:latest}=await r.json();const url=URL.createObjectURL(new Blob([JSON.stringify(latest,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`jobs-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(err){$('message').textContent=err.message;}};
 window.addEventListener('beforeunload',e=>{if(pendingSave||dirty()){e.preventDefault();e.returnValue='';}});
 async function init(){try{const r=await fetch('/api/jobs');if(!r.ok)throw Error('Could not load positions');({data,revision}=await r.json());const config=await fetch('/api/settings');if(!config.ok)throw Error('Could not load settings');const cfg=await config.json();settings=cfg.settings;settingsRevision=cfg.revision;const flags=await fetch('/api/countries');if(!flags.ok)throw Error('Could not load country codes');supportedCountries=new Set(await flags.json());await restoreViewState();$('columns').innerHTML=fields.map(([key,label])=>`<label><input type="checkbox" value="${key}" ${visible.has(key)?'checked':''}> ${label}</label>`).join('');$('imported').textContent=`${data.jobs.length} unique positions`;render();}catch(e){$('message').textContent=e.message+' — open the Start file for your system.';}}
+async function loadBuildVersion(){
+ try{
+  const response=await fetch('/api/version');if(!response.ok)return;
+  const build=await response.json();
+  $('build-version').textContent='Version '+build.version;
+  $('build-version').title=build.builtAt?'Built '+new Date(build.builtAt).toLocaleString():'Source checkout';
+ }catch{} // Version availability must not prevent using the tracker.
+}
+loadBuildVersion();
 init();
 function canChangeView(){if(pendingSave){$('message').textContent='Wait for the current save to finish.';return false;}return !dirty()||confirm('Discard unsaved changes?');}
 function closeFilter(){filterKey=null;$('column-filter').hidden=true;document.querySelectorAll('[data-filter]').forEach(b=>b.setAttribute('aria-expanded','false'));}

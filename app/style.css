@@ -290,3 +290,6 @@ tr.job.urgent>td:first-child,tr.detail.urgent>td{box-shadow:inset var(--row-edge
 .detail-toolbar .undo-control{margin-inline-start:90px}
 
 .detail-toolbar[hidden]{display:none}
+
+.footer-build{display:flex;flex-wrap:wrap;gap:4px 16px}
+#build-version{white-space:nowrap}
