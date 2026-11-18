@@ -1,6 +1,7 @@
 import {STATUS_VALUES, INTERVIEW_OUTCOMES, MILESTONE_DATES, interviewDetails, effectiveStatus, interviewHistoryText, validStageDate, isRejectedAfterInterview, hasSentApplication, hasReceivedOffer} from './status-history.mjs';
 import {filterAndSort,choicesFor,EMPTY,REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL,INTERVIEW_TOTAL,OFFER_TOTAL} from './view-model.mjs';
 import {groupColour,ensureGroupColours} from './group-colours.mjs';
+import {COLUMN_WIDTHS,minimumColumnWidth,MAX_COLUMN_WIDTH,clampColumnWidth} from './column-layout.mjs';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const statuses=STATUS_VALUES;
@@ -18,12 +19,13 @@ const inProgressStatuses=['Applied','Interview','Offer'];
 const statusPresets={New:['New'],Shortlisted:['Shortlisted'],Urgent:statuses,'In progress':inProgressStatuses,[APPLIED_TOTAL]:[APPLIED_TOTAL],[INTERVIEW_TOTAL]:[INTERVIEW_TOTAL],[OFFER_TOTAL]:[OFFER_TOTAL],All:statuses};
 const visible=new Set(fields.slice(0,9).map(x=>x[0]));
 let standardLayout;
-let columnOrder=fields.map(([key])=>key);
+let columnOrder=fields.map(([key])=>key),columnWidths={};
 const dateMonths=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-function layoutState(){return {columns:[...visible],order:[...columnOrder],sort,direction};}
+function layoutState(){return {columns:[...visible],order:[...columnOrder],widths:{...columnWidths},sort,direction};}
 function applyLayout(layout){
  visible.clear();layout.columns.forEach(key=>visible.add(key));sort=layout.sort;direction=layout.direction;
  columnOrder=layout.order?[...layout.order]:fields.map(([key])=>key);
+ columnWidths={...layout.widths};
 }
 function isInProgressView(){
  return filters.status?.length===inProgressStatuses.length&&inProgressStatuses.every(status=>filters.status.includes(status));
@@ -238,7 +240,12 @@ function resizeColumns(){
   const baseWidth=Number(column.dataset.width);
   column.style.width=(baseWidth+(column.hasAttribute('data-fixed')?0:extraWidth*baseWidth/flexibleWidth))+'px';
  }
+ table.style.minWidth=totalWidth+'px';
  table.style.width=(totalWidth+(flexibleWidth?extraWidth:0))+'px';
+ for(const handle of $('head').querySelectorAll('[data-resize-column]')){
+  const width=Math.round(handle.closest('th').getBoundingClientRect().width);
+  handle.setAttribute('aria-valuenow',width);handle.setAttribute('aria-valuetext',width+' pixels');
+ }
 }
 new ResizeObserver(resizeColumns).observe(document.querySelector('.table-wrap'));
 function render(){
@@ -249,9 +256,9 @@ function render(){
  refreshStatusPresets();
  const cols=columnOrder.filter(key=>visible.has(key)).map(key=>fields.find(field=>field[0]===key));
  // Keep controls compact. Extra table width goes to the flexible columns.
- const widths={fit:80,company:130.5,title:365,star:114,group:110,country:124,city:105,workMode:103.25,status:107,applicationDate:130,seniority:170,firstSeen:110,postedDate:110,assessmentBasis:143};
+ const widths={...COLUMN_WIDTHS,...columnWidths};
  const totalWidth=44+cols.reduce((sum,[key])=>sum+widths[key],0);
- $('colgroup').innerHTML='<col data-width="44" data-fixed style="width:44px">'+cols.map(([key])=>`<col data-column="${key}" data-width="${widths[key]}" ${['fit','star','country'].includes(key)?'data-fixed':''} style="width:${widths[key]}px">`).join('');
+ $('colgroup').innerHTML='<col data-width="44" data-fixed style="width:44px">'+cols.map(([key])=>`<col data-column="${key}" data-width="${widths[key]}" ${Object.hasOwn(columnWidths,key)||['fit','star','country'].includes(key)?'data-fixed':''} style="width:${widths[key]}px">`).join('');
  $('colgroup').closest('table').style.minWidth=totalWidth+'px';
  $('head').innerHTML='<th aria-label="Details"></th>'+cols.map(([key,label])=>{
  const value=filters[key];
@@ -259,7 +266,7 @@ function render(){
   ?value.length>0&&!allCheckboxValuesSelected(key,value)
   :Boolean(value);
  const clearButton=active?`<button type="button" class="clear-column-filter" data-clear-column-filter="${key}" aria-label="Clear ${label} filter" title="Clear ${label} filter">×</button>`:'';
- return `<th data-column="${key}" aria-sort="${sort===key?(direction===1?'ascending':'descending'):'none'}"><div class="column-heading"><button class="column-label ${active?'filtered':''}" data-filter="${key}" title="Drag to move; Alt+Left/Right moves with the keyboard" aria-label="Filter ${label}" aria-haspopup="dialog" aria-controls="column-filter" aria-expanded="${filterKey===key}">${label}</button>${clearButton}<button class="sort-arrow" data-sort="${key}" aria-label="Sort by ${label}" title="Sort by ${label}">${sort===key?(direction===1?'↑':'↓'):'↕'}</button></div></th>`;
+ return `<th data-column="${key}" aria-sort="${sort===key?(direction===1?'ascending':'descending'):'none'}"><div class="column-heading"><button class="column-label ${active?'filtered':''}" data-filter="${key}" title="Drag to move; Alt+Left/Right moves with the keyboard" aria-label="Filter ${label}" aria-haspopup="dialog" aria-controls="column-filter" aria-expanded="${filterKey===key}">${label}</button>${clearButton}<button class="sort-arrow" data-sort="${key}" aria-label="Sort by ${label}" title="Sort by ${label}">${sort===key?(direction===1?'↑':'↓'):'↕'}</button></div><button type="button" class="column-resize-handle" data-resize-column="${key}" role="separator" aria-orientation="vertical" aria-label="Resize ${label} column" aria-valuemin="${minimumColumnWidth(key)}" aria-valuemax="${MAX_COLUMN_WIDTH}" title="Drag to resize; double-click or Home restores automatic width. Left/Right adjusts width."></button></th>`;
  }).join('');
  const rows=filtered();
  if(open&&!rows.some(job=>job.id===open))open=null;
@@ -328,6 +335,57 @@ $('head').addEventListener('keydown',event=>{
  event.preventDefault();closeFilter();
  const shown=columnOrder.filter(key=>visible.has(key)),index=shown.indexOf(label.dataset.filter),step=event.key==='ArrowLeft'?-1:1;
  if(shown[index+step])moveColumn(label.dataset.filter,shown[index+step],step===1);
+});
+// Only the column sizing changes during a drag; the expanded editor is never rebuilt.
+function applyColumnWidth(key,width){
+ if(width===undefined)delete columnWidths[key];else columnWidths[key]=clampColumnWidth(key,width);
+ const column=$('colgroup').querySelector('[data-column="'+key+'"]');if(!column)return;
+ column.dataset.width=columnWidths[key]??COLUMN_WIDTHS[key];
+ column.toggleAttribute('data-fixed',Object.hasOwn(columnWidths,key)||['fit','star','country'].includes(key));
+ resizeColumns();
+}
+function announceColumnWidth(key){
+ const handle=$('head').querySelector('[data-resize-column="'+key+'"]');
+ $('column-layout-result').textContent=fields.find(field=>field[0]===key)[1]+' width '+handle.getAttribute('aria-valuetext');
+}
+let columnResize;
+function finishColumnResize(cancel=false){
+ const resize=columnResize;if(!resize)return;
+ columnResize=null;
+ if(cancel)applyColumnWidth(resize.key,resize.previous);
+ else if(resize.changed){saveViewState();announceColumnWidth(resize.key);}
+ document.body.classList.remove('column-resizing');
+ if(resize.handle.hasPointerCapture(resize.pointerId))resize.handle.releasePointerCapture(resize.pointerId);
+}
+$('head').addEventListener('pointerdown',event=>{
+ const handle=event.target.closest('[data-resize-column]');
+ if(!handle||event.button!==0||!event.isPrimary)return;
+ event.preventDefault();closeFilter();handle.focus({preventScroll:true});
+ const key=handle.dataset.resizeColumn;
+ columnResize={key,handle,pointerId:event.pointerId,x:event.clientX,width:handle.closest('th').getBoundingClientRect().width,previous:columnWidths[key],changed:false};
+ handle.setPointerCapture(event.pointerId);document.body.classList.add('column-resizing');
+});
+document.addEventListener('pointermove',event=>{
+ const resize=columnResize;if(!resize||event.pointerId!==resize.pointerId)return;
+ if(!resize.handle.isConnected){finishColumnResize(true);return;}
+ const delta=event.clientX-resize.x;if(!resize.changed&&delta===0)return;
+ event.preventDefault();resize.changed=true;applyColumnWidth(resize.key,resize.width+delta);
+});
+document.addEventListener('pointerup',event=>{if(columnResize?.pointerId===event.pointerId)finishColumnResize();});
+document.addEventListener('pointercancel',()=>finishColumnResize(true));
+$('head').addEventListener('lostpointercapture',()=>finishColumnResize(true));
+$('head').addEventListener('dblclick',event=>{
+ const handle=event.target.closest('[data-resize-column]');if(!handle)return;
+ event.preventDefault();applyColumnWidth(handle.dataset.resizeColumn);saveViewState();announceColumnWidth(handle.dataset.resizeColumn);
+});
+$('head').addEventListener('keydown',event=>{
+ if(event.key==='Escape'&&columnResize){event.preventDefault();finishColumnResize(true);return;}
+ const handle=event.target.closest('[data-resize-column]');
+ if(!handle||!['ArrowLeft','ArrowRight','Home'].includes(event.key))return;
+ event.preventDefault();closeFilter();const key=handle.dataset.resizeColumn;
+ const delta=(event.key==='ArrowLeft'?-1:1)*(event.shiftKey?50:10);
+ applyColumnWidth(key,event.key==='Home'?undefined:handle.closest('th').getBoundingClientRect().width+delta);
+ saveViewState();announceColumnWidth(key);
 });
 $('head').onclick=e=>{
  if(performance.now()<suppressHeaderClickUntil)return;

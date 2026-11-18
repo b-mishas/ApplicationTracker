@@ -4,6 +4,13 @@
 
 --------------------
 
+## 2026-11-18 — resizable columns (Codex)
+
+- Drag heading edges to resize columns. Double-click or Home restores automatic sizing; arrow keys adjust by 10 px (Shift: 50 px), Escape cancels. Shared limits protect compact controls. Manual widths stay exact while untouched columns share spare space; horizontal scrolling handles narrower windows. Widths persist per layout and survive moving/hiding columns. Expand remains fixed.
+- Isolated API/export/Undo regressions passed, including independent width persistence, legacy states and invalid-width rejection. Synthetic Chromium verified actual mouse resizing, draft preservation, Escape, keyboard/reset controls, bounds, reload, Applied-view isolation, reorder/hide/show and 390/900/1600 px layouts. Desktop/narrow screenshots inspected. Other browsers and physical devices remain untested.
+- Restarted the normal tracker at its existing address; version/module endpoints work and inventory, export preferences, port and view-state hashes are unchanged. No ZIP build or push.
+
+
 ## 2026-11-18 — draggable columns (Codex)
 
 - Drag heading labels to reorder columns, with an insertion marker and fixed expand column. Alt+Left/Right provides keyboard movement. Existing header/filter/sort controls and hidden-column positions are preserved. Order saves with each view layout in data/view-state.json. Moving existing cells preserves expanded-editor drafts and keyboard focus.

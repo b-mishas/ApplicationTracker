@@ -1,5 +1,6 @@
 // A dependency-free local server. Only listens on this computer.
 import http from 'node:http';
+import {validColumnWidths} from './column-layout.mjs';
 import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
@@ -36,7 +37,8 @@ function validViewLayout(layout){
  return layout&&Array.isArray(layout.columns)&&layout.columns.length<=filterKeys.size
   &&layout.columns.every(key=>filterKeys.has(key))&&new Set(layout.columns).size===layout.columns.length
   &&filterKeys.has(layout.sort)&&[1,-1].includes(layout.direction)
-  &&(layout.order===undefined||Array.isArray(layout.order)&&layout.order.length===filterKeys.size&&layout.order.every(key=>filterKeys.has(key))&&new Set(layout.order).size===layout.order.length);
+  &&(layout.order===undefined||Array.isArray(layout.order)&&layout.order.length===filterKeys.size&&layout.order.every(key=>filterKeys.has(key))&&new Set(layout.order).size===layout.order.length)
+  &&(layout.widths===undefined||validColumnWidths(layout.widths));
 }
 function validViewState(state){
  if(!state||typeof state.search!=='string'||state.search.length>2000||!Number.isSafeInteger(state.updatedAt)||state.updatedAt<0||!state.filters||typeof state.filters!=='object'||Array.isArray(state.filters))return false;
@@ -179,7 +181,7 @@ const server=http.createServer(async(req,res)=>{
     throw e;
    }
   }
-  const files={'/':'index.html','/index.html':'index.html','/app.js':'app.js','/view-model.mjs':'view-model.mjs','/group-colours.mjs':'group-colours.mjs','/status-history.mjs':'status-history.mjs','/style.css':'style.css'};
+  const files={'/':'index.html','/index.html':'index.html','/app.js':'app.js','/column-layout.mjs':'column-layout.mjs','/view-model.mjs':'view-model.mjs','/group-colours.mjs':'group-colours.mjs','/status-history.mjs':'status-history.mjs','/style.css':'style.css'};
   if(req.method==='GET'&&/^\/flags\/[a-z]{2}\.svg$/.test(url.pathname)){
    try{return reply(200,await readFile(path.join(root,'../node_modules/flag-icons/flags/4x3',path.basename(url.pathname))),'image/svg+xml');}catch{return reply(404,{error:'Unknown flag'});}
   }
