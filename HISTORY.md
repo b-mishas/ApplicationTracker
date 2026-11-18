@@ -4,6 +4,12 @@
 
 --------------------
 
+## 2026-11-18 — expanded-view Undo (Codex)
+
+- Added Undo at the expanded view's top-right, using the same handler, shared state, icon and feedback as menu Undo. It occupies existing space through absolute positioning, preserving the original expanded height. The local button/feedback belongs only to the latest edited row; menu Undo remains global. Opening another row hides its local control, while reopening the edited row restores it.
+- Synthetic Chromium checked both Undo paths, draft protection and matching feedback, consumed/hidden state, unique IDs and desktop geometry (no extra height). Cross-row checks verified ownership transfer, reopening, global Undo targeting the last edited row and same-row success feedback. Syntax/whitespace checks passed. Temporary server stopped; no real data/settings changes. Narrow layouts/other browsers untested this turn. No commit/push/ZIP build.
+
+
 ## 2026-11-18 — active-only Offer badge and tracker restart (Codex)
 
 - Gold fill/outline now applies only to active Offer; inactive Offer matches the other outcome buttons. Added an active-only decorative dollar circle using the existing badge class, with equal button widths retained.

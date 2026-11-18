@@ -119,7 +119,11 @@ function syncStageControls(section,job,draft){
  section.querySelector('[data-application-date]').hidden=!visible.application;
  section.querySelector('[data-application-status]').hidden=!visible.application;
 }
-function detail(j){return `<tr class="detail ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}"><td colspan="${visible.size+1}"><div class="detail-grid"><section><h3>Why it fits</h3><p>${esc(j.reasoning||'No assessment yet.')}</p><h3>Gaps</h3><p>${esc(j.gaps||'No caveats recorded.')}</p></section><section><h3>Evidence & location</h3><p>Assessment: <b>${esc(j.assessmentBasis)}</b>\nSeniority: ${esc(j.seniority||'Unknown')}\nLocation as recorded: ${esc(j.locationRaw)}\nFirst found: ${esc(j.firstSeen)}\nPosted: ${esc(j.postedDate||'Unknown')}\nAvailability: ${esc(j.availability||'Unverified')}</p><h3>Sources</h3>${j.sources.map(s=>`<p>${esc(s.label)}${safeUrl(s.url)?` · <a target="_blank" rel="noopener noreferrer" href="${safeUrl(s.url)}">${j.linkType==='search'?'Open search':'Open listing'} ↗</a>`:''}<br><span class="muted">${esc(s.file)}</span></p>`).join('')}</section><section class="application-steps"><h3>Application steps</h3>${stageControls(j)}<label>Notes<textarea class="edit-notes" placeholder="Questions, follow-ups, application notes…">${esc(j.notes)}</textarea></label><button class="save" data-id="${esc(j.id)}" disabled>Save changes</button> <button type="button" class="cancel" disabled title="Discard unsaved edits; saved status changes are kept">Cancel</button><span class="save-state" role="status"></span></section></div></td></tr>`;}
+// Reuse the menu control markup, dropping IDs so the expanded copy stays unique.
+function detailUndoControls(){
+ return '<div class="undo-control">'+$('undo-result').outerHTML.replace(' id="undo-result"','')+$('undo-edit').outerHTML.replace(' id="undo-edit"','')+'</div>';
+}
+function detail(j){return `<tr class="detail ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}"><td colspan="${visible.size+1}"><div class="detail-toolbar">${detailUndoControls()}</div><div class="detail-grid"><section><h3>Why it fits</h3><p>${esc(j.reasoning||'No assessment yet.')}</p><h3>Gaps</h3><p>${esc(j.gaps||'No caveats recorded.')}</p></section><section><h3>Evidence & location</h3><p>Assessment: <b>${esc(j.assessmentBasis)}</b>\nSeniority: ${esc(j.seniority||'Unknown')}\nLocation as recorded: ${esc(j.locationRaw)}\nFirst found: ${esc(j.firstSeen)}\nPosted: ${esc(j.postedDate||'Unknown')}\nAvailability: ${esc(j.availability||'Unverified')}</p><h3>Sources</h3>${j.sources.map(s=>`<p>${esc(s.label)}${safeUrl(s.url)?` · <a target="_blank" rel="noopener noreferrer" href="${safeUrl(s.url)}">${j.linkType==='search'?'Open search':'Open listing'} ↗</a>`:''}<br><span class="muted">${esc(s.file)}</span></p>`).join('')}</section><section class="application-steps"><h3>Application steps</h3>${stageControls(j)}<label>Notes<textarea class="edit-notes" placeholder="Questions, follow-ups, application notes…">${esc(j.notes)}</textarea></label><button class="save" data-id="${esc(j.id)}" disabled>Save changes</button> <button type="button" class="cancel" disabled title="Discard unsaved edits; saved status changes are kept">Cancel</button><span class="save-state" role="status"></span></section></div></td></tr>`;}
 function dirty(){
  const area=document.querySelector('.edit-notes');if(!area)return false;
  const job=data.jobs.find(item=>item.id===open),section=area.closest('section');
@@ -158,23 +162,28 @@ function refreshOverview(){
  $('offers-preset').hidden=offers===0;
 }
 function refreshUndoButton(){
- const button=$('undo-edit');
- button.disabled=pendingSave||!lastUndo;
- button.hidden=!lastUndo&&!$('undo-result').textContent;
+ // The menu Undo is global; the expanded copy belongs only to its edited row.
+ const toolbar=document.querySelector('.detail-toolbar');
+ if(toolbar)toolbar.hidden=lastUndo?.id!==open&&(!$('undo-result').textContent||undoResultJobId!==open);
+ for(const button of document.querySelectorAll('[data-undo-edit]')){
+  button.disabled=pendingSave||!lastUndo;
+  button.hidden=!lastUndo&&!$('undo-result').textContent;
+  button.onclick=undoEdit;
+ }
 }
 function setPendingSave(pending){
  pendingSave=pending;
  refreshUndoButton();
 }
-let undoResultTimer;
-function showUndoResult(text,details=''){
- const result=$('undo-result');
+let undoResultTimer,undoResultJobId;
+function showUndoResult(text,details='',jobId=lastUndo?.id){
+ undoResultJobId=jobId;
  clearTimeout(undoResultTimer);
- result.textContent=text;
- result.title=details;
+ for(const result of document.querySelectorAll('[data-undo-result]')){result.textContent=text;result.title=details;}
+ refreshUndoButton();
  undoResultTimer=setTimeout(()=>{
-  result.textContent='';
-  result.title='';
+  for(const result of document.querySelectorAll('[data-undo-result]')){result.textContent='';result.title='';}
+  undoResultJobId=undefined;
   refreshUndoButton();
  },1000);
 }
@@ -256,7 +265,7 @@ function render(){
  $('body').innerHTML=rows.length?rows.map((j,index)=>`<tr class="job ${index%2?'stripe':'plain'} ${open===j.id?'expanded':'collapsed'} ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}" data-id="${esc(j.id)}"><td><button class="toggle" data-id="${esc(j.id)}" aria-expanded="${open===j.id}" aria-label="${open===j.id?'Collapse':'Expand'} ${esc(j.title)}">${open===j.id?'−':'+'}</button></td>${cols.map(([key])=>`<td class="${key}">${cell(j,key)}</td>`).join('')}</tr>${open===j.id?detail(j):''}`).join(''):`<tr><td colspan="${cols.length+1}" class="empty">${data.jobs.length?'No positions match these filters. Try Reset.':'No positions yet. Set up the search agent to add discoveries.'}</td></tr>`;
  resizeColumns();
  if(filterKey)positionFilter();
- refreshOverview();refreshEditorButtons();
+ refreshOverview();refreshEditorButtons();refreshUndoButton();
 }
 function mayRender(){if(dirty()&&!confirm('Discard unsaved changes to this position?'))return false;render();return true;}
 $('head').onclick=e=>{
@@ -474,19 +483,20 @@ $('body').addEventListener('change',event=>{
  }
 });
 $('body').addEventListener('input',event=>{if(event.target.closest('.detail'))refreshEditorButtons();});
-$('undo-edit').onclick=async()=>{
+async function undoEdit(){
  if(!lastUndo||pendingSave)return;
  if(dirty()){showUndoResult('Save or cancel','Save or cancel your unsaved edits before undoing the last save.');return;}
+ const undoneId=lastUndo.id;
  setPendingSave(true);
  $('body').inert=true;
  try{
   await saveJobEdit({...lastUndo,quickAction:'undo'});
   lastUndo=undefined;
   render();
-  showUndoResult('Undone');
+  showUndoResult('Undone','',undoneId);
  }catch(error){showUndoResult('Undo failed',error.message);}
  finally{$('body').inert=false;setPendingSave(false);refreshEditorButtons();}
-};
+}
 function canExportApplications(){
  if(pendingSave){$('message').textContent='Wait for the current save to finish.';return false;}
  if(dirty()){$('message').textContent='Save your changes before exporting applications.';return false;}

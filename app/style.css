@@ -53,13 +53,13 @@ td.title .muted{font-size:11px;line-height:1.4}
 header{--undo-result-space:90px;flex-wrap:wrap;gap:8px var(--undo-result-space)}
 /* Keep the export controls in place when the Undo button or its feedback disappears. */
 .undo-control{position:relative}
-#undo-result{position:absolute;inset-inline-end:calc(100% + 8px);top:50%;transform:translateY(-50%);white-space:nowrap;font-size:12px;color:#666666}
-#undo-edit[hidden]{visibility:hidden}
-#undo-edit:disabled{opacity:.55;cursor:default}
-#undo-edit{gap:5px}
-#undo-edit svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+[data-undo-result]{position:absolute;inset-inline-end:calc(100% + 8px);top:50%;transform:translateY(-50%);white-space:nowrap;font-size:12px;color:#666666}
+[data-undo-edit][hidden]{visibility:hidden}
+[data-undo-edit]:disabled{opacity:.55;cursor:default}
+[data-undo-edit]{gap:5px}
+[data-undo-edit] svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 /* Share header control sizing between buttons and links. */
-.export-actions>.export,.application-export>.export,#undo-edit{display:inline-flex;align-items:center;line-height:16px}
+.export-actions>.export,.application-export>.export,[data-undo-edit]{display:inline-flex;align-items:center;line-height:16px}
 .application-export{display:inline-flex;align-items:center;border:1px solid #cbd9d1;border-radius:8px;background:#edf4ee;white-space:nowrap}
 .application-export>span{padding:0 10px;font-size:12px}
 .application-export>.export{border:0;border-left:1px solid #cbd9d1;border-radius:0}
@@ -283,3 +283,10 @@ tr.job.urgent>td:first-child,tr.detail.urgent>td{box-shadow:inset var(--row-edge
 .interview-outcomes button[data-next-status=Offer][aria-pressed=true]{display:inline-flex;align-items:center;justify-content:center;gap:3px;background:#fff4d3;border-color:#d6b665;color:#66501c}
 .interview-outcomes .offer-dollar{display:none;flex:0 0 14px;width:14px;height:14px;font-size:11px}
 .interview-outcomes button[aria-pressed=true] .offer-dollar{display:inline-flex}
+
+.detail td{position:relative}
+.detail-toolbar{position:absolute;top:12px;right:30px;display:flex;align-items:center}
+.detail-toolbar [data-undo-edit]{height:30px;padding:5px 8px;font-size:12px}
+.detail-toolbar .undo-control{margin-inline-start:90px}
+
+.detail-toolbar[hidden]{display:none}
