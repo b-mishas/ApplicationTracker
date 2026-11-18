@@ -32,6 +32,12 @@ try{
  assert.equal((await saveView({...progressView,layout:{...layout,direction:0}})).status,400);
  assert.equal((await saveView(legacyView)).status,200);
  assert.deepEqual(await (await fetch(base+'/api/view-state')).json(),progressView);
+ const order=['title','fit','company','group','star','country','city','workMode','status','applicationDate','seniority','firstSeen','postedDate','assessmentBasis'];
+ const orderedView={...progressView,layout:{...layout,order},standardLayout:{...standardLayout,order:[...order].reverse()},updatedAt:3};
+ assert.equal((await saveView(orderedView)).status,200);
+ assert.deepEqual(await (await fetch(base+'/api/view-state')).json(),orderedView);
+ for(const invalid of [order.slice(1),[...order.slice(0,-1),'bogus'],[...order.slice(0,-1),order[0]],'title'])assert.equal((await saveView({...orderedView,layout:{...orderedView.layout,order:invalid}})).status,400);
+ console.log('PASS: full column orders persist independently and invalid/duplicate orders are rejected.');
  console.log('PASS: legacy filter state and independent view layouts persist, stale writes are ignored and invalid layouts are rejected.');
  const initial=await (await fetch(base+'/api/jobs')).json();
  assert.equal(initial.data.jobs.length,fixtures.jobs.length);

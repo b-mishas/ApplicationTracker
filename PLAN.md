@@ -14,7 +14,6 @@
 
 - **Employer model comparison.** Before relying on the smallest model for career pages, compare it with the middle model on simple, paginated and JavaScript-heavy sites (including zero-result ones) against independently inspected listings; measure openings found, partial/errors and actual run cost.
 - **Board script (deferred agent work).** Port JobTracker's fetch-boards.mjs only after designing and testing: durable pending discoveries before IDs are marked seen, re-evaluation after filter changes, changed or reopened jobs with known IDs, explicit partial status at pagination limits, bounded resumable first run, kept state on fetch failure, no closure from absence, ambiguous city-only locations kept for review. Then decide app/ or scripts/ and the write permissions. Verify network access in scheduled Claude and Codex runs first.
-- **Draggable columns.** Column order can be shulffled by dragging (except the first 'expand' column). Current state is saved in `view-state.json`.
 - **Resizeable columns.** Column width can be adjusted by dragging on column edges. Current state is saved in `view-state.json`.
 - **In-app button tutorial.** Highlight one control at a time against a translucent overlay. Give each a one-sentence explanation and provide Next, Back, Skip and replay. Support keyboard use and narrow screens.
 - **Versioned ZIP names (optional).** The footer now shows package.json version; future packages include BUILD_INFO.json with version and build time. Consider adding the version to archive names too.

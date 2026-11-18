@@ -293,3 +293,11 @@ tr.job.urgent>td:first-child,tr.detail.urgent>td{box-shadow:inset var(--row-edge
 
 .footer-build{display:flex;flex-wrap:wrap;gap:4px 16px}
 #build-version{white-space:nowrap}
+
+/* Drag labels; the separate filter-clear and sort buttons retain their click actions. */
+th .column-label{cursor:grab;touch-action:none}
+.column-dragging,.column-dragging *{cursor:grabbing!important;user-select:none!important}
+th.drag-source .column-heading{opacity:.5}
+th.drop-before{box-shadow:inset 3px 0 var(--green)}
+th.drop-after{box-shadow:inset -3px 0 var(--green)}
+.visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}

@@ -35,7 +35,8 @@ async function readViewState(){
 function validViewLayout(layout){
  return layout&&Array.isArray(layout.columns)&&layout.columns.length<=filterKeys.size
   &&layout.columns.every(key=>filterKeys.has(key))&&new Set(layout.columns).size===layout.columns.length
-  &&filterKeys.has(layout.sort)&&[1,-1].includes(layout.direction);
+  &&filterKeys.has(layout.sort)&&[1,-1].includes(layout.direction)
+  &&(layout.order===undefined||Array.isArray(layout.order)&&layout.order.length===filterKeys.size&&layout.order.every(key=>filterKeys.has(key))&&new Set(layout.order).size===layout.order.length);
 }
 function validViewState(state){
  if(!state||typeof state.search!=='string'||state.search.length>2000||!Number.isSafeInteger(state.updatedAt)||state.updatedAt<0||!state.filters||typeof state.filters!=='object'||Array.isArray(state.filters))return false;

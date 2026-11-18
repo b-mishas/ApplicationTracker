@@ -11,3 +11,5 @@ From the installation root:
 Node here means an available compatible Node executable. The Windows x64 release includes runtime/win-x64/node.exe; the Mac Intel release includes runtime/darwin-x64/node and the Mac Apple silicon release runtime/darwin-arm64/node. Quote paths containing spaces. Linux agent environments need their own Linux Node; host executables cannot run there. No private Codex/Claude runtime, Python or package installation is needed.
 
 See SEARCH_WORKFLOW.md for exact settings, import, employer-workbook and export commands. Settings contains only Excel export language. Groups/countries come from position JSON and dates use local computer time. No tracker search configuration is required before importing. The old --require-configured self-check option is accepted as a compatibility alias.
+
+Drag a column heading label to reorder columns; the expand column stays first. Alternatively, focus a heading and press Alt+Left/Right. Column order, visibility and sorting are saved in data/view-state.json; the Applied view keeps its own layout while active. Moving columns preserves unsaved expanded-row edits.

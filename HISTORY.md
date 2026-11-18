@@ -4,6 +4,12 @@
 
 --------------------
 
+## 2026-11-18 — draggable columns (Codex)
+
+- Drag heading labels to reorder columns, with an insertion marker and fixed expand column. Alt+Left/Right provides keyboard movement. Existing header/filter/sort controls and hidden-column positions are preserved. Order saves with each view layout in data/view-state.json. Moving existing cells preserves expanded-editor drafts and keyboard focus.
+- Isolated API regressions passed, including legacy layouts, independent orders and invalid/duplicate-order rejection. Synthetic Chromium mouse and keyboard checks passed for reorder, draft preservation, reload, hide/show, Applied-view isolation, filters and sorting. Other browsers/devices remain untested.
+
+
 ## 2026-11-18 — visible build version (Codex)
 
 - Footer displays the version from package.json through /api/version. Future release builds add BUILD_INFO.json with version and UTC build time; the footer tooltip identifies that time or a source checkout. ZIP names remain unchanged.

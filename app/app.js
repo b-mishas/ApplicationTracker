@@ -18,10 +18,12 @@ const inProgressStatuses=['Applied','Interview','Offer'];
 const statusPresets={New:['New'],Shortlisted:['Shortlisted'],Urgent:statuses,'In progress':inProgressStatuses,[APPLIED_TOTAL]:[APPLIED_TOTAL],[INTERVIEW_TOTAL]:[INTERVIEW_TOTAL],[OFFER_TOTAL]:[OFFER_TOTAL],All:statuses};
 const visible=new Set(fields.slice(0,9).map(x=>x[0]));
 let standardLayout;
+let columnOrder=fields.map(([key])=>key);
 const dateMonths=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-function layoutState(){return {columns:[...visible],sort,direction};}
+function layoutState(){return {columns:[...visible],order:[...columnOrder],sort,direction};}
 function applyLayout(layout){
  visible.clear();layout.columns.forEach(key=>visible.add(key));sort=layout.sort;direction=layout.direction;
+ columnOrder=layout.order?[...layout.order]:fields.map(([key])=>key);
 }
 function isInProgressView(){
  return filters.status?.length===inProgressStatuses.length&&inProgressStatuses.every(status=>filters.status.includes(status));
@@ -36,7 +38,7 @@ function syncViewLayout(){
  }else if(standardLayout){
   applyLayout(standardLayout);standardLayout=undefined;
  }
- for(const input of $('columns').querySelectorAll('input'))input.checked=visible.has(input.value);
+ for(const key of columnOrder){const input=$('columns').querySelector('input[value="'+key+'"]');if(input){input.checked=visible.has(key);$('columns').append(input.closest('label'));}}
 }
 const safeUrl=url=>{try{const u=new URL(url);return ['https:','http:'].includes(u.protocol)?esc(u.href):'';}catch{return '';}};
 // Local SVG files also work without a flag-emoji font.
@@ -245,11 +247,11 @@ function render(){
  ensureGroupColours(data);
  $('search-clear').hidden=!$('search').value;
  refreshStatusPresets();
- const cols=fields.filter(([key])=>visible.has(key));
+ const cols=columnOrder.filter(key=>visible.has(key)).map(key=>fields.find(field=>field[0]===key));
  // Keep controls compact. Extra table width goes to the flexible columns.
  const widths={fit:80,company:130.5,title:365,star:114,group:110,country:124,city:105,workMode:103.25,status:107,applicationDate:130,seniority:170,firstSeen:110,postedDate:110,assessmentBasis:143};
  const totalWidth=44+cols.reduce((sum,[key])=>sum+widths[key],0);
- $('colgroup').innerHTML='<col data-width="44" data-fixed style="width:44px">'+cols.map(([key])=>`<col data-width="${widths[key]}" ${['fit','star','country'].includes(key)?'data-fixed':''} style="width:${widths[key]}px">`).join('');
+ $('colgroup').innerHTML='<col data-width="44" data-fixed style="width:44px">'+cols.map(([key])=>`<col data-column="${key}" data-width="${widths[key]}" ${['fit','star','country'].includes(key)?'data-fixed':''} style="width:${widths[key]}px">`).join('');
  $('colgroup').closest('table').style.minWidth=totalWidth+'px';
  $('head').innerHTML='<th aria-label="Details"></th>'+cols.map(([key,label])=>{
  const value=filters[key];
@@ -257,18 +259,78 @@ function render(){
   ?value.length>0&&!allCheckboxValuesSelected(key,value)
   :Boolean(value);
  const clearButton=active?`<button type="button" class="clear-column-filter" data-clear-column-filter="${key}" aria-label="Clear ${label} filter" title="Clear ${label} filter">×</button>`:'';
- return `<th aria-sort="${sort===key?(direction===1?'ascending':'descending'):'none'}"><div class="column-heading"><button class="column-label ${active?'filtered':''}" data-filter="${key}" aria-label="Filter ${label}" aria-haspopup="dialog" aria-controls="column-filter" aria-expanded="${filterKey===key}">${label}</button>${clearButton}<button class="sort-arrow" data-sort="${key}" aria-label="Sort by ${label}" title="Sort by ${label}">${sort===key?(direction===1?'↑':'↓'):'↕'}</button></div></th>`;
+ return `<th data-column="${key}" aria-sort="${sort===key?(direction===1?'ascending':'descending'):'none'}"><div class="column-heading"><button class="column-label ${active?'filtered':''}" data-filter="${key}" title="Drag to move; Alt+Left/Right moves with the keyboard" aria-label="Filter ${label}" aria-haspopup="dialog" aria-controls="column-filter" aria-expanded="${filterKey===key}">${label}</button>${clearButton}<button class="sort-arrow" data-sort="${key}" aria-label="Sort by ${label}" title="Sort by ${label}">${sort===key?(direction===1?'↑':'↓'):'↕'}</button></div></th>`;
  }).join('');
  const rows=filtered();
  if(open&&!rows.some(job=>job.id===open))open=null;
  $('count').textContent=`${rows.length} of ${data.jobs.length} positions`;
- $('body').innerHTML=rows.length?rows.map((j,index)=>`<tr class="job ${index%2?'stripe':'plain'} ${open===j.id?'expanded':'collapsed'} ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}" data-id="${esc(j.id)}"><td><button class="toggle" data-id="${esc(j.id)}" aria-expanded="${open===j.id}" aria-label="${open===j.id?'Collapse':'Expand'} ${esc(j.title)}">${open===j.id?'−':'+'}</button></td>${cols.map(([key])=>`<td class="${key}">${cell(j,key)}</td>`).join('')}</tr>${open===j.id?detail(j):''}`).join(''):`<tr><td colspan="${cols.length+1}" class="empty">${data.jobs.length?'No positions match these filters. Try Reset.':'No positions yet. Set up the search agent to add discoveries.'}</td></tr>`;
+ $('body').innerHTML=rows.length?rows.map((j,index)=>`<tr class="job ${index%2?'stripe':'plain'} ${open===j.id?'expanded':'collapsed'} ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}" data-id="${esc(j.id)}"><td><button class="toggle" data-id="${esc(j.id)}" aria-expanded="${open===j.id}" aria-label="${open===j.id?'Collapse':'Expand'} ${esc(j.title)}">${open===j.id?'−':'+'}</button></td>${cols.map(([key])=>`<td data-column="${key}" class="${key}">${cell(j,key)}</td>`).join('')}</tr>${open===j.id?detail(j):''}`).join(''):`<tr><td colspan="${cols.length+1}" class="empty">${data.jobs.length?'No positions match these filters. Try Reset.':'No positions yet. Set up the search agent to add discoveries.'}</td></tr>`;
  resizeColumns();
  if(filterKey)positionFilter();
  refreshOverview();refreshEditorButtons();refreshUndoButton();
 }
 function mayRender(){if(dirty()&&!confirm('Discard unsaved changes to this position?'))return false;render();return true;}
+// Move existing cells rather than rendering: an expanded editor keeps its draft and focus.
+function moveColumn(key,target,after=false){
+ if(key===target)return;
+ const order=columnOrder.filter(value=>value!==key);
+ order.splice(order.indexOf(target)+(after?1:0),0,key);
+ if(order.every((value,index)=>value===columnOrder[index]))return;
+ columnOrder=order;
+ const focused=document.activeElement;
+ for(const row of [$('colgroup'),$('head'),...$('body').querySelectorAll('tr.job')]){
+  for(const column of columnOrder){const cell=[...row.children].find(child=>child.dataset.column===column);if(cell)row.append(cell);}
+ }
+ for(const column of columnOrder){const input=$('columns').querySelector('input[value="'+column+'"]');if(input)$('columns').append(input.closest('label'));}
+ if(focused?.isConnected&&document.activeElement!==focused)focused.focus({preventScroll:true});
+ saveViewState();
+ $('column-layout-result').textContent=fields.find(field=>field[0]===key)[1]+' column moved';
+}
+let columnDrag,suppressHeaderClickUntil=0;
+function clearColumnDrag(){
+ if(columnDrag?.active)suppressHeaderClickUntil=performance.now()+250;
+ document.body.classList.remove('column-dragging');
+ $('head').querySelectorAll('.drag-source,.drop-before,.drop-after').forEach(header=>header.classList.remove('drag-source','drop-before','drop-after'));
+ columnDrag=null;
+}
+$('head').addEventListener('pointerdown',event=>{
+ const label=event.target.closest('.column-label');
+ if(!label||event.button!==0||!event.isPrimary)return;
+ columnDrag={key:label.dataset.filter,label,pointerId:event.pointerId,x:event.clientX,y:event.clientY,active:false};
+});
+document.addEventListener('pointermove',event=>{
+ const drag=columnDrag;if(!drag||event.pointerId!==drag.pointerId)return;
+ if(!drag.label.isConnected){clearColumnDrag();return;}
+ if(!drag.active){
+  if(Math.hypot(event.clientX-drag.x,event.clientY-drag.y)<6)return;
+  drag.active=true;closeFilter();drag.label.setPointerCapture(event.pointerId);
+  document.body.classList.add('column-dragging');drag.label.closest('th').classList.add('drag-source');
+ }
+ event.preventDefault();
+ $('head').querySelectorAll('.drop-before,.drop-after').forEach(header=>header.classList.remove('drop-before','drop-after'));
+ const target=document.elementFromPoint(event.clientX,event.clientY)?.closest('#head th[data-column]');
+ drag.target=target?.dataset.column;
+ if(!target||drag.target===drag.key)return;
+ const rect=target.getBoundingClientRect();drag.after=event.clientX>rect.left+rect.width/2;
+ target.classList.add(drag.after?'drop-after':'drop-before');
+});
+document.addEventListener('pointerup',event=>{
+ const drag=columnDrag;if(!drag||event.pointerId!==drag.pointerId)return;
+ if(drag.active&&drag.target)moveColumn(drag.key,drag.target,drag.after);
+ clearColumnDrag();
+});
+document.addEventListener('pointercancel',clearColumnDrag);
+$('head').addEventListener('lostpointercapture',clearColumnDrag);
+$('head').addEventListener('keydown',event=>{
+ const label=event.target.closest('.column-label');
+ if(event.key==='Escape'&&columnDrag?.active){event.preventDefault();clearColumnDrag();return;}
+ if(!label||!event.altKey||!['ArrowLeft','ArrowRight'].includes(event.key))return;
+ event.preventDefault();closeFilter();
+ const shown=columnOrder.filter(key=>visible.has(key)),index=shown.indexOf(label.dataset.filter),step=event.key==='ArrowLeft'?-1:1;
+ if(shown[index+step])moveColumn(label.dataset.filter,shown[index+step],step===1);
+});
 $('head').onclick=e=>{
+ if(performance.now()<suppressHeaderClickUntil)return;
  const clear=e.target.closest('[data-clear-column-filter]');
  if(clear){
   if(!canChangeView())return;
@@ -362,7 +424,7 @@ $('reset').onclick=()=>{
 $('columns').onchange=e=>{if(!canChangeView()){e.target.checked=!e.target.checked;return;}e.target.checked?visible.add(e.target.value):visible.delete(e.target.value);render();};
 $('export').onclick=async e=>{e.preventDefault();if(pendingSave){$('message').textContent='Wait for the current save to finish.';return;}try{const r=await fetch('/api/jobs');if(!r.ok)throw Error('Export failed');const {data:latest}=await r.json();const url=URL.createObjectURL(new Blob([JSON.stringify(latest,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`jobs-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(err){$('message').textContent=err.message;}};
 window.addEventListener('beforeunload',e=>{if(pendingSave||dirty()){e.preventDefault();e.returnValue='';}});
-async function init(){try{const r=await fetch('/api/jobs');if(!r.ok)throw Error('Could not load positions');({data,revision}=await r.json());const config=await fetch('/api/settings');if(!config.ok)throw Error('Could not load settings');const cfg=await config.json();settings=cfg.settings;settingsRevision=cfg.revision;const flags=await fetch('/api/countries');if(!flags.ok)throw Error('Could not load country codes');supportedCountries=new Set(await flags.json());await restoreViewState();$('columns').innerHTML=fields.map(([key,label])=>`<label><input type="checkbox" value="${key}" ${visible.has(key)?'checked':''}> ${label}</label>`).join('');$('imported').textContent=`${data.jobs.length} unique positions`;render();}catch(e){$('message').textContent=e.message+' — open the Start file for your system.';}}
+async function init(){try{const r=await fetch('/api/jobs');if(!r.ok)throw Error('Could not load positions');({data,revision}=await r.json());const config=await fetch('/api/settings');if(!config.ok)throw Error('Could not load settings');const cfg=await config.json();settings=cfg.settings;settingsRevision=cfg.revision;const flags=await fetch('/api/countries');if(!flags.ok)throw Error('Could not load country codes');supportedCountries=new Set(await flags.json());await restoreViewState();$('columns').innerHTML=columnOrder.map(key=>fields.find(field=>field[0]===key)).map(([key,label])=>`<label><input type="checkbox" value="${key}" ${visible.has(key)?'checked':''}> ${label}</label>`).join('');$('imported').textContent=`${data.jobs.length} unique positions`;render();}catch(e){$('message').textContent=e.message+' — open the Start file for your system.';}}
 async function loadBuildVersion(){
  try{
   const response=await fetch('/api/version');if(!response.ok)return;
