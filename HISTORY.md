@@ -4,6 +4,17 @@
 
 --------------------
 
+## 2026-11-18 — balanced resize highlight (Codex)
+
+- Positioned the full 7 px resize handle inside its heading, keeping its green line centered and preventing the next heading from covering half the highlight. The last-column exception is no longer needed.
+- Synthetic Chromium verified every handle lies within its heading, both edges remain reachable, actual resizing works, mouse focus clears, and keyboard/hover feedback remains. Desktop screenshot and whitespace check passed. Committed together with the approved transparent sort-arrow background.
+
+
+## 2026-11-18 — neutral sort-arrow background (Codex)
+
+- Removed the default sort-arrow area shading so it blends with the table heading. Hover and keyboard-focus feedback remain. Synthetic Chromium confirmed default transparency, hover/focus colours and working sorting; desktop screenshot and whitespace check passed. Included in the table-heading refinement commit.
+
+
 ## 2026-11-18 — clear resize focus after mouse use (Codex)
 
 - Completed pointer resizing now releases the handle focus, removing the lingering green mark once the pointer leaves. Hover feedback, keyboard focus/arrow resizing and Escape cancellation remain available.
