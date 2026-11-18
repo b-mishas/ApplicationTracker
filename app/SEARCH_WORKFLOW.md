@@ -76,14 +76,15 @@ If the workbook cannot be updated, record employer check dates/career URLs in da
 
 ## Agent search coverage
 
-`data/reports/coverage.json` is the agent's run-to-run search record, not tracker configuration or an import batch. Neither the tracker nor the importer reads it. Follow `agent/ROUTINE_PROMPT.md` Part B for its exact JSON structure and completion rules.
+`data/reports/coverage.json` is the agent's run-to-run search record, not tracker configuration or an import batch. Neither the tracker nor the importer reads it. Fields missing from an older file mean empty. Follow `agent/ROUTINE_PROMPT.md` Part B for its exact JSON structure and completion rules.
 
 - `updatedAt`, `gmailCheckedThrough`, `gmailLastAttempt` and `sources` record attempts and successful coverage. Preserve earlier successful checkpoints for failed, skipped or partial scans; counts describe the current attempt.
-- `employers` records successful check dates and career URLs under the exact workbook company name, including when workbook writes are unavailable.
+- `employers` records, under the exact workbook company name, `lastChecked` (complete successful checks only, including when workbook writes are unavailable), `lastAttempt` (every attempt), `careersUrl` and `method`: one short line describing how the full listing was read (ATS or site, public search/API URL, filters, paging, end of list), reused by the next run. It holds no code or credentials.
 - `linkedinAccess` is an object with `attemptedAt` (UTC Z), `browser`, `status` (`ok` or `failed`), `postingsRead`, `postingsFailed` and `reason`. It records the observed browser-access result for the run.
 - `dropped` is an array of candidates dropped by the agent that are not in jobs.json. Each entry has `provider`, `providerJobId`, `url`, `company`, `title`, `reason` and `droppedAt` (YYYY-MM-DD). Keep existing entries and remove only those older than 60 days. This memory is separate from the user's Dismissed status in the tracker.
 - `recheck` is an array counting re-check attempts for saved "Title only" or Unverified records. Each entry has `jobId`, `attempts` and `lastAttempt` (YYYY-MM-DD). Remove an entry when its record is resolved or no longer New/Shortlisted; stop re-checking after three attempts.
-- `unfinished` holds only work that failed with an observed tool error; remove an entry only after completing it. Standing user rules belong in the candidate profile.
+- `refreshed` maps a Shortlisted record id to the date (YYYY-MM-DD) of its last successful refresh. Remove an entry when the record is no longer Shortlisted.
+- `unfinished` holds work that failed with an observed tool error or was left partial or deferred by a limit of the routine, each with its reason; remove an entry only after completing it. Standing user rules belong in the candidate profile.
 
 The agent writes this file directly; do not submit these fields to the discovery importer or add them to jobs.json.
 

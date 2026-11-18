@@ -4,6 +4,16 @@
 
 --------------------
 
+## 2026-11-18 — routine token-cost changes implemented (Claude)
+
+- ROUTINE_PROMPT Part B, following Codex's review: checklist-based completion with done / not due / deferred / partial / failed states and no unlimited-effort wording; fuller subagents (mails one per started 30, postings ten, employers ten or portals two–three); employers on the smallest model only with a cached method that worked before, otherwise middle; per-source limits of fifteen tool calls or five minutes. Employers due by age (A 3, B 7, C 14 days) unless the profile says otherwise, at most twenty attempts per run in next-due order; missing career URLs five per run. Shortlisted refresh rule and weekly coverage-gap searches with catch-up. coverage.json gains employers[].lastAttempt and method, and refreshed; unfinished also records partial and deferred work.
+- Profile template, CUSTOMIZE.md, app/SEARCH_WORKFLOW.md and INTERFACE_FOR_TRACKER.md updated; templates/ copies identical. Static checks only: template equality, git diff --check, npm test exit 0, and a trace of the review's cases. No live or model-comparison run.
+
+## 2026-11-18 — routine token-cost proposal reviewed (Codex)
+
+- Compared the current routine, profile and coverage contract with JobTracker commit 15dbda5, its handoff and board script. Recorded the complete implementation instructions and next action directly in HANDOFF_AGENT.md; the separate review file was removed as requested.
+- Identified completion/cap conflicts, scheduling catch-up and refresh retry requirements, and script risks around seen IDs before processing and capped pagination. Review only: no prompt, script, runtime data or schedule changes; no measured optimized search run or distribution rebuild.
+
 ## 2026-11-18 — expanded-view Undo (Codex)
 
 - Added Undo at the expanded view's top-right, using the same handler, shared state, icon and feedback as menu Undo. It occupies existing space through absolute positioning, preserving the original expanded height. The local button/feedback belongs only to the latest edited row; menu Undo remains global. Opening another row hides its local control, while reopening the edited row restores it.

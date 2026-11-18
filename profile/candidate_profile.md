@@ -89,10 +89,11 @@ Alerts only (never browse the site directly): {{e.g. Indeed}}
 - Rotation: Monday {{…}}; Tuesday {{…}}; Wednesday {{…}}; Thursday {{…}}; Friday: catch-up and weakest-covered role/country combinations.
 
 ### Known coverage gaps the agent should search explicitly
+Weekly on Monday unless stated otherwise here.
 - {{e.g. remote roles in Spain are not covered by alerts}}
 
 ### Employer schedule
-Default: priority A every run, B Monday and Thursday, C Friday. Priority rule used in `profile/companies.xlsx`:
+Default: an employer is checked again 3 days after its last successful check for priority A, 7 days for B, 14 days for C; at most 20 employers per run, the most overdue first. Longer intervals cost less but can miss openings that close quickly; change the numbers here if you prefer. Priority rule used in `profile/companies.xlsx`:
 - A: {{e.g. plausible employer for my target level, in scope, preferred region}}
 - B: {{e.g. plausible, but harder location or fewer matching roles}}
 - C: {{long shot}}

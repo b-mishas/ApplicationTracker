@@ -32,7 +32,8 @@ Safety rules (no applying, no messages, no sign-in, Gmail read-only), work order
 
 ## What may be adjusted, but only in the profile
 - The wording of each fit level and the bridgeable-gap rule (§8), within the fixed frame.
-- Employer schedule (default A daily, B Mon/Thu, C Fri).
+- Employer schedule (default A every 3 days, B every 7, C every 14; at most 20 employers per run).
+- Frequency and day of the coverage-gap searches (default weekly on Monday).
 - Portal list and weekday rotation.
 - Mismatch signals, special rules and special exclusions (§9).
 - Which sources are "alerts only" (never browsed directly).
