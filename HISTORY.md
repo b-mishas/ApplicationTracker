@@ -4,6 +4,12 @@
 
 --------------------
 
+## 2026-11-18 — clear resize focus after mouse use (Codex)
+
+- Completed pointer resizing now releases the handle focus, removing the lingering green mark once the pointer leaves. Hover feedback, keyboard focus/arrow resizing and Escape cancellation remain available.
+- Reproduced the defect in synthetic Chromium, then verified the fix using real Tab, arrow-key and mouse events. Existing resize/reset/draft/persistence/view-layout checks passed, including narrow layouts. Syntax and whitespace checks passed; other browsers untested.
+
+
 ## 2026-11-18 — resizable columns (Codex)
 
 - Drag heading edges to resize columns. Double-click or Home restores automatic sizing; arrow keys adjust by 10 px (Shift: 50 px), Escape cancels. Shared limits protect compact controls. Manual widths stay exact while untouched columns share spare space; horizontal scrolling handles narrower windows. Widths persist per layout and survive moving/hiding columns. Expand remains fixed.

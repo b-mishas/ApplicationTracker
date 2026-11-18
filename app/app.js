@@ -356,6 +356,9 @@ function finishColumnResize(cancel=false){
  else if(resize.changed){saveViewState();announceColumnWidth(resize.key);}
  document.body.classList.remove('column-resizing');
  if(resize.handle.hasPointerCapture(resize.pointerId))resize.handle.releasePointerCapture(resize.pointerId);
+ // A completed pointer gesture must not leave a keyboard-style focus mark.
+ // Keyboard resizing never enters this path; Escape cancellation keeps focus.
+ if(!cancel&&document.activeElement===resize.handle)resize.handle.blur();
 }
 $('head').addEventListener('pointerdown',event=>{
  const handle=event.target.closest('[data-resize-column]');
