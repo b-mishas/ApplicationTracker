@@ -1,6 +1,6 @@
 // A dependency-free local server. Only listens on this computer.
 import http from 'node:http';
-import {validColumnWidths} from './column-layout.mjs';
+import {validColumnWidths,PRESET_COLUMNS} from './column-layout.mjs';
 import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
@@ -22,7 +22,7 @@ let port=Number(process.env.PORT??8765), origin=`http://127.0.0.1:${port}`;
 const installation=crypto.createHash('sha256').update(root+'\0'+dataRoot).digest('hex');
 class NotFound extends Error{}
 const viewStateFile=path.join(dataRoot,'view-state.json');
-const filterKeys=new Set(['fit','company','group','title','star','country','city','workMode','status','applicationDate','seniority','firstSeen','postedDate','assessmentBasis']);
+const filterKeys=new Set(['fit','company','group','title','star','country','city','workMode','status','applicationDate','lastInterview','seniority','firstSeen','postedDate','assessmentBasis']);
 let viewStateWrite=Promise.resolve();
 // Keep one successful position edit available to the tab that made it.
 let lastJobEdit;
@@ -37,14 +37,16 @@ function validViewLayout(layout){
  return layout&&Array.isArray(layout.columns)&&layout.columns.length<=filterKeys.size
   &&layout.columns.every(key=>filterKeys.has(key))&&new Set(layout.columns).size===layout.columns.length
   &&filterKeys.has(layout.sort)&&[1,-1].includes(layout.direction)
-  &&(layout.order===undefined||Array.isArray(layout.order)&&layout.order.length===filterKeys.size&&layout.order.every(key=>filterKeys.has(key))&&new Set(layout.order).size===layout.order.length)
+  &&(layout.order===undefined||Array.isArray(layout.order)&&layout.order.length<=filterKeys.size&&layout.order.every(key=>filterKeys.has(key))&&new Set(layout.order).size===layout.order.length)
   &&(layout.widths===undefined||validColumnWidths(layout.widths));
 }
 function validViewState(state){
  if(!state||typeof state.search!=='string'||state.search.length>2000||!Number.isSafeInteger(state.updatedAt)||state.updatedAt<0||!state.filters||typeof state.filters!=='object'||Array.isArray(state.filters))return false;
  const shortText=value=>typeof value==='string'&&value.length<=2000;
  return Object.entries(state.filters).every(([key,value])=>filterKeys.has(key)&&(shortText(value)||Array.isArray(value)&&value.length<=1000&&value.every(shortText)))
-  &&[state.layout,state.standardLayout].every(layout=>layout===undefined||validViewLayout(layout));
+  &&[state.layout,state.standardLayout].every(layout=>layout===undefined||validViewLayout(layout))
+  &&(state.layoutPreset===undefined||typeof state.layoutPreset==='string'&&Object.hasOwn(PRESET_COLUMNS,state.layoutPreset))
+  &&(state.presetLayouts===undefined||state.presetLayouts!==null&&typeof state.presetLayouts==='object'&&!Array.isArray(state.presetLayouts)&&Object.entries(state.presetLayouts).every(([preset,layout])=>Object.hasOwn(PRESET_COLUMNS,preset)&&validViewLayout(layout)));
 }
 const server=http.createServer(async(req,res)=>{
  const reply=(code,value,type='application/json')=>{res.writeHead(code,{'Content-Type':type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(type==='application/json'?JSON.stringify(value):value);};

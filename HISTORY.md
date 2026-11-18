@@ -4,6 +4,12 @@
 
 --------------------
 
+## 2026-11-18 — preset layouts and Last interview (Codex)
+
+- Added independent saved visibility, order, widths and sorting for all eight presets. Shortlisted/Urgent append Posted; New appends First found; Applied keeps Actions and appends Applied on; Applications sent omits Actions, and Interview invites/Offers received add Last interview. Applied retains newest-application-first sorting.
+- Last interview derives from existing milestone/history dates, displays D MMM YYYY and supports date filtering/sorting. Cleared dates suppress legacy fallback. Legacy shared layouts remain readable; versioned one-time upgrades add Posted to saved Shortlisted layouts and Actions to saved Applied layouts while respecting later manual hiding. No inventory/import/export schema change.
+- Focused layout/model and isolated API/export/Undo checks passed. Synthetic Chromium verified defaults, legacy migration, per-preset customizations, reload, derived dates, sorting/filtering, upgrade persistence, later manual hiding and narrow layouts. Backend restarted at the same address with user-data/settings hashes unchanged at restart. Other browsers/devices untested. Committed together; no push or ZIP build.
+
 ## 2026-11-18 — balanced resize highlight (Codex)
 
 - Positioned the full 7 px resize handle inside its heading, keeping its green line centered and preventing the next heading from covering half the highlight. The last-column exception is no longer needed.

@@ -36,7 +36,7 @@ try{
  const orderedView={...progressView,layout:{...layout,order},standardLayout:{...standardLayout,order:[...order].reverse()},updatedAt:3};
  assert.equal((await saveView(orderedView)).status,200);
  assert.deepEqual(await (await fetch(base+'/api/view-state')).json(),orderedView);
- for(const invalid of [order.slice(1),[...order.slice(0,-1),'bogus'],[...order.slice(0,-1),order[0]],'title'])assert.equal((await saveView({...orderedView,layout:{...orderedView.layout,order:invalid}})).status,400);
+ for(const invalid of [[...order.slice(0,-1),'bogus'],[...order.slice(0,-1),order[0]],'title'])assert.equal((await saveView({...orderedView,layout:{...orderedView.layout,order:invalid}})).status,400);
  const sizedView={...orderedView,layout:{...orderedView.layout,widths:{company:220,title:420}},standardLayout:{...orderedView.standardLayout,widths:{company:180}},updatedAt:4};
  assert.equal((await saveView(sizedView)).status,200);
  assert.deepEqual(await (await fetch(base+'/api/view-state')).json(),sizedView);
@@ -46,6 +46,13 @@ try{
  }
  assert.equal((await saveView({...sizedView,updatedAt:5,layout:{...sizedView.layout,widths:{fit:80,company:100,title:1200}}})).status,200);
  assert.equal((await fetch(base+'/column-layout.mjs')).status,200);
+ const presetView={...sizedView,updatedAt:6,layoutPreset:'Shortlisted',presetLayouts:{Shortlisted:sizedView.layout,New:{...sizedView.layout,columns:['company','firstSeen']}}};
+ assert.equal((await saveView(presetView)).status,200);
+ assert.deepEqual(await (await fetch(base+'/api/view-state')).json(),presetView);
+ for(const presetLayouts of [null,[],{Bogus:sizedView.layout},{New:{...sizedView.layout,columns:['bogus']}}])assert.equal((await saveView({...presetView,presetLayouts})).status,400);
+ assert.equal((await saveView({...presetView,layoutPreset:'Bogus'})).status,400);
+ assert.equal((await saveView({...presetView,updatedAt:7,layout:{...sizedView.layout,columns:['lastInterview'],sort:'lastInterview'},filters:{lastInterview:'2026-11-01'}})).status,200);
+ console.log('PASS: per-preset layouts and Last interview filters/sorting persist; invalid presets/layouts are rejected.');
  console.log('PASS: independent column widths persist, legacy layouts work and malformed/out-of-range widths are rejected.');
  console.log('PASS: full column orders persist independently and invalid/duplicate orders are rejected.');
  console.log('PASS: legacy filter state and independent view layouts persist, stale writes are ignored and invalid layouts are rejected.');

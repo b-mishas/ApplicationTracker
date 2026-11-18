@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {filterAndSort,choicesFor,EMPTY,REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL,INTERVIEW_TOTAL,OFFER_TOTAL} from './view-model.mjs';
+import {filterAndSort,choicesFor,columnValue,EMPTY,REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL,INTERVIEW_TOTAL,OFFER_TOTAL} from './view-model.mjs';
 import {STATUS_VALUES,isRejectedAfterInterview,hasSentApplication,hasReceivedOffer,interviewDetails,updateStage,interviewHistoryText} from './status-history.mjs';
 const jobs=[
  {id:'a',company:'Alpha',title:'Lead',group:'ELN/LIMS',countries:['DE'],status:'New',fit:2,firstSeen:'2026-11-02'},
@@ -224,3 +224,17 @@ assert.equal(futureInterview.interviewDate,interviewDay);
 updateStage(futureInterview,{status:'Dismissed'},transitionDay);
 assert.equal(futureInterview.interviewDate,interviewDay);assert.equal(futureInterview.offerDate,transitionDay);
 console.log('PASS: all interview/offer departure dates, today defaults, blank interview default, explicit dates and same-status clear preservation.');
+
+const lastInterviews=[
+ {id:'modern',status:'Interview',interviewDate:'2026-11-12',fit:4},
+ {id:'legacy',status:'Offer',statusHistory:[{status:'Interview',date:'2026-10-20'},{status:'Interview',date:'2026-11-11'},{status:'Offer',date:'2026-11-15'}],fit:3},
+ {id:'cleared',status:'Interview',interviewDate:'',statusHistory:[{status:'Interview',date:'2026-11-17'}],fit:2},
+ {id:'invalid',status:'Interview',interviewDate:'2026-02-31',fit:1}
+];
+assert.equal(columnValue(lastInterviews[1],'lastInterview'),'2026-11-11');
+assert.equal(columnValue(lastInterviews[2],'lastInterview'),'');
+assert.equal(columnValue(lastInterviews[3],'lastInterview'),'');
+assert.deepEqual(choicesFor(lastInterviews[0],'lastInterview'),['2026-11-12']);
+assert.deepEqual(filterAndSort(lastInterviews,{sort:'lastInterview',direction:-1}).map(j=>j.id),['modern','legacy','cleared','invalid']);
+assert.deepEqual(filterAndSort(lastInterviews,{filters:{lastInterview:'2026-11-11'},sort:'lastInterview',direction:1}).map(j=>j.id),['legacy','modern']);
+console.log('PASS: Last interview derives the latest existing date, respects cleared/invalid dates and supports chronological sorting and date filters.');

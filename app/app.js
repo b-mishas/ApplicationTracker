@@ -1,12 +1,12 @@
 import {STATUS_VALUES, INTERVIEW_OUTCOMES, MILESTONE_DATES, interviewDetails, effectiveStatus, interviewHistoryText, validStageDate, isRejectedAfterInterview, hasSentApplication, hasReceivedOffer} from './status-history.mjs';
-import {filterAndSort,choicesFor,EMPTY,REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL,INTERVIEW_TOTAL,OFFER_TOTAL} from './view-model.mjs';
+import {filterAndSort,choicesFor,columnValue,EMPTY,REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL,INTERVIEW_TOTAL,OFFER_TOTAL} from './view-model.mjs';
 import {groupColour,ensureGroupColours} from './group-colours.mjs';
-import {COLUMN_WIDTHS,minimumColumnWidth,MAX_COLUMN_WIDTH,clampColumnWidth} from './column-layout.mjs';
+import {COLUMN_WIDTHS,defaultColumnLayout,PRESET_DEFAULTS_VERSION,upgradePresetLayouts,minimumColumnWidth,MAX_COLUMN_WIDTH,clampColumnWidth} from './column-layout.mjs';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const statuses=STATUS_VALUES;
 const statusFilters=statuses.flatMap(status=>status==='Rejected'?[status,REJECTED_AFTER_INTERVIEW]:[status]);
-const fields=[['fit','Fit'],['company','Company'],['group','Group'],['title','Position'],['star','Actions'],['country','Country'],['city','City'],['workMode','Work mode'],['status','Status'],['applicationDate','Applied on'],['seniority','Seniority'],['firstSeen','First found'],['postedDate','Posted'],['assessmentBasis','Assessment']];
+const fields=[['fit','Fit'],['company','Company'],['group','Group'],['title','Position'],['star','Actions'],['country','Country'],['city','City'],['workMode','Work mode'],['status','Status'],['applicationDate','Applied on'],['lastInterview','Last interview'],['seniority','Seniority'],['firstSeen','First found'],['postedDate','Posted'],['assessmentBasis','Assessment']];
 let settings={exportLanguage:'en'},settingsRevision,startupState,portState;
 let supportedCountries=new Set();
 let data,revision,sort='star',direction=-1,open=null,filterKey=null,pendingSave=false,lastUndo;
@@ -18,27 +18,22 @@ const filters={status:defaultStatusFilter()};
 const inProgressStatuses=['Applied','Interview','Offer'];
 const statusPresets={New:['New'],Shortlisted:['Shortlisted'],Urgent:statuses,'In progress':inProgressStatuses,[APPLIED_TOTAL]:[APPLIED_TOTAL],[INTERVIEW_TOTAL]:[INTERVIEW_TOTAL],[OFFER_TOTAL]:[OFFER_TOTAL],All:statuses};
 const visible=new Set(fields.slice(0,9).map(x=>x[0]));
-let standardLayout;
+let layoutPreset,presetLayouts={};
 let columnOrder=fields.map(([key])=>key),columnWidths={};
 const dateMonths=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function layoutState(){return {columns:[...visible],order:[...columnOrder],widths:{...columnWidths},sort,direction};}
 function applyLayout(layout){
  visible.clear();layout.columns.forEach(key=>visible.add(key));sort=layout.sort;direction=layout.direction;
- columnOrder=layout.order?[...layout.order]:fields.map(([key])=>key);
+ const order=layout.order??fields.map(([key])=>key);
+ columnOrder=[...order,...fields.map(([key])=>key).filter(key=>!order.includes(key))];
  columnWidths={...layout.widths};
 }
-function isInProgressView(){
- return filters.status?.length===inProgressStatuses.length&&inProgressStatuses.every(status=>filters.status.includes(status));
-}
 function syncViewLayout(){
- if(isInProgressView()){
-  if(!standardLayout){
-   // Keep the normal layout so changes in this view stay local to it.
-   standardLayout=layoutState();
-   visible.delete('star');visible.add('applicationDate');sort='applicationDate';direction=-1;
-  }
- }else if(standardLayout){
-  applyLayout(standardLayout);standardLayout=undefined;
+ const preset=selectedPreset()??'Custom';
+ if(preset!==layoutPreset){
+  if(layoutPreset)presetLayouts[layoutPreset]=layoutState();
+  applyLayout(presetLayouts[preset]??defaultColumnLayout(preset));
+  layoutPreset=preset;
  }
  for(const key of columnOrder){const input=$('columns').querySelector('input[value="'+key+'"]');if(input){input.checked=visible.has(key);$('columns').append(input.closest('label'));}}
 }
@@ -53,8 +48,8 @@ function cell(j,key){
  if(key==='group'){const colour=groupColour(data.groupColours.assignments[j.group]);return `<span class="badge group" style="--group-fill:${colour.background};--group-ink:${colour.foreground}">${esc(j.group)}</span>`;}
  if(key==='status'&&isRejectedAfterInterview(j))return esc('Interview -> Rejected');
  if(key==='status')return effectiveStatus(j)==='Offer'?'<span class="offer-status"><span class="offer-dollar" aria-hidden="true">$</span>Offer</span>':esc(effectiveStatus(j));
- if(['firstSeen','postedDate','applicationDate'].includes(key)){
-  const value=j[key];
+ if(['firstSeen','postedDate','applicationDate','lastInterview'].includes(key)){
+  const value=columnValue(j,key);
   if(!validStageDate(value,{allowEmpty:false}))return key==='postedDate'?esc(value||'—'):'—';
   // ISO components keep calendar dates independent of browser timezone.
   const [year,month,day]=value.split('-');
@@ -140,7 +135,7 @@ function refreshEditorButtons(){
  for(const button of section.querySelectorAll('.clear-date')){const input=button.previousElementSibling;button.disabled=pendingSave||(!input.value&&!input.validity.badInput);}
 }
 function hasUrgentFilter(){return filters.star?.length===1&&filters.star[0]==='Urgent';}
-function refreshStatusPresets(){
+function selectedPreset(){
  const selectedFilters=filters.status?.length?filters.status:statuses;
  // The interview subgroup is redundant when all rejections are selected.
  const withoutSubgroup=selectedFilters.includes('Rejected')?selectedFilters.filter(status=>status!==REJECTED_AFTER_INTERVIEW):selectedFilters;
@@ -149,8 +144,12 @@ function refreshStatusPresets(){
  for(const button of document.querySelectorAll('[data-status-preset]')){
   const name=button.dataset.statusPreset,preset=statusPresets[name];
   const active=name==='Urgent'?urgentView:!urgentView&&selected.length===preset.length&&preset.every(status=>selected.includes(status));
-  button.setAttribute('aria-pressed',String(active));
+  if(active)return name;
  }
+}
+function refreshStatusPresets(){
+ const active=selectedPreset();
+ for(const button of document.querySelectorAll('[data-status-preset]'))button.setAttribute('aria-pressed',String(button.dataset.statusPreset===active));
 }
 function refreshOverview(){
  $('total').textContent=data.jobs.length;
@@ -202,7 +201,7 @@ async function saveJobEdit(payload){
 }
 const pendingViewKey='application-tracker.pending-view';
 let lastView='',viewUpdatedAt=0;
-function viewState(){return {search:$('search').value,filters,layout:layoutState(),...(standardLayout?{standardLayout}:{})};}
+function viewState(){return {search:$('search').value,filters,layout:layoutState(),layoutPreset,presetDefaultsVersion:PRESET_DEFAULTS_VERSION,presetLayouts:{...presetLayouts,...(layoutPreset?{[layoutPreset]:layoutState()}:{})}};}
 function saveViewState(){
  const view=viewState();
  const serialized=JSON.stringify(view);if(serialized===lastView)return;
@@ -222,11 +221,22 @@ async function restoreViewState(){
  if(view){
   for(const key of Object.keys(filters))delete filters[key];
   Object.assign(filters,view.filters);$('search').value=view.search;
-  if(view.layout)applyLayout(view.layout);
-  standardLayout=view.standardLayout;
+  if(view.presetLayouts){
+   presetLayouts=upgradePresetLayouts(view.presetLayouts,view.presetDefaultsVersion);
+   if(view.layoutPreset&&view.layout){
+    layoutPreset=view.layoutPreset;
+    const upgraded=upgradePresetLayouts({[layoutPreset]:view.layout},view.presetDefaultsVersion);
+    applyLayout(upgraded[layoutPreset]);
+   }
+  }else{
+   // Older versions shared a layout. Preserve it for custom filter combinations;
+   // named views begin with their newly defined columns.
+   const previous=view.standardLayout??view.layout;
+   if(previous)presetLayouts.Custom=previous;
+  }
   viewUpdatedAt=view.updatedAt;
  }
- if(!retry)lastView=JSON.stringify(viewState());
+ if(!retry&&(!view||view.presetDefaultsVersion===PRESET_DEFAULTS_VERSION))lastView=JSON.stringify(viewState());
 }
 // Resize columns without rendering again, so an open editor keeps its draft.
 function resizeColumns(){
@@ -403,7 +413,7 @@ $('head').onclick=e=>{
  }
  const label=e.target.closest('[data-filter]');if(label){showFilter(label.dataset.filter);return;}
  const arrow=e.target.closest('[data-sort]');if(!arrow||!canChangeView())return;
- direction=sort===arrow.dataset.sort?-direction:['fit','star','applicationDate'].includes(arrow.dataset.sort)?-1:1;sort=arrow.dataset.sort;render();
+ direction=sort===arrow.dataset.sort?-direction:['fit','star','applicationDate','lastInterview'].includes(arrow.dataset.sort)?-1:1;sort=arrow.dataset.sort;render();
 };
 $('body').onclick=async e=>{
  const row=e.target.closest('tr.job');
@@ -535,8 +545,8 @@ function populateFilter(){
   const selected=filters[key]||[];
   controls=values.map(value=>`<label class="filter-choice"><input type="checkbox" data-value="${esc(value)}" ${selected.includes(value)?'checked':''}>${key==='country'&&value!==EMPTY?flagGraphic(value):''}<span>${value===EMPTY?(key==='fit'?'Not assessed':'Not specified'):esc(value)}</span></label>`).join('');
  }else{
-  const dateFilter=['firstSeen','applicationDate'].includes(key);
-  const prompt=key==='firstSeen'?'Found since':key==='applicationDate'?'Applied on or after':'Contains';
+  const dateFilter=['firstSeen','applicationDate','lastInterview'].includes(key);
+  const prompt=key==='firstSeen'?'Found since':key==='applicationDate'?'Applied on or after':key==='lastInterview'?'Interview on or after':'Contains';
   controls=`<label class="filter-text">${prompt}<input id="column-filter-input" type="${dateFilter?'date':'search'}" value="${esc(filters[key]||'')}" aria-label="${esc(label)} filter"></label>`;
  }
  $('column-filter').innerHTML=`<div class="filter-heading"><strong>${esc(label)}</strong><span class="filter-buttons">${checkboxFields.has(key)?'<button type="button" data-all-filter>All</button>':''}<button type="button" data-clear-filter>Clear</button></span></div><div class="filter-options">${controls}</div>`;

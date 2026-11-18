@@ -5,6 +5,8 @@ export const APPLIED_TOTAL='Applied in total';
 export const INTERVIEW_TOTAL='Interviews in total';
 export const OFFER_TOTAL='Offers in total';
 export const REJECTED_AFTER_INTERVIEW='Rejected after Interview';
+// Last interview is a display/filter value derived from the existing milestone/history.
+export const columnValue=(job,key)=>key==='lastInterview'?interviewDetails(job).interviewDate:job[key];
 export function choicesFor(job,key){
  if(key==='country')return job.countries?.length?job.countries:[EMPTY];
  if(key==='star'){
@@ -12,7 +14,7 @@ export function choicesFor(job,key){
   if(job.urgent)choices.unshift('Urgent');
   return choices;
  }
- const v=key==='status'?effectiveStatus(job):job[key];
+ const v=key==='status'?effectiveStatus(job):columnValue(job,key);
  const choices=[v==null||v===''?EMPTY:String(v)];
  if(key==='status'){
   if(isRejectedAfterInterview(job))choices.push(REJECTED_AFTER_INTERVIEW);
@@ -30,14 +32,14 @@ export function filterAndSort(jobs,{filters={},search='',sort='fit',direction=-1
    // Unchecked options mean no filter, so selecting one value takes one click.
    if(Array.isArray(value))return !value.length||choicesFor(j,key).some(v=>value.includes(v));
    if(!value)return true;
-   if(['firstSeen','applicationDate'].includes(key))return Boolean(j[key])&&j[key]>=value;
+   if(['firstSeen','applicationDate','lastInterview'].includes(key))return Boolean(columnValue(j,key))&&columnValue(j,key)>=value;
    return String(j[key]??'').toLocaleLowerCase().includes(value.toLocaleLowerCase());
   });
  }).sort((a,b)=>{
   // Dismissal has higher priority than the user's chosen column/direction.
   const group=Number(a.status==='Dismissed')-Number(b.status==='Dismissed');
   if(group)return group;
-  const value=j=>sort==='star'?2*Number(Boolean(j.urgent))+Number(j.status==='Shortlisted'):sort==='country'?(j.countries||[]).join(','):sort==='status'?effectiveStatus(j):j[sort];
+  const value=j=>sort==='star'?2*Number(Boolean(j.urgent))+Number(j.status==='Shortlisted'):sort==='country'?(j.countries||[]).join(','):sort==='status'?effectiveStatus(j):columnValue(j,sort);
   const av=value(a),bv=value(b),missing=v=>v==null||v==='';
   // Highest fit breaks ties regardless of the primary sort direction.
   const fitOrder=(b.fit??0)-(a.fit??0);
