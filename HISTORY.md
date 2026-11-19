@@ -3,6 +3,12 @@
 [PLAN.md](PLAN.md) lists remaining work. [HANDOFF_AGENT.md](HANDOFF_AGENT.md) and [HANDOFF_WRAPPER.md](HANDOFF_WRAPPER.md) record the latest verification details. Entries are newest first; add new ones directly below the separator line.
 
 --------------------
+## 2026-11-19 — Posting access and employer coverage prompt corrections (Codex)
+
+- Adapted the supplied JobTracker changes in the routine and identical pristine template: user-established sign-in sessions with unattended fallback, full-description access tests, task-specific delegation, employer-first company/title searches and one finder round per candidate.
+- Required reconciliation of selected employers against results and follow-up for missing names/methods or unsupported access within existing limits. Did not port the deferred board fetcher or invent adapter configuration. Existing coverage schema and importer interface unchanged.
+- Static consistency review, exact source/template parity and git diff --check passed. No live search, installed automation update, commit, push or ZIP rebuild; practical access/coverage improvement remains unverified.
+
 ## 2026-11-19 — Review of rehearsal prompt corrections applied (Claude)
 
 - Model rule: never a subagent on a larger model than the lead (Claude Opus/Fable, Codex Sol/Astra named); smallest unavailable → middle; no model choice → subagent without model setting. Replaces "do the work yourself", which grows the lead's context. Small-set rule generalized (up to three sources or five postings of a kind are read directly); rehearsal and employer-only clauses removed from Part B and setup. Source evidence capped at one line per source; run folders older than 30 days deleted. Coverage reconciliation shortened; setup acceptance shortened.

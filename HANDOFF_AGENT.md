@@ -1,30 +1,19 @@
 # Agent handoff
 
-Updated 2026-11-19 19:59 UTC, Codex. Scope: commit rehearsal-driven routine/setup corrections with Claude's amendments. Checkout C:/Users/misha/Claude/ApplicationTracker, main; pre-commit HEAD c2ccc64, tracking origin/main (one local wrapper commit ahead before this commit). Remote/CI unverified. This snapshot accompanies the requested [Prompt] commit. No push or distribution build. Preserve unrelated HANDOFF_WRAPPER.md, untracked design/ and the working-copy deletion of HISTORY.md's Applied preset ordering entry; that deletion is excluded from this commit.
+Updated 2026-11-19T21:39:24.1363227Z, Codex. Scope: adapt the supplied JobTracker posting-access and employer-coverage corrections to this project's routine. Checkout C:/Users/misha/Claude/ApplicationTracker, main at 1fbdd54c496c96e0cf2724b3926f28bf65f1b42d, upstream origin/main; remote/CI unverified. This snapshot accompanies the requested prompt commit; HEAD above is pre-commit. No push, package, live search or installed automation update.
 
-## Implemented agent changes
+## Completed and changed files
 
-Codex (from the Terra rehearsal 2026-11-18 and follow-up 2026-11-19):
-- Search recovery: actually attempt an available browser for blocked, JavaScript-shell or unfollowable paginated listings within the fifteen-call/five-minute source limit; record real errors or limits; an unconfirmed empty page is incomplete; a LinkedIn failure says nothing about employer sites.
-- Auditability: `run-completion.json`, ledger with an outcome and reason per candidate, `source-evidence.jsonl`; counters reconciled with ledger and importer report.
-- ROOT-only access: unique `data/reports/runs/<run-id>/` per run (ID = batch runId); setup validation in a `setupcheck-` folder there; documented in INTERFACE_FOR_TRACKER.md.
-- No nested delegation, one capability test, no short status polls; setup acceptance by evidence, not run length.
+agent/ROUTINE_PROMPT.md and its identical templates/agent copy now distinguish unattended work from interactive user sign-in, allow existing user-established sessions, require a full-description access test and record actual browser failures. Employer-first company/title link finding precedes LinkedIn-only reads; finder rounds remain once per candidate per run, including refreshes and re-checks. Delegation capability is task-specific so LinkedIn failure does not disable supported mail/public ATS work.
 
-Claude on top:
-- Model rule: never a subagent on a model larger than the lead; smallest unavailable → middle; no model choice → subagent without a model setting (replaces "lead reads directly", which grows the lead's context).
-- Small sets (up to three sources or five postings of a kind) are read directly; rehearsal and employer-only clauses removed from Part B and setup.
-- Source evidence one line per source; run folders older than 30 days deleted (added to permitted writes); Coverage and setup acceptance text shortened.
-- Codex automation on Terra (setup step 10, guides/SETUP_CODEX.md); both setup guides drop the half-hour expectation.
-- PLAN: regression cases for the two missed openings (Zalando page 2, n8n JavaScript board); regenerate installed prompts.
+Selected employers must be reconciled against results under exact workbook names. Missing results/cache methods, name mismatches and unsupported methods require follow-up within the existing limits, never a successful coverage date. Public paginated listing/detail endpoints are preferred. No board script was ported: PLAN.md still defers it pending state-safety design. Coverage schema, importer and workbook interface remain unchanged. HISTORY.md records the verified prose milestone; agent/orchestration/ROADMAP.md records the updated baseline without marking any state milestone complete.
 
-Files: agent/ROUTINE_PROMPT.md, agent/SETUP_PROMPT.md, guides/SETUP_CLAUDE.md, guides/SETUP_CODEX.md (+ identical templates/ copies), INTERFACE_FOR_TRACKER.md, PLAN.md, HISTORY.md.
+## Retained work and verification
 
-## Verification
+Preserve all pre-existing tracked and untracked changes, including project rules, wrapper handoff, plan, README, ignore rules, design/ and rehearsal/. The state-driven roadmap remains agreed design only and is excluded from this commit because the whole file belongs to earlier uncommitted work; its baseline note remains in the working copy. Retained rehearsal evidence and relocation details remain under rehearsal/README.md and rehearsal/runs/README.md; archived prompts retain historical paths. No other area's handoff was rewritten.
 
-Commit checks: all four changed prompt/guide source files match their templates; staged whitespace and scope checked. Claude previously reported npm test exit 0 and full agent/guide/profile parity; no full-suite rerun for this documentation-only commit. Rehearsal evidence: .build-cache/terra-rehearsal-20261118-1416/evaluation/REPORT.md and .build-cache/terra-followup-20261119/evidence/REPORT.md (Claude read reports, not underlying logs). These prompt revisions have static verification only.
+Exact routine/template SHA-256 parity and git diff --check passed; reviewed fallback paths against existing limits and coverage fields. No runtime behavior, browser access, scheduled permissions or platform acceptance was tested. No active agents, searches or servers were started.
 
-Untested: agent adherence to the browser fallback and model rule, failed refresh, unattended scheduling and ROOT-only permissions, Gmail, authenticated LinkedIn, packaged platforms. Installed filled prompts, automations, the manual rehearsal-daily-job-search task and ZIPs hold older Part B text.
+## Next action
 
-## Next
-
-Regenerate installed prompts through agent/CUSTOMIZE.md and run a narrow rehearsal checking the two regression cases when authorized. Neither was performed for this commit. No active searches or background operations started.
+Installed filled prompts and scheduled tasks still need regeneration through agent/CUSTOMIZE.md when requested. Live access/coverage effectiveness remains unverified. Persistent-state implementation still starts at roadmap milestone 1; this prompt correction does not implement it. ZIPs retain their previous contents.
