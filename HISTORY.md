@@ -3,6 +3,10 @@
 [PLAN.md](PLAN.md) lists remaining work. [HANDOFF_AGENT.md](HANDOFF_AGENT.md) and [HANDOFF_WRAPPER.md](HANDOFF_WRAPPER.md) record the latest verification details. Entries are newest first; add new ones directly below the separator line.
 
 --------------------
+## 2026-11-19 — Applied preset ordering (Codex)
+
+- Applied now groups Offer, Interview and Applied in that order; the selected column continues sorting within each group. Focused model tests passed.
+
 
 ## 2026-11-18 — preset layouts and Last interview (Codex)
 

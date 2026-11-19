@@ -58,7 +58,7 @@ function cell(j,key){
  if(key==='country')return (j.countries||[]).map(c=>`<span class="country-code">${flagGraphic(c)} ${esc(c)}</span>`).join(' / ')||'—';
  return esc(j[key]||'—');
 }
-function filtered(){return filterAndSort(data.jobs,{filters,search:$('search').value,sort,direction});}
+function filtered(){return filterAndSort(data.jobs,{filters,search:$('search').value,sort,direction,prioritizeProgress:selectedPreset()==='In progress'});}
 function stageFields(job,saved=interviewDetails(job)){
  const terminal=['Rejected','Withdrawn'].includes(job.status);
  const application=['Applied','Interview','Offer'].includes(job.status)||terminal;

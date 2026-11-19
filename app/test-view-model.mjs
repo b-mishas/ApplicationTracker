@@ -55,6 +55,13 @@ assert.deepEqual(filterAndSort(applications,{...progressOptions,direction:1}).ma
 assert.deepEqual(filterAndSort(applications,{...progressOptions,filters:{...progressOptions.filters,applicationDate:'2026-11-01'}}).map(job=>job.id),['newest']);
 console.log('PASS: application dates sort chronologically with missing dates last, retain Fit tie-breaking and filter by applied-on date and effective status.');
 
+const groupedOptions={...progressOptions,prioritizeProgress:true};
+assert.deepEqual(filterAndSort(applications,groupedOptions).map(job=>job.id),['older-high','empty','older-low','newest','unknown']);
+const moreOffers=[...applications,{id:'offer-new',status:'Offer',applicationDate:'2026-11-05',fit:1}];
+assert.deepEqual(filterAndSort(moreOffers,groupedOptions).map(job=>job.id),['offer-new','older-high','empty','older-low','newest','unknown']);
+assert.deepEqual(filterAndSort(moreOffers,{...groupedOptions,direction:1}).map(job=>job.id),['older-high','offer-new','empty','older-low','newest','unknown']);
+console.log('PASS: Applied groups effective stages and sorts within each group.');
+
 const rejectionJobs=[
  {id:'direct',status:'Rejected'},
  {id:'after-interview',status:'Rejected',interviewDate:'2026-11-03',interviewOutcome:'Rejected'},

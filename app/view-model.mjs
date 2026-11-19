@@ -24,7 +24,7 @@ export function choicesFor(job,key){
  }
  return choices;
 }
-export function filterAndSort(jobs,{filters={},search='',sort='fit',direction=-1}={}){
+export function filterAndSort(jobs,{filters={},search='',sort='fit',direction=-1,prioritizeProgress=false}={}){
  const query=search.toLocaleLowerCase();
  return jobs.filter(j=>{
   if(query&&![j.company,j.title,j.group,j.reasoning,j.gaps,j.notes,j.locationRaw].join(' ').toLocaleLowerCase().includes(query))return false;
@@ -39,6 +39,12 @@ export function filterAndSort(jobs,{filters={},search='',sort='fit',direction=-1
   // Dismissal has higher priority than the user's chosen column/direction.
   const group=Number(a.status==='Dismissed')-Number(b.status==='Dismissed');
   if(group)return group;
+  // Group stages first; the selected column still sorts within each group.
+  if(prioritizeProgress){
+   const rank={Offer:0,Interview:1,Applied:2};
+   const stageOrder=(rank[effectiveStatus(a)]??3)-(rank[effectiveStatus(b)]??3);
+   if(stageOrder)return stageOrder;
+  }
   const value=j=>sort==='star'?2*Number(Boolean(j.urgent))+Number(j.status==='Shortlisted'):sort==='country'?(j.countries||[]).join(','):sort==='status'?effectiveStatus(j):columnValue(j,sort);
   const av=value(a),bv=value(b),missing=v=>v==null||v==='';
   // Highest fit breaks ties regardless of the primary sort direction.
