@@ -3,6 +3,10 @@
 [PLAN.md](PLAN.md) lists remaining work. [HANDOFF_AGENT.md](HANDOFF_AGENT.md) and [HANDOFF_WRAPPER.md](HANDOFF_WRAPPER.md) record the latest verification details. Entries are newest first; add new ones directly below the separator line.
 
 --------------------
+## 2026-11-19 — Sketch heading typography (Codex)
+
+- Table headings now match wrapper-directions.html: bold 11 px Segoe UI, sentence case, normal letter spacing. Headless Chromium compared computed typography with the sketch and verified filter opening.
+
 ## 2026-11-19 — Applied preset ordering (Codex)
 
 - Applied now groups Offer, Interview and Applied in that order; the selected column continues sorting within each group. Focused model tests passed.
