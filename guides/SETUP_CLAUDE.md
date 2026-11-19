@@ -21,7 +21,7 @@ The setup itself is a conversation: `START_HERE.html` gives you one instruction 
 - Read the summary in *Scheduled* → "Daily job search" → latest run, or open the tracker.
 
 ## What a normal run looks like
-- **It takes a while.** A complete run reads every alert mail and checks every employer due that day; expect half an hour or more. A run that finishes within a few minutes has skipped work.
+- **Run length varies.** A run reads every new alert mail and checks the employers due that day, so it takes longer after a weekend or with many alerts and can be short on a quiet day.
 - **It uses a good part of your plan's daily allowance.** Schedule it for a time when you are not using Claude heavily yourself. If runs stop with a usage-limit message, tell the assistant; fewer alerts or employers reduce the load.
 - **The first run usually says "Gmail: empty",** because new alerts need a day to arrive. That is correct.
 - **The Coverage line at the end of the summary** shows how many alerts, employers and portals were due and how many were checked. "Not done: nothing" means the run was complete.

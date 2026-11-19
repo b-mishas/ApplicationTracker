@@ -3,6 +3,16 @@
 [PLAN.md](PLAN.md) lists remaining work. [HANDOFF_AGENT.md](HANDOFF_AGENT.md) and [HANDOFF_WRAPPER.md](HANDOFF_WRAPPER.md) record the latest verification details. Entries are newest first; add new ones directly below the separator line.
 
 --------------------
+## 2026-11-19 — Review of rehearsal prompt corrections applied (Claude)
+
+- Model rule: never a subagent on a larger model than the lead (Claude Opus/Fable, Codex Sol/Astra named); smallest unavailable → middle; no model choice → subagent without model setting. Replaces "do the work yourself", which grows the lead's context. Small-set rule generalized (up to three sources or five postings of a kind are read directly); rehearsal and employer-only clauses removed from Part B and setup. Source evidence capped at one line per source; run folders older than 30 days deleted. Coverage reconciliation shortened; setup acceptance shortened.
+- Setup and Codex guide recommend Terra for the Codex automation; both guides drop "half an hour or more". PLAN: regression cases for the two missed openings, regenerate installed prompts. Static checks: agent/, guides/, profile/ equal templates/; git diff --check clean; npm test exit 0. No live run.
+
+## 2026-11-19 — Run evidence inside the installation (Codex)
+
+- Routine evidence, helper scripts and delegated results now use a unique `data/reports/runs/<run-id>/` folder inside ROOT, with explicit write permission and retained evidence. Setup validation also uses this folder tree, so neither workflow requires another writable folder.
+- Updated source prompts, identical pristine templates and the interface path table. Template parity, path-consistency review and whitespace checks passed; no live agent or scheduled-permission test performed.
+
 ## 2026-11-19 — Sketch heading typography (Codex)
 
 - Table headings now match wrapper-directions.html: bold 11 px Segoe UI, sentence case, normal letter spacing. Headless Chromium compared computed typography with the sketch and verified filter opening.
@@ -11,6 +21,22 @@
 
 - Applied now groups Offer, Interview and Applied in that order; the selected column continues sorting within each group. Focused model tests passed.
 
+
+## 2026-11-19 — rehearsal-driven prompt corrections (Codex)
+
+- Restricted delegated models and prohibited nested delegation; missing supported models and small employer-only workloads use direct reading. Required bounded browser recovery for JavaScript/incomplete pages, compact source/completion evidence and reconciled counters/exclusions.
+- Removed setup minimum-duration assumptions and aligned acceptance with partial/deferred routine outcomes. Updated both pristine prompt copies; exact parity and whitespace checks passed. Static verification only; no live run, code/schema change, filled-prompt update or ZIP rebuild.
+
+## 2026-11-19 — focused Terra follow-up (Codex)
+
+- One fresh Terra agent, no helpers, Contentful only, 93 seconds: reused saved reading method and refreshed the existing Shortlisted record. Independent local comparisons verified zero additions, one update, status/notes/manual urgency preserved, other nine records unchanged, correct coverage/workbook dates, archived clean batch and original runtime hashes unchanged.
+- Native agent usage: 35,109 uncached input, 373,504 cached input, 3,596 output tokens. One unrelated process-inspection attempt failed; no broader searches. Failed refresh and UI acceptance remain untested. Evidence: `.build-cache/terra-followup-20261119/evidence/REPORT.md`. No code/prompt changes, commit, push or packaging.
+
+## 2026-11-18 — isolated Terra rehearsal evaluation (Codex)
+
+- Fictional candidate, three employers, snapshot 5c6c101: ten discoveries imported, six reviewed and four unverified. Contentful complete; Zalando/n8n partial. Independent browser review found at least two plausible missed openings and an unused browser recovery route. Search completeness failed; incomplete coverage reported honestly.
+- Original runtime/personal files and copied app code unchanged; Part B identical. Nine synthetic importer checks and five offline replay/preservation checks passed, zero duplicate additions. No second live run or UI acceptance; cached-method reuse and actual Shortlisted refresh untested. Model fallback and evaluator overhead consumed excessive resources; no further agents used for final conclusions.
+- Local report/evidence: `.build-cache/terra-rehearsal-20261118-1416/evaluation/REPORT.md`. No production code/prompt change, commit, push or ZIP build.
 
 ## 2026-11-18 — preset layouts and Last interview (Codex)
 

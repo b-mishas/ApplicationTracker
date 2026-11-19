@@ -12,7 +12,10 @@
 
 ## Planned improvements
 
+- **Produce agent use logs.** When distributing the package amount friends, I could let the agent collect some usage stats and save it at the end of the setup session and the daily routines. They could send them, and then we can diagnose problems users encountered.
 - **Employer model comparison.** Before relying on the smallest model for career pages, compare it with the middle model on simple, paginated and JavaScript-heavy sites (including zero-result ones) against independently inspected listings; measure openings found, partial/errors and actual run cost.
+- **Rehearsal regression cases.** The next rehearsal must find the two openings the Terra rehearsal (2026-11-18) missed: Zalando's second listing page (Software Engineer (Kotlin), Transport Planning Optimization, 2723609) and n8n's JavaScript-only Ashby board (Senior Product Engineer (TS/NodeJS/Vue)), or record them as partial with the limit reached.
+- **Regenerate installed prompts.** After the next Part B commit, rebuild every filled prompt and installed scheduled task or automation through agent/CUSTOMIZE.md, including the manual rehearsal-daily-job-search task, which still holds an older Part B.
 - **Board script (deferred agent work).** Port JobTracker's fetch-boards.mjs only after designing and testing: durable pending discoveries before IDs are marked seen, re-evaluation after filter changes, changed or reopened jobs with known IDs, explicit partial status at pagination limits, bounded resumable first run, kept state on fetch failure, no closure from absence, ambiguous city-only locations kept for review. Then decide app/ or scripts/ and the write permissions. Verify network access in scheduled Claude and Codex runs first.
 - **In-app button tutorial.** Highlight one control at a time against a translucent overlay. Give each a one-sentence explanation and provide Next, Back, Skip and replay. Support keyboard use and narrow screens.
 - **Versioned ZIP names (optional).** The footer now shows package.json version; future packages include BUILD_INFO.json with version and build time. Consider adding the version to archive names too.

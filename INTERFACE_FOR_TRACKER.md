@@ -35,6 +35,7 @@ Not shipped: `AGENTS.md`, `CLAUDE.md`, `HANDOFF_AGENT.md`, `HANDOFF_WRAPPER.md`,
 | `data/incoming/` | agent writes batches | write new batches |
 | `data/incoming/imported/` | agent moves completed batches | move only |
 | `data/reports/<batch filename without .json>.report.json` | importer | read |
+| `data/reports/runs/<run-id>/` | agent | create a unique folder per run; read/write completion checklist, candidate ledger, source evidence, helper scripts and delegated results; retain evidence for review (setup validation batches use a unique `setupcheck-<unique-id>/` folder here) |
 | `data/reports/coverage.json` | agent | read/write (incl. `employers` check and attempt dates, career URLs and cached reading methods, the fallback when the workbook cannot be written; `refreshed`, last successful refresh per Shortlisted record; `dropped`, the agent's 60-day memory of dropped roles; `recheck`, attempt counts for unverified records; `linkedinAccess`) |
 | `profile/candidate_profile.md` | user | read |
 | `profile/companies.xlsx` (sheet "Companies": columns "Careers page", "Priority", "Status", "Last checked") | user; agent writes "Last checked" and "Careers page" using the bundled workbook helper | read/write those two columns |

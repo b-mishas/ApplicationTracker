@@ -1,27 +1,30 @@
 # Agent handoff
 
-Updated 2026-11-18 01:56 UTC, Claude. Scope: routine token-cost changes from Codex's review (previous version of this file), implemented in prompt and profile templates.
+Updated 2026-11-19 19:59 UTC, Codex. Scope: commit rehearsal-driven routine/setup corrections with Claude's amendments. Checkout C:/Users/misha/Claude/ApplicationTracker, main; pre-commit HEAD c2ccc64, tracking origin/main (one local wrapper commit ahead before this commit). Remote/CI unverified. This snapshot accompanies the requested [Prompt] commit. No push or distribution build. Preserve unrelated HANDOFF_WRAPPER.md, untracked design/ and the working-copy deletion of HISTORY.md's Applied preset ordering entry; that deletion is excluded from this commit.
 
-Checkout: C:/Users/misha/Claude/ApplicationTracker; branch main, HEAD 63fcb39, no upstream. Remote/CI unverified. Nothing committed or staged. Untracked design/ preserved. Wrapper state: HANDOFF_WRAPPER.md (unchanged).
+## Implemented agent changes
 
-## Changed (uncommitted)
+Codex (from the Terra rehearsal 2026-11-18 and follow-up 2026-11-19):
+- Search recovery: actually attempt an available browser for blocked, JavaScript-shell or unfollowable paginated listings within the fifteen-call/five-minute source limit; record real errors or limits; an unconfirmed empty page is incomplete; a LinkedIn failure says nothing about employer sites.
+- Auditability: `run-completion.json`, ledger with an outcome and reason per candidate, `source-evidence.jsonl`; counters reconciled with ledger and importer report.
+- ROOT-only access: unique `data/reports/runs/<run-id>/` per run (ID = batch runId); setup validation in a `setupcheck-` folder there; documented in INTERFACE_FOR_TRACKER.md.
+- No nested delegation, one capability test, no short status polls; setup acceptance by evidence, not run length.
 
-- agent/ROUTINE_PROMPT.md = templates/agent/ROUTINE_PROMPT.md: Completion states done / not due / deferred / partial / failed, no unlimited-effort wording, `unfinished` work counts within the limits. Subagents: full batches, last batch flushed per step, capability test on a real item; mails one per started 30 (at most three at a time); postings ten; employers ten or portals two–three per subagent, smallest model only with a cached method that worked before, otherwise middle; §9 scope rules passed; per-source limit fifteen calls or five minutes, wait over 10 s = deferred. Employers due by profile schedule, default A 3 / B 7 / C 14 days, next-due order, never-checked first by oldest `lastAttempt`, at most twenty attempts per run; method cache with one rediscovery; career URLs five per run. Shortlisted refresh rule (never refreshed, 3 days, or deadline within 10 days and not today; shares reads with re-checks; skips exhausted re-checks). Weekly gap searches with catch-up. coverage.json: `employers[].lastAttempt`, `method`, `refreshed`. Summary Coverage counts extended.
-- profile/candidate_profile.md, agent/CUSTOMIZE.md (+ templates/ copies): new default schedule and its tradeoff; gap searches weekly on Monday.
-- app/SEARCH_WORKFLOW.md, INTERFACE_FOR_TRACKER.md: new coverage fields; old files mean empty.
-- PLAN.md: employer model comparison; board-script requirements (deferred). HISTORY.md: entry added; Codex's review entry moved to the top (it sat below older entries).
+Claude on top:
+- Model rule: never a subagent on a model larger than the lead; smallest unavailable → middle; no model choice → subagent without a model setting (replaces "lead reads directly", which grows the lead's context).
+- Small sets (up to three sources or five postings of a kind) are read directly; rehearsal and employer-only clauses removed from Part B and setup.
+- Source evidence one line per source; run folders older than 30 days deleted (added to permitted writes); Coverage and setup acceptance text shortened.
+- Codex automation on Terra (setup step 10, guides/SETUP_CODEX.md); both setup guides drop the half-hour expectation.
+- PLAN: regression cases for the two missed openings (Zalando page 2, n8n JavaScript board); regenerate installed prompts.
 
-## Deviations from the review
-
-- Employer attempts recorded as `employers[].lastAttempt`, not as `sources` entries (one source entry per employer would bloat `sources`, and every source entry needs six fields).
-- Board script not ported (agreed deferral).
+Files: agent/ROUTINE_PROMPT.md, agent/SETUP_PROMPT.md, guides/SETUP_CLAUDE.md, guides/SETUP_CODEX.md (+ identical templates/ copies), INTERFACE_FOR_TRACKER.md, PLAN.md, HISTORY.md.
 
 ## Verification
 
-Static only: agent/, profile/, guides/ equal their templates/ copies; git diff --check clean; npm test exit 0. Traced: empty and 95-mail intervals; old coverage file; 21 due employers; repeatedly blocked never-checked employer; missed Monday; capped pagination (partial, no Last checked, no method); failed refresh; same-day near-deadline rerun; exhausted re-checks. Known gap: a Shortlisted record whose refresh read keeps failing is retried every run.
+Commit checks: all four changed prompt/guide source files match their templates; staged whitespace and scope checked. Claude previously reported npm test exit 0 and full agent/guide/profile parity; no full-suite rerun for this documentation-only commit. Rehearsal evidence: .build-cache/terra-rehearsal-20261118-1416/evaluation/REPORT.md and .build-cache/terra-followup-20261119/evidence/REPORT.md (Claude read reports, not underlying logs). These prompt revisions have static verification only.
 
-No live run, no model comparison, no ZIP rebuild; filled profiles and live schedules untouched.
+Untested: agent adherence to the browser fallback and model rule, failed refresh, unattended scheduling and ROOT-only permissions, Gmail, authenticated LinkedIn, packaged platforms. Installed filled prompts, automations, the manual rehearsal-daily-job-search task and ZIPs hold older Part B text.
 
 ## Next
 
-User review, then commit on request (`[Prompt]`; app/SEARCH_WORKFLOW.md and INTERFACE_FOR_TRACKER.md belong in the same commit). Then a rehearsal with measured cost and the employer model comparison (PLAN.md).
+Regenerate installed prompts through agent/CUSTOMIZE.md and run a narrow rehearsal checking the two regression cases when authorized. Neither was performed for this commit. No active searches or background operations started.
