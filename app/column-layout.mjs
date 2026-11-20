@@ -1,5 +1,5 @@
 // Shared display limits keep browser sizing and persisted-state validation consistent.
-export const COLUMN_WIDTHS={fit:80,company:130.5,title:365,star:114,group:110,country:124,city:105,workMode:103.25,status:107,applicationDate:130,lastInterview:140,seniority:170,firstSeen:110,postedDate:110,assessmentBasis:143};
+export const COLUMN_WIDTHS={fit:80,company:130.5,title:365,star:114,group:110,country:124,city:105,workMode:103.25,status:107,applicationDate:114,lastInterview:114,seniority:170,firstSeen:110,postedDate:110,assessmentBasis:143};
 export const MIN_COLUMN_WIDTH=80,MAX_COLUMN_WIDTH=1200;
 const minimumWidths={company:100,title:160,star:114,country:100,applicationDate:110};
 export const minimumColumnWidth=key=>minimumWidths[key]??MIN_COLUMN_WIDTH;

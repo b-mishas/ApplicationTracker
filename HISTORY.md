@@ -4,6 +4,10 @@
 
 --------------------
 
+## 2026-11-20 — JobTracker table refinements (Codex)
+
+- Ported bcad8b4, b8999dd and 5d16323: removed the expansion column, added keyboard row expansion, restricted Urgent to New/Shortlisted, muted the zero New count, and compacted specified columns and headings. Focused suites and isolated Chromium checks passed.
+
 ## 2026-11-20 — Reset current preset (Codex)
 
 - Reset restores the selected preset’s default filters, search, column visibility/order/widths and sorting; Urgent stays urgent. Custom status combinations fall back to All positions. Other presets retain their saved layouts. Independent Chromium checks passed for all eight presets, reload and preserving other layouts.

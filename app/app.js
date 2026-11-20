@@ -17,6 +17,7 @@ const defaultStatusFilter=()=>statuses.filter(status=>!['Rejected','Dismissed','
 const filters={status:defaultStatusFilter()};
 const inProgressStatuses=['Applied','Interview','Offer'];
 const statusPresets={New:['New'],Shortlisted:['Shortlisted'],Urgent:['New','Shortlisted'],'In progress':inProgressStatuses,[APPLIED_TOTAL]:[APPLIED_TOTAL],[INTERVIEW_TOTAL]:[INTERVIEW_TOTAL],[OFFER_TOTAL]:[OFFER_TOTAL],All:statuses};
+const compactColumns=new Set(['fit','star','country','workMode','status','firstSeen','applicationDate','lastInterview','postedDate']);
 const visible=new Set(fields.slice(0,9).map(x=>x[0]));
 let layoutPreset,presetLayouts={};
 let columnOrder=fields.map(([key])=>key),columnWidths={};
@@ -268,7 +269,7 @@ function render(){
  // Keep controls compact. Extra table width goes to the flexible columns.
  const widths={...COLUMN_WIDTHS,...columnWidths};
  const totalWidth=cols.reduce((sum,[key])=>sum+widths[key],0);
- $('colgroup').innerHTML=cols.map(([key])=>`<col data-column="${key}" data-width="${widths[key]}" ${Object.hasOwn(columnWidths,key)||['fit','star','country'].includes(key)?'data-fixed':''} style="width:${widths[key]}px">`).join('');
+ $('colgroup').innerHTML=cols.map(([key])=>`<col data-column="${key}" data-width="${widths[key]}" ${Object.hasOwn(columnWidths,key)||compactColumns.has(key)?'data-fixed':''} style="width:${widths[key]}px">`).join('');
  $('colgroup').closest('table').style.minWidth=totalWidth+'px';
  $('head').innerHTML=cols.map(([key,label])=>{
  const value=filters[key];
@@ -351,7 +352,7 @@ function applyColumnWidth(key,width){
  if(width===undefined)delete columnWidths[key];else columnWidths[key]=clampColumnWidth(key,width);
  const column=$('colgroup').querySelector('[data-column="'+key+'"]');if(!column)return;
  column.dataset.width=columnWidths[key]??COLUMN_WIDTHS[key];
- column.toggleAttribute('data-fixed',Object.hasOwn(columnWidths,key)||['fit','star','country'].includes(key));
+ column.toggleAttribute('data-fixed',Object.hasOwn(columnWidths,key)||compactColumns.has(key));
  resizeColumns();
 }
 function announceColumnWidth(key){
