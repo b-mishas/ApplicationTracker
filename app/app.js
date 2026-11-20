@@ -16,7 +16,7 @@ const rowStage=status=>stageClasses.get(status)||'';
 const defaultStatusFilter=()=>statuses.filter(status=>!['Rejected','Dismissed','Withdrawn'].includes(status));
 const filters={status:defaultStatusFilter()};
 const inProgressStatuses=['Applied','Interview','Offer'];
-const statusPresets={New:['New'],Shortlisted:['Shortlisted'],Urgent:statuses,'In progress':inProgressStatuses,[APPLIED_TOTAL]:[APPLIED_TOTAL],[INTERVIEW_TOTAL]:[INTERVIEW_TOTAL],[OFFER_TOTAL]:[OFFER_TOTAL],All:statuses};
+const statusPresets={New:['New'],Shortlisted:['Shortlisted'],Urgent:['New','Shortlisted'],'In progress':inProgressStatuses,[APPLIED_TOTAL]:[APPLIED_TOTAL],[INTERVIEW_TOTAL]:[INTERVIEW_TOTAL],[OFFER_TOTAL]:[OFFER_TOTAL],All:statuses};
 const visible=new Set(fields.slice(0,9).map(x=>x[0]));
 let layoutPreset,presetLayouts={};
 let columnOrder=fields.map(([key])=>key),columnWidths={};
@@ -140,7 +140,7 @@ function selectedPreset(){
  // The interview subgroup is redundant when all rejections are selected.
  const withoutSubgroup=selectedFilters.includes('Rejected')?selectedFilters.filter(status=>status!==REJECTED_AFTER_INTERVIEW):selectedFilters;
  const selected=statuses.every(status=>withoutSubgroup.includes(status))?withoutSubgroup.filter(status=>![APPLIED_TOTAL,INTERVIEW_TOTAL,OFFER_TOTAL].includes(status)):withoutSubgroup;
- const urgentView=hasUrgentFilter()&&selected.length===statuses.length&&statuses.every(status=>selected.includes(status));
+ const urgentView=hasUrgentFilter()&&selected.length===statusPresets.Urgent.length&&statusPresets.Urgent.every(status=>selected.includes(status));
  for(const button of document.querySelectorAll('[data-status-preset]')){
   const name=button.dataset.statusPreset,preset=statusPresets[name];
   const active=name==='Urgent'?urgentView:!urgentView&&selected.length===preset.length&&preset.every(status=>selected.includes(status));
@@ -157,7 +157,7 @@ function refreshOverview(){
  $('interview-total').textContent=data.jobs.filter(job=>interviewDetails(job).hasInterview).length;
  $('shortlist').textContent=data.jobs.filter(j=>j.status==='Shortlisted').length;
  $('new-count').textContent=data.jobs.filter(j=>j.status==='New').length;
- $('urgent').textContent=data.jobs.filter(j=>j.urgent).length;
+ $('urgent').textContent=data.jobs.filter(j=>j.urgent&&statusPresets.Urgent.includes(effectiveStatus(j))).length;
  $('active').textContent=data.jobs.filter(j=>inProgressStatuses.includes(effectiveStatus(j))).length;
  $('new-count').classList.toggle('has-new',Number($('new-count').textContent)>0);
  const offers=data.jobs.filter(hasReceivedOffer).length;

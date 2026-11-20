@@ -310,3 +310,8 @@ th .column-resize-handle:hover,th .column-resize-handle:focus-visible{background
 th .column-resize-handle:hover::after,th .column-resize-handle:focus-visible::after{background:var(--green)}
 th .column-resize-handle:focus-visible{outline-offset:-2px}
 .column-resizing,.column-resizing *{cursor:col-resize!important;user-select:none!important}
+
+#new-count:not(.has-new){color:#829087}
+.sidebar button[data-status-preset=Urgent]{width:calc(100% - 18px);margin-left:18px;padding-block:5px;font-size:12px}
+.sidebar button[data-status-preset=Urgent] .sidebar-count{font-size:calc(12px + 1pt)}
+.sidebar button[data-status-preset=Urgent][aria-pressed=true]{box-shadow:inset 3px 0 #bb3834}
