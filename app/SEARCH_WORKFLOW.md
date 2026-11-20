@@ -76,7 +76,7 @@ If the workbook cannot be updated, record employer check dates/career URLs in da
 
 ## Candidate capture
 
-Use [CANDIDATE_STATE.md](CANDIDATE_STATE.md) and `candidate-ledger.mjs` for per-run candidate capture and saved assessments, starting before setup discovery. [RUN_STATE.md](RUN_STATE.md) adds the run task list, cross-run pending work and a derived summary. Both helpers write only search-owned files under data/reports/runs/; they never write jobs.json. Imports use the commands above; rerunning an interrupted import is safe. Run folders are kept.
+[RUN_STATE.md](RUN_STATE.md) describes `run-state.mjs`, the one state helper the agent calls: it starts a run, captures finds before selection, marks finds already in jobs.json or on the dropped list, saves decisions and derives summary counts. [CANDIDATE_STATE.md](CANDIDATE_STATE.md) describes its ledger storage. Both write only search-owned files under data/reports/runs/; they never write jobs.json. Imports use the commands above; rerunning an interrupted import is safe. Run folders are kept.
 
 ## Agent search coverage
 

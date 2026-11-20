@@ -1,58 +1,63 @@
-# Run state contract (version 2)
+# Run state contract (version 3)
 
-`run-state.mjs` keeps the live `run-completion.json` task list, finds unfinished work across run folders and derives summary counts. It complements [CANDIDATE_STATE.md](CANDIDATE_STATE.md). It never writes inventory, browses, decides relevance, schedules work or advances coverage dates. Imports use the normal importer in [SEARCH_WORKFLOW.md](SEARCH_WORKFLOW.md).
+`run-state.mjs` is the search agent's one state helper. It starts a run, saves every find before it is read or rated, marks finds the tracker already has, saves decisions, and derives summary counts. It reads `jobs.json` and the `dropped` list in `coverage.json` but never writes them; imports use the normal importer in [SEARCH_WORKFLOW.md](SEARCH_WORKFLOW.md). Storage and identity rules are in [CANDIDATE_STATE.md](CANDIDATE_STATE.md).
 
 ## Commands
 
-From ROOT, with the same Node as the importer. `--root` is the data folder; `--run` is the run-folder name under `data/reports/runs/`, not a path. `--input` is a UTF-8 JSON file (BOM accepted). Output is JSON; exit 1 means failure with a message.
+Run from ROOT with the same Node as the importer. `--root` defaults to `data`. Every command except `init` works on the current run (named in `data/reports/runs/CURRENT`); `--run <run-id>` selects another run folder. Output is one JSON line; exit 1 means failure with a message.
 
 ```text
-node app/run-state.mjs init    --root data --run <run-id> [--input <run-folder>/plan.json]
-node app/run-state.mjs task    --root data --run <run-id> --input <run-folder>/tasks.json
-node app/run-state.mjs next    --root data [--run <run-id>]
-node app/run-state.mjs summary --root data --run <run-id>
-node app/run-state.mjs read    --root data --run <run-id>
+node app/run-state.mjs init
+node app/run-state.mjs capture --input <file> [--input <file> ...]
+node app/run-state.mjs resolve --input <file>
+node app/run-state.mjs summary
+node app/run-state.mjs next
 ```
 
-## Init
+## init
 
-Run before the first external call. It creates the run folder, an empty candidate ledger if none exists, and the manifest with the current profile hash. It never overwrites an existing manifest. All input is optional:
+Run once, before the first external call. It creates `data/reports/runs/<run-id>/` with the candidate ledger and a manifest (`runId`, `startedAt`, profile hash), makes it the current run and never overwrites an existing run. It prints `runId`, the run `folder`, the `batch` file name to use for this run's import, and `carried`: finds from earlier runs, including setup captures, that still need work (pending, assessed but not in the inventory, or excluded under a different profile, marked `reassess`). Assessed ones include fit, reasoning and gaps, so they can go into today's batch without another read. A find counts as stored only when an inventory record shares its provider ID or posting URL (or, for a find with neither, its company, title and location); a find that matches a record by name alone is carried with `similar` naming that record. `warnings` lists unreadable ledgers; they are left untouched.
+
+## capture
+
+Pass one or more files: subagent result files as written (JSONL, one find per line), a JSON array, or `{"candidates": [...]}`. Each find needs `company` and `title`; `location` (default `Unknown`), `url`, `provider` with `providerJobId`, and `source` (a label, or `{label, ref}`; default the file name) are used when present. Other fields are ignored.
+
+It saves all finds first, then returns them in four groups:
+
+- `known`: same company and the same provider job ID or posting URL as an inventory record of any status, or as a dropped entry. Saved as duplicate (`r5 (Applied)`, `dropped: <reason>`); do not read or rate them.
+- `decidedBefore`: assessed or excluded in an earlier run under the current profile. The decision is copied onto today's entry; reuse it without another read.
+- `similar`: same company, title and location as an inventory record, but no shared ID or URL. Decide yourself whether it is the same vacancy.
+- `new`: everything else. Read, rate or drop these.
+
+Each find has a short `id` (8 characters) for `resolve`. Earlier entries of a captured vacancy are marked as duplicates of today's, so every vacancy has one open entry.
+
+## resolve
+
+Input is a JSON list of decisions, one per find:
 
 ```json
-{"scope": {"sources": ["*"], "exclusions": [{"source": "LinkedIn", "reason": "User excluded LinkedIn for this run"}]},
- "tasks": [{"id": "employer:Example", "kind": "employer", "source": "Example", "status": "pending"}]}
+[{"id": "1a2b3c4d", "state": "assessed", "basis": "Posting reviewed", "fit": 4, "reasoning": "Java and SQL match", "gaps": "No Kafka", "evidence": "Java 17 and SQL essential"},
+ {"id": "5e6f7a8b", "state": "excluded", "reason": "Sales role"},
+ {"id": "9c0d1e2f", "state": "duplicate", "reason": "Same as r12"}]
 ```
 
-`sources` defaults to `["*"]` (the profile's normal sources). Exclusions apply to this run only; they never become profile rules.
+`assessed` needs `basis` and `reasoning`. With basis `Posting reviewed` it also needs `evidence`: the posting lines the rating rests on. Use `Title only` when the posting was not read. `fit` and `gaps` are optional. Nothing is filled in by default, so incomplete input is rejected while the source is still at hand. `excluded` and `duplicate` need `reason`. `pending` reopens a find. The profile hash is added automatically. Resolve carried finds with `--run` set to the run they came from. Assessed means rated, not imported.
 
-## Tasks
+## summary
 
-`task` takes one task object or `{"tasks": [...]}`. A new id is added; an existing id is replaced. Send only the fields you know:
+Read-only. Run it before writing the final summary:
 
-- `id`, `kind`, `source`, `status` are required. Kinds: alerts, posting, refresh, employer, portal, gap, recheck, import, coverage, summary. Statuses: pending, active, done, partial, deferred, failed, not_due, excluded.
-- `evidence` is required for done (for example the source-evidence line). `reason` is required for partial, deferred, failed, not_due and excluded. `nextAction` is required for partial, deferred and failed, so the next run knows where to continue.
-- `cursor` is an optional short continuation hint (for example `page=3`). Listings change: resume with overlap and deduplicate.
+- `candidates`: this run's finds by state.
+- `addedThisRun`: every inventory record whose first source is this run's batch. It is read from the inventory, so a repeated or interrupted import does not change it. `touchedThisRun` counts all records carrying this run's batch.
+- `importReports`: each importer report for this run's batch with counts and the ambiguous or rejected records still to repair.
+- `carriedFromEarlierRuns` and `warnings`.
 
-Update a task when a source finishes or stops, not after every call. Keep full results in the ledger and `source-evidence.jsonl`, not in task text.
+Source coverage (employers, portals, alerts) is not derived here; take it from `source-evidence.jsonl` and `coverage.json`. Report metrics recorded nowhere as unknown, never as zero.
 
-## Next
+## next
 
-`next` scans every run folder and returns, per run, unfinished tasks and candidates that still need work: pending ones, assessed ones not yet in the inventory, and exclusions decided under an older profile (a duplicate points at a record or candidate that is reassessed itself). A pending candidate that matches an inventory record of any status, or an entry of the `dropped` list in `coverage.json`, carries `known`: `{"record": "<id>", "status": "Applied"}` or `{"status": "dropped", "reason": "..."}`. Resolve it as duplicate without reading or rating it. With `--run`, it also flags `profileChanged` and marks items whose source is excluded today (`excludedNow`). Unreadable or older-format files are listed under `warnings` and left untouched.
-
-Delivery is read from `jobs.json`: an assessed candidate counts as stored, and a pending one as known, when an inventory record of the same company shares its provider ID or posting URL or, failing that, has the same normalised title and a matching location. Dropped entries carry no location, so they match by provider ID or URL only. A candidate the importer rejected or marked ambiguous therefore stays in `next` until it is repaired and imported, or resolved as duplicate or excluded. Inspect saved candidates before repeating a search; reuse assessments only when the profile has not changed.
-
-## Summary
-
-Run `summary` before writing the final summary. It is read-only and returns:
-
-- `candidates`: this run's ledger by state.
-- `tasks`: counts by kind and status, zeros included.
-- `inventory.addedThisRun`: every inventory record whose first source is this run's batch, including candidates captured in earlier runs. Because it is read from the inventory, an interrupted or repeated import does not change it. `touchedThisRun` counts all records carrying this run's batch.
-- `importReports`: each importer report for this run's batch with counts, `reportError` and the ambiguous/rejected records still to repair. A retry overwrites the previous report, so use `addedThisRun` for additions.
-- `unfinishedTasks` and `outstanding` (the `next` result).
-
-Task statuses are declared by the agent; source coverage still needs source evidence. Report metrics not recorded anywhere as unknown, never as zero.
+Prints the `carried` list again without starting a run.
 
 ## Safety and retention
 
-One lead process writes the manifest and ledgers; subagents return result files. Writes use an atomic replace under an exclusive `run-state.lock` directory. Never remove a lock while its writer may be active. All run folders are kept; there is no deletion command.
+One lead process writes state; subagents only write result files. Ledger writes use an atomic replace under an exclusive lock directory; never remove a lock while its writer may be active. All run folders are kept; there is no deletion command. Manifests from version 2 are still readable; their task lists are ignored.

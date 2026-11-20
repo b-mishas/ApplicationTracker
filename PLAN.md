@@ -12,7 +12,7 @@
 
 ## Planned improvements
 
-- **State-driven search orchestration.** Follow [agent/orchestration/ORCHESTRATION_ROADMAP.md](agent/orchestration/ORCHESTRATION_ROADMAP.md). Capture, cross-run pending work and derived summary are implemented and simplified (milestones 1–5, fixture-tested). Next: a small-model multi-posting rehearsal with and without the helpers (milestone 6); token savings remain unproven.
+- **State-driven search orchestration.** Follow [agent/orchestration/ORCHESTRATION_ROADMAP.md](agent/orchestration/ORCHESTRATION_ROADMAP.md). Milestones 1–7 are done: one slim helper (init, capture with the inventory check, resolve, summary) after the small-model rehearsal showed equal results at 57% more input. Next: a hand-off and recovery rehearsal (milestone 8); helper value remains unproven.
 - **Produce agent use logs.** When distributing the package amount friends, I could let the agent collect some usage stats and save it at the end of the setup session and the daily routines. They could send them, and then we can diagnose problems users encountered.
 - **Employer model comparison.** Before relying on the smallest model for career pages, compare it with the middle model on simple, paginated and JavaScript-heavy sites (including zero-result ones) against independently inspected listings; measure openings found, partial/errors and actual run cost.
 - **Rehearsal regression cases.** The next rehearsal must find the two openings the Terra rehearsal (2026-11-18) missed: Zalando's second listing page (Software Engineer (Kotlin), Transport Planning Optimization, 2723609) and n8n's JavaScript-only Ashby board (Senior Product Engineer (TS/NodeJS/Vue)), or record them as partial with the limit reached.

@@ -12,24 +12,26 @@ The [routine](../ROUTINE_PROMPT.md), [workflow](../../app/SEARCH_WORKFLOW.md), [
 
 | Artifact | Purpose |
 |---|---|
-| run-completion.json | **Guide and resume the current run.** Records its tasks, outcomes and continuation points, with this run's exclusions and profile hash. |
+| run-completion.json | **Identify the run.** Records its id, start time and profile hash. Unfinished source work is carried in coverage.json `unfinished`, not in a separate task list. |
 | run-ledger.jsonl | **Keep track of every discovered job vacancy.** Preserves its identity, sources, assessment and current disposition so unfinished work is not lost. |
 | source-evidence.jsonl | **Show what was actually checked.** Records search methods, pages/items inspected, coverage evidence, failures and where to continue. |
 | coverage.json | **Decide what to check next time.** Remembers successful source checks, reusable access methods, dropped vacancies and refresh/recheck history across runs. |
 | Inventory and importer reports | **Show what was stored.** jobs.json source files tell which run added or touched a record, regardless of retries; importer reports give counts and records to repair. |
 
-Use existing `candidate-ledger.mjs` and `run-state.mjs` helpers for bookkeeping; the agent judges relevance and evidence. **Only the existing importer writes inventory.** Contracts: [CANDIDATE_STATE.md](../../app/CANDIDATE_STATE.md), [RUN_STATE.md](../../app/RUN_STATE.md).
+The agent calls one helper, `run-state.mjs` (init, capture, resolve, summary), which stores finds through `candidate-ledger.mjs`; the agent judges relevance and evidence. **Only the existing importer writes inventory.** Contracts: [CANDIDATE_STATE.md](../../app/CANDIDATE_STATE.md), [RUN_STATE.md](../../app/RUN_STATE.md).
 
 **Terminology:** a job vacancy is a discovered role; the candidate is the human job seeker. Existing code/file identifiers containing `candidate` remain unchanged for compatibility.
 
-**Where details live:** ledger fields and assessment rules are in CANDIDATE_STATE.md; manifest commands, scope guards, snapshots and receipt recovery are in RUN_STATE.md. Source-evidence and coverage procedures are in ROUTINE_PROMPT.md. Verify exact validation against the helpers and batch schema. The history explains decisions and test evidence; it is not the field contract.
+**Where details live:** ledger fields and assessment rules are in CANDIDATE_STATE.md; commands and their output groups are in RUN_STATE.md. Source-evidence and coverage procedures are in ROUTINE_PROMPT.md. Verify exact validation against the helpers and batch schema. The history explains decisions and test evidence; it is not the field contract.
 
 ## Invariants
 
 - **Capture immediately**, including setup discoveries, before selecting postings to investigate. Every captured job vacancy has a disposition or remains discoverable as pending.
+- **Check finds at capture.** A find sharing a provider ID or posting URL with any inventory record or dropped entry is saved as a duplicate before anyone reads or rates it; name-only matches are left to the agent.
+- **Keep bookkeeping cheap.** Every helper call costs a lead turn that re-reads the whole context. Prefer one call per batch of finds and one per batch of decisions; put command lines in the routine so the agent need not read the contracts.
 - **Assessment is not delivery.** Preserve reusable results and distinguish prepared batches from confirmed imports. Deduplicate conservatively; retain distinct vacancies and source occurrences.
 - Save after discovery/result batches, assessments, source attempts and imports, and before blocking calls—not after every tool call. On restart, inspect saved pending work before repeating external work.
-- Respect current scope, profile revisions, stops, deadlines and budgets. Temporary exclusions never become permanent preferences. Resume mutable listings with overlap and deduplication.
+- Respect current scope and profile revisions. Temporary exclusions never become permanent preferences. Resume mutable listings with overlap and deduplication.
 - **Source coverage needs evidence.** Partial listings never earn successful check dates; cached methods and task labels do not prove coverage.
 - Derive delivery and "added this run" from the inventory, not from per-attempt receipts. The importer is idempotent, so an interrupted import is simply rerun; its report describes the latest attempt only.
 - Preserve unresolved work and all dependencies. Current policy retains all runs; destructive pruning remains deferred. No automatic legacy migration.
@@ -50,9 +52,12 @@ Use isolated rehearsal inventories and fictional profiles, **never real applicat
 - [x] **5. Simplification:** keep capture, cross-run `next` and the derived summary; drop revision checks, call budgets, stop/context/resume and the import receipt layer; derive delivery from jobs.json. Fixture-tested; no agent run yet.
 - [x] **6. Small-model acceptance:** a multi-posting rehearsal on the routine's intended models (smallest/middle subagents) with and without the state helpers, comparing retained vacancies, summary accuracy and native token use. **Result (2026-11-20, one run per arm):** equal retention, no trap reads and exact counts in both arms; helpers cost 57% more input, so the decision rule says cut further. Recovery across runs was not exercised.
 
+- [x] **7. Slim helper:** after milestone 6 and Codex's review, one helper with init, capture (with the inventory/dropped check and earlier-run decisions), resolve (short ids, flat fields) and summary; no task list; current run found from `CURRENT`; posting reads delegated from three postings up. Fixture-tested; no agent run yet.
+- [ ] **8. Hand-off and recovery rehearsal:** same reader model and delegation policy in both arms; a delegated employer batch containing known vacancies under alternate URLs and IDs; an interruption after assessment and before import, resumed by a fresh agent. Compare retained vacancies, repeated reads and ratings, duplicate imports, summary accuracy, native tokens and CLI cost against the plain routine (b66c262).
+
 ## Current next action
 
-Decide how far to cut the helpers after milestone 6 (helpers won nothing at 57% more input in a single-run scenario). Token savings remain unproven.
+Milestone 8. The helper earns its cost only if it pays for itself where work changes hands or is interrupted; if not, keep only the capture check as a small script.
 
 ## Why this design
 

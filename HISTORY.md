@@ -4,6 +4,10 @@
 
 --------------------
 
+## 2026-11-20 — Slim search state helper
+
+- run-state.mjs reduced to init, capture, resolve, summary and next after the small-model rehearsal showed 57% more input for equal results. Capture checks every find against jobs.json and the dropped list and reports earlier decisions; no task list; the run ID stays inside ROOT. Fixture tests and full npm test pass; no agent run yet. Details in agent/orchestration/ORCHESTRATION_HISTORY.md.
+
 ## 2026-11-20 — JobTracker table refinements (Codex)
 
 - Ported bcad8b4, b8999dd and 5d16323: removed the expansion column, added keyboard row expansion, restricted Urgent to New/Shortlisted, muted the zero New count, and compacted specified columns and headings. Focused suites and isolated Chromium checks passed.

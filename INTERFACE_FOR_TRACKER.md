@@ -44,7 +44,7 @@ The tracker must not depend on `data/reports/coverage.json` or the workbook; bot
 
 ## Candidate capture helper
 
-`app/candidate-ledger.mjs` (`app/CANDIDATE_STATE.md`) keeps per-run candidate capture and assessments; `app/run-state.mjs` (`app/RUN_STATE.md`) keeps the run task list, lists unfinished work across runs and derives summary counts, reading jobs.json but never writing it. Both are agent-owned state under data/reports/runs/, independent of inventory and coverage schemas. Imports still use the import command below. Run folders are kept, not deleted by age.
+`app/run-state.mjs` (`app/RUN_STATE.md`) starts search runs, captures finds, marks those already in jobs.json or on the dropped list, saves decisions and derives summary counts; its ledger storage is `app/candidate-ledger.mjs` (`app/CANDIDATE_STATE.md`). It reads jobs.json but never writes it. Both are agent-owned state under data/reports/runs/, independent of inventory and coverage schemas. Imports still use the import command below. Run folders are kept, not deleted by age.
 
 ## Import command
 From `app/`: `node import-discoveries.mjs incoming/<file>.json --root ../data [--validate-only | --dry-run]`. Exit codes 0 / 2 / 3 / 4 / 5 and the final `RESULT` line as today. The agent follows `SEARCH_WORKFLOW.md` if it documents something else.

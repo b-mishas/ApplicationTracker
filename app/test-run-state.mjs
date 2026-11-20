@@ -4,134 +4,163 @@ import os from 'node:os';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {initializeRun, readRun, updateTasks, outstanding, profileRevision, summarizeRun} from './run-state.mjs';
-import {readLedger, changeLedger, initializeLedger} from './candidate-ledger.mjs';
+import {initializeRun, captureFinds, resolveFinds, outstanding, summarizeRun} from './run-state.mjs';
+import {readLedger} from './candidate-ledger.mjs';
 import {importBatch} from './import-discoveries.mjs';
 import {commit} from './store.mjs';
 
 const cli = fileURLToPath(new URL('./run-state.mjs', import.meta.url));
 const job = n => ({company: 'Example', title: `Engineer ${n}`, url: `https://example.test/jobs/${n}`, provider: 'ATS', providerJobId: String(n), linkType: 'posting', group: 'Engineering', countries: ['DE'], city: 'Berlin', locationRaw: 'Berlin', workMode: 'Hybrid', workModeRaw: 'Hybrid', fit: 4, reasoning: 'Core skills match', gaps: '', seniority: 'Senior', assessmentBasis: 'Posting reviewed', postedDate: '', observedAt: '2026-11-20T01:00:00Z', availability: 'Open'});
+// Subagent result line: extra fields (requirements, mail id) are ignored by capture.
+const line = (n, extra = {}) => JSON.stringify({company: 'Example', title: `Engineer ${n}`, location: 'Berlin', url: job(n).url, provider: 'ATS', providerJobId: String(n), requirements: ['Java'], ...extra});
+let directory, root;
 async function fixture(fn) {
-  const directory = await mkdtemp(path.join(os.tmpdir(), 'run-state-'));
-  const root = path.join(directory, 'data');
+  directory = await mkdtemp(path.join(os.tmpdir(), 'run-state-'));
+  root = path.join(directory, 'data');
   await mkdir(path.join(root, 'incoming'), {recursive: true}); await mkdir(path.join(directory, 'profile'));
   await writeFile(path.join(directory, 'profile', 'candidate_profile.md'), 'Approved example profile');
   await writeFile(path.join(root, 'jobs.json'), JSON.stringify({schemaVersion: 1, jobs: []}));
-  try { await fn(root); } finally { await rm(directory, {recursive: true, force: true}); }
+  try { await fn(); } finally { await rm(directory, {recursive: true, force: true}); }
 }
-const runFolder = (root, runId) => path.join(root, 'reports', 'runs', runId);
-// Capture and assess numbered candidates; candidate 0 has no URL or provider id (alert title only).
-async function assessed(root, runId, numbers) {
-  const directory = runFolder(root, runId);
-  await initializeLedger(directory);
-  await changeLedger(directory, 'capture', {candidates: numbers.map(n => n === 0
-    ? {company: 'Example', title: 'Engineer 0', location: 'Berlin', source: {label: 'Example', ref: 'alert:0'}}
-    : {company: 'Example', title: `Engineer ${n}`, location: 'Berlin', url: job(n).url, provider: 'ATS', providerJobId: String(n), source: {label: 'Example', ref: `page1:${n}`}})});
-  const {rows} = await readLedger(directory), profile = await profileRevision(root);
-  await changeLedger(directory, 'resolve', {updates: rows.map(row => ({id: row.id, state: 'assessed', assessment: {fit: 4, basis: 'Posting reviewed', reasoning: 'Core skills match', gaps: '', evidence: 'Java and SQL; Berlin hybrid', profileRevision: profile}}))});
+async function capture(lines, name = 'employer-example.jsonl') {
+  const file = path.join(directory, name);
+  await writeFile(file, lines.join('\n'));
+  return captureFinds(root, [file]);
 }
-// Plain importer, exactly as the routine runs it.
-async function importJobs(root, runId, jobs) {
+const assess = (result, extra = {}) => resolveFinds(root, result.new.map(row => ({id: row.id, state: 'assessed', basis: 'Posting reviewed', fit: 4, reasoning: 'Core skills match', evidence: 'Java and SQL required', ...extra})));
+async function importJobs(runId, jobs) {
   const filename = `2026-11-20-${runId}.json`;
   const payload = {schemaVersion: 1, runId, searchedAt: '2026-11-20T01:00:00Z', jobs: jobs.map(j => ({...j, sources: [{label: 'Example', url: j.url, file: filename}]}))};
   await writeFile(path.join(root, 'incoming', filename), JSON.stringify(payload));
   return importBatch({root, batchPath: path.join('incoming', filename)});
 }
-const pending = async (root, runId, current = null) => (await outstanding(root, current)).runs.find(run => run.runId === runId);
+const run = (...args) => JSON.parse(execFileSync(process.execPath, [cli, ...args, '--root', root], {encoding: 'utf8'}));
 let passed = 0;
 async function test(label, fn) { await fixture(fn); console.log(`ok ${++passed} ${label}`); }
 
-await test('minimal init, batch task updates and fresh-process next with cursor', async root => {
-  await initializeRun(root, 'run-aaaa', {tasks: [{id: 'employer:Example', kind: 'employer', source: 'Example', status: 'pending'}]});
-  await assessed(root, 'setup-capture', [1, 2]);
-  await updateTasks(root, 'run-aaaa', {tasks: [
-    {id: 'employer:Example', kind: 'employer', source: 'Example', status: 'partial', cursor: 'page=2', reason: 'Page limit', nextAction: 'Read page 2 with overlap'},
-    {id: 'portal:Board', kind: 'portal', source: 'Board', status: 'done', evidence: 'source-evidence.jsonl line 1'}]});
-  const result = JSON.parse(execFileSync(process.execPath, [cli, 'next', '--root', root, '--run', 'run-aaaa'], {encoding: 'utf8'}));
-  assert.equal(result.runs.find(run => run.runId === 'setup-capture').candidates.length, 2);
-  const tasks = result.runs.find(run => run.runId === 'run-aaaa').tasks;
-  assert.equal(tasks.length, 1); assert.equal(tasks[0].cursor, 'page=2');
-  await assert.rejects(updateTasks(root, 'run-aaaa', {id: 'x', kind: 'employer', source: 'X', status: 'done'}), /evidence/);
-  await assert.rejects(updateTasks(root, 'run-aaaa', {id: 'x', kind: 'employers', source: 'X', status: 'pending'}), /kind must be one of/);
-  await assert.rejects(updateTasks(root, 'run-aaaa', {id: 'x', kind: 'employer', source: 'X', status: 'partial', reason: 'Limit'}), /nextAction/);
-  await assert.rejects(initializeRun(root, 'run-aaaa'), /already has a manifest/);
+await test('init names the run and batch; capture reads subagent JSONL; resolve takes short ids', async () => {
+  const started = run('init');
+  assert.match(started.runId, /^run-\d{12}-[0-9a-f]{4}$/);
+  assert.match(started.batch, new RegExp(`^data/incoming/\\d{4}-\\d\\d-\\d\\d-${started.runId}\\.json$`));
+  assert.equal((await readFile(path.join(root, 'reports', 'runs', 'CURRENT'), 'utf8')).trim(), started.runId);
+  const file = path.join(directory, 'finds.jsonl');
+  await writeFile(file, [line(1, {mailId: 'm1'}), line(2), JSON.stringify({company: 'Example', title: 'Engineer 3'})].join('\n'));
+  const captured = run('capture', '--input', file);
+  assert.equal(captured.captured, 3); assert.equal(captured.new.length, 3); assert.equal(captured.new[0].id.length, 8);
+  const decisions = path.join(directory, 'decisions.json');
+  await writeFile(decisions, JSON.stringify([{id: captured.new[0].id, state: 'assessed', basis: 'Posting reviewed', fit: 4, reasoning: 'Java match', evidence: 'Requires Java'},
+    {id: captured.new[1].id, state: 'excluded', reason: 'Too junior'}]));
+  assert.deepEqual(run('resolve', '--input', decisions).candidates, {total: 3, pending: 1, assessed: 1, excluded: 1, duplicate: 0});
+  const {rows} = await readLedger(path.join(root, 'reports', 'runs', started.runId));
+  assert.equal(rows[0].assessment.basis, 'Posting reviewed'); assert.match(rows[0].assessment.profileRevision, /^[a-f0-9]{64}$/);
+  assert.equal(rows[2].discovery.location, 'Unknown'); assert.equal(rows[2].discovery.source.label, 'finds');
+  await assert.rejects(resolveFinds(root, [{id: 'abc', state: 'excluded', reason: 'x'}]), /Unknown or ambiguous id/);
+  await assert.rejects(resolveFinds(root, [{id: captured.new[2].id, state: 'done'}]), /State must be/);
+  await assert.rejects(resolveFinds(root, [{id: captured.new[2].id, state: 'excluded'}]), /reason/);
+  // Evidence is never upgraded by defaults.
+  await assert.rejects(resolveFinds(root, [{id: captured.new[2].id, state: 'assessed', fit: 3, reasoning: 'Title fits'}]), /needs basis/);
+  await assert.rejects(resolveFinds(root, [{id: captured.new[2].id, state: 'assessed', basis: 'Posting reviewed', fit: 3, reasoning: 'Title fits'}]), /needs evidence/);
+  await resolveFinds(root, [{id: captured.new[2].id, state: 'assessed', basis: 'Title only', fit: 3, reasoning: 'Title fits'}]);
+  const titleOnly = (await readLedger(path.join(root, 'reports', 'runs', started.runId))).rows[2].assessment;
+  assert.deepEqual([titleOnly.basis, titleOnly.evidence], ['Title only', 'Title only']);
 });
 
-await test('delivery is read from inventory; rejected and ambiguous stay pending', async root => {
-  await initializeRun(root, 'run-aaaa');
-  await assessed(root, 'run-aaaa', [0, 1, 2, 3]);
-  await commit(root, data => { data.jobs.push({id: 'other', company: 'Other employer', title: 'Other job', status: 'New', provider: 'ATS', providerJobId: '3', url: 'https://other.test/3', notes: ''}); });
-  const {provider, providerJobId, ...titleOnly} = job(0);
-  const result = await importJobs(root, 'run-aaaa', [titleOnly, job(1), {...job(2), countries: ['ZZ']}, job(3)]);
-  assert.equal(result.exitCode, 5); assert.equal(result.added, 2); assert.equal(result.ambiguous, 1);
-  const left = (await pending(root, 'run-aaaa')).candidates.map(row => row.title).sort();
-  assert.deepEqual(left, ['Engineer 2', 'Engineer 3'], 'URL-less candidate 0 matched by name; rejected 2 and ambiguous 3 remain');
-  const summary = await summarizeRun(root, 'run-aaaa');
-  assert.equal(summary.inventory.addedThisRun.length, 2);
-  assert.equal(summary.importReports[0].unresolved.length, 2);
-});
-
-await test('interrupted or repeated import still counts additions once', async root => {
-  await initializeRun(root, 'run-aaaa');
-  await assessed(root, 'run-aaaa', [1, 2]);
-  await importJobs(root, 'run-aaaa', [job(1), job(2)]);
-  const retry = await importJobs(root, 'run-aaaa', [job(1), job(2)]);
-  assert.equal(retry.added, 0); assert.equal(retry.unchanged, 2, 'Report now describes the retry only');
-  const summary = await summarizeRun(root, 'run-aaaa');
-  assert.equal(summary.inventory.addedThisRun.length, 2);
-  assert.equal(summary.importReports.at(-1).unchanged, 2);
-  assert.equal(await pending(root, 'run-aaaa'), undefined);
-});
-
-await test('cross-run: setup captures delivered later; refresh is touched, not added', async root => {
-  await assessed(root, 'setup-capture', [1]);
-  await initializeRun(root, 'run-bbbb');
-  await importJobs(root, 'run-bbbb', [job(1)]);
-  assert.equal(await pending(root, 'setup-capture'), undefined);
-  const first = await summarizeRun(root, 'run-bbbb');
-  assert.equal(first.candidates.total, 0); assert.equal(first.inventory.addedThisRun.length, 1);
-  await initializeRun(root, 'run-cccc');
-  await importJobs(root, 'run-cccc', [{...job(1), reasoning: 'Refreshed requirements'}]);
-  const refresh = await summarizeRun(root, 'run-cccc');
-  assert.equal(refresh.inventory.addedThisRun.length, 0); assert.equal(refresh.inventory.touchedThisRun, 1);
-});
-
-await test('profile change, scope exclusions and legacy manifests are reported, not blocked', async root => {
-  await initializeRun(root, 'run-aaaa', {scope: {sources: ['*'], exclusions: [{source: 'Example', reason: 'User excluded today'}]}});
-  await assessed(root, 'run-aaaa', [1]);
-  await writeFile(path.resolve(root, '../profile/candidate_profile.md'), 'Changed profile');
-  const next = await outstanding(root, 'run-aaaa');
-  assert.equal(next.profileChanged, true);
-  const row = next.runs.find(run => run.runId === 'run-aaaa').candidates[0];
-  assert.equal(row.needsReassessment, true); assert.equal(row.excludedNow, true);
-  const legacy = runFolder(root, 'legacy-old'); await mkdir(legacy);
-  await writeFile(path.join(legacy, 'run-completion.json'), '{"schemaVersion":1}');
-  assert.ok((await outstanding(root)).warnings.some(warning => warning.runId === 'legacy-old'));
-  assert.equal(await readFile(path.join(legacy, 'run-completion.json'), 'utf8'), '{"schemaVersion":1}');
-});
-
-await test('pending finds already stored or dropped are marked known; duplicates stay resolved', async root => {
-  await initializeRun(root, 'run-aaaa');
-  await commit(root, data => { data.jobs.push({id: 'r5', company: 'Example GmbH', title: 'Engineer 5', status: 'Applied', provider: 'ATS', providerJobId: '5', url: 'https://example.test/jobs/5', linkType: 'posting', city: 'Berlin', locationRaw: 'Berlin', notes: ''}); });
+await test('finds already stored (any status) or dropped are marked duplicate at capture; name-only matches stay for the agent', async () => {
+  await initializeRun(root);
+  await commit(root, data => { data.jobs.push({id: 'r5', company: 'Example GmbH', title: 'Engineer 5', status: 'Applied', provider: 'ATS', providerJobId: '5', url: job(5).url, linkType: 'posting', city: 'Berlin', locationRaw: 'Berlin', notes: ''},
+    {id: 'r8', company: 'Example', title: 'Engineer 8', status: 'Dismissed', provider: 'ATS', providerJobId: '8', url: job(8).url, linkType: 'posting', city: 'Berlin', locationRaw: 'Berlin', notes: ''},
+    {id: 'other', company: 'Other employer', title: 'Other job', status: 'New', provider: 'ATS', providerJobId: '7', url: 'https://other.test/7', linkType: 'posting', notes: ''}); });
+  await mkdir(path.join(root, 'reports'), {recursive: true});
   await writeFile(path.join(root, 'reports', 'coverage.json'), JSON.stringify({dropped: [{provider: 'ATS', providerJobId: '6', url: '', company: 'Example', title: 'Engineer 6', reason: 'Too junior', droppedAt: '2026-11-01'}]}));
-  const directory = runFolder(root, 'run-aaaa');
-  // Company-page find: different city and no URL, but the same provider ID as the stored application.
-  await changeLedger(directory, 'capture', {candidates: [5, 6, 7].map(n => ({company: 'Example', title: `Engineer ${n}`, location: n === 5 ? 'Vienna' : 'Berlin', provider: 'ATS', providerJobId: String(n), source: {label: 'Example', ref: `page1:${n}`}}))});
-  const rows = (await pending(root, 'run-aaaa')).candidates;
-  assert.deepEqual(rows.map(row => row.known ?? null), [{record: 'r5', status: 'Applied'}, {status: 'dropped', reason: 'Too junior'}, null]);
-  const profile = await profileRevision(root);
-  await changeLedger(directory, 'resolve', {updates: rows.slice(0, 2).map(row => ({id: row.id, state: 'duplicate', reason: row.known.record || 'dropped', profileRevision: profile}))});
-  await writeFile(path.resolve(root, '../profile/candidate_profile.md'), 'Changed profile');
-  assert.deepEqual((await pending(root, 'run-aaaa')).candidates.map(row => row.title), ['Engineer 7'], 'Duplicates do not resurface after a profile change');
+  // 5: same provider id, other city; 6: dropped; 7: id shared with another employer; 8 under a new requisition id: name match only.
+  const result = await capture([line(5, {location: 'Vienna'}), line(6), line(7), line(8, {providerJobId: '88', url: 'https://example.test/jobs/88'})]);
+  assert.deepEqual(result.known.map(row => row.match), ['r5 (Applied)', 'dropped: Too junior']);
+  assert.deepEqual(result.new.map(row => row.title), ['Engineer 7']);
+  assert.deepEqual(result.similar.map(row => [row.title, row.match]), [['Engineer 8', 'r8 (Dismissed)']]);
+  assert.equal((await summarizeRun(root)).candidates.duplicate, 2);
 });
 
-await test('summary is read-only and counts task statuses', async root => {
-  await initializeRun(root, 'run-aaaa', {tasks: [{id: 'employer:A', kind: 'employer', source: 'A', status: 'partial', reason: 'Page limit', nextAction: 'Page 3'}]});
-  const before = await readFile(path.join(runFolder(root, 'run-aaaa'), 'run-completion.json'), 'utf8');
-  const summary = JSON.parse(execFileSync(process.execPath, [cli, 'summary', '--root', root, '--run', 'run-aaaa'], {encoding: 'utf8'}));
-  assert.equal(summary.tasks.employer.partial, 1); assert.equal(summary.tasks.employer.done, 0);
-  assert.equal(summary.unfinishedTasks.length, 1);
-  assert.equal(await readFile(path.join(runFolder(root, 'run-aaaa'), 'run-completion.json'), 'utf8'), before);
-  assert.equal((await readRun(root, 'run-aaaa')).schemaVersion, 2);
+await test('delivery is read from inventory; rejected and ambiguous finds are carried to the next run', async () => {
+  const first = await initializeRun(root);
+  await commit(root, data => { data.jobs.push({id: 'other', company: 'Other employer', title: 'Other job', status: 'New', provider: 'ATS', providerJobId: '3', url: 'https://other.test/3', notes: ''}); });
+  await assess(await capture([JSON.stringify({company: 'Example', title: 'Engineer 0', location: 'Berlin', source: 'Alert'}), line(1), line(2), line(3)]));
+  const {provider, providerJobId, ...titleOnly} = job(0);
+  const result = await importJobs(first.runId, [titleOnly, job(1), {...job(2), countries: ['ZZ']}, job(3)]);
+  assert.equal(result.exitCode, 5); assert.equal(result.added, 2); assert.equal(result.ambiguous, 1);
+  const summary = await summarizeRun(root);
+  assert.equal(summary.addedThisRun.length, 2); assert.equal(summary.importReports[0].unresolved.length, 2);
+  const second = await initializeRun(root);
+  assert.deepEqual(second.carried.map(row => row.title).sort(), ['Engineer 2', 'Engineer 3'], 'URL-less 0 matched by name; rejected 2 and ambiguous 3 carried');
+  assert.equal(second.carried[0].fit, 4);
+});
+
+await test('repeated import counts additions once; a refresh in a later run is touched, not added', async () => {
+  const first = await initializeRun(root);
+  await assess(await capture([line(1), line(2)]));
+  await importJobs(first.runId, [job(1), job(2)]);
+  const retry = await importJobs(first.runId, [job(1), job(2)]);
+  assert.equal(retry.added, 0); assert.equal(retry.unchanged, 2);
+  assert.equal((await summarizeRun(root)).addedThisRun.length, 2);
+  const second = await initializeRun(root);
+  assert.equal(second.carried.length, 0);
+  await importJobs(second.runId, [{...job(1), reasoning: 'Refreshed requirements'}]);
+  const refresh = await summarizeRun(root);
+  assert.equal(refresh.addedThisRun.length, 0); assert.equal(refresh.touchedThisRun, 1);
+});
+
+await test('an interrupted run is resumed from files: carried work and earlier decisions are reused, not re-rated', async () => {
+  await initializeRun(root);
+  const found = await capture([line(1), line(2), line(3)]);
+  await resolveFinds(root, [{id: found.new[0].id, state: 'assessed', basis: 'Posting reviewed', fit: 5, reasoning: 'Strong Java match', evidence: 'Java 17 essential'}, {id: found.new[1].id, state: 'excluded', reason: 'On-site in another country'}]);
+  // Interrupted before import. The next run starts, lists the leftovers, and meets the same finds again.
+  const resumed = await initializeRun(root);
+  assert.deepEqual(resumed.carried.map(row => [row.title, row.state]), [['Engineer 1', 'assessed'], ['Engineer 3', 'pending']]);
+  const again = await capture([line(1), line(2), line(3)]);
+  assert.deepEqual(again.decidedBefore.map(row => [row.title, row.state, row.fit ?? row.reason]), [['Engineer 1', 'assessed', 5], ['Engineer 2', 'excluded', 'On-site in another country']]);
+  assert.deepEqual(again.new.map(row => row.title), ['Engineer 3']);
+  // Reused decisions are saved on today's rows and earlier rows point here, so a restart carries each vacancy once.
+  assert.deepEqual((await summarizeRun(root)).candidates, {total: 3, pending: 1, assessed: 1, excluded: 1, duplicate: 0});
+  const restart = await initializeRun(root);
+  assert.deepEqual(restart.carried.map(row => [row.run, row.title, row.state]), [[resumed.runId, 'Engineer 1', 'assessed'], [resumed.runId, 'Engineer 3', 'pending']]);
+});
+
+await test('a new requisition with a stored title survives an interruption as similar, not delivered', async () => {
+  await initializeRun(root);
+  await commit(root, data => { data.jobs.push({id: 'r8', company: 'Example', title: 'Engineer 8', status: 'Applied', provider: 'ATS', providerJobId: '8', url: job(8).url, linkType: 'posting', city: 'Berlin', locationRaw: 'Berlin', notes: ''}); });
+  const found = await capture([line(8, {providerJobId: '88', url: 'https://example.test/jobs/88'})]);
+  assert.equal(found.similar.length, 1);
+  await resolveFinds(root, [{id: found.similar[0].id, state: 'assessed', basis: 'Posting reviewed', fit: 4, reasoning: 'Second opening', evidence: 'Requisition 88, Java essential'}]);
+  const next = await initializeRun(root);
+  assert.deepEqual(next.carried.map(row => [row.title, row.state, row.similar]), [['Engineer 8', 'assessed', 'r8 (Applied)']]);
+});
+
+await test('an exclusion reused after rediscovery stays resolved across restarts', async () => {
+  await initializeRun(root);
+  const first = await capture([line(4)]);
+  await resolveFinds(root, [{id: first.new[0].id, state: 'excluded', reason: 'Too junior'}]);
+  await initializeRun(root);
+  const again = await capture([line(4)]);
+  assert.deepEqual(again.decidedBefore.map(row => [row.state, row.reason]), [['excluded', 'Too junior']]);
+  assert.equal((await summarizeRun(root)).candidates.excluded, 1);
+  assert.deepEqual((await initializeRun(root)).carried, []);
+});
+
+await test('profile change re-opens exclusions only; duplicates stay; summary is read-only; bad ledgers are preserved', async () => {
+  await initializeRun(root);
+  await commit(root, data => { data.jobs.push({id: 'r5', company: 'Example', title: 'Engineer 5', status: 'Applied', provider: 'ATS', providerJobId: '5', url: job(5).url, linkType: 'posting', notes: ''}); });
+  const found = await capture([line(4), line(5)]);
+  await resolveFinds(root, [{id: found.new[0].id, state: 'excluded', reason: 'Too junior'}]);
+  await writeFile(path.resolve(root, '../profile/candidate_profile.md'), 'Changed profile');
+  const next = await initializeRun(root);
+  assert.equal(next.profileChanged, false, 'New run starts on the new profile');
+  assert.deepEqual(next.carried.map(row => [row.title, row.reassess]), [['Engineer 4', true]]);
+  const broken = path.join(root, 'reports', 'runs', 'legacy-old'); await mkdir(broken);
+  await writeFile(path.join(broken, 'run-ledger.jsonl'), '{"schemaVersion":0}\n');
+  assert.ok((await outstanding(root)).warnings.some(warning => warning.run === 'legacy-old'));
+  assert.equal(await readFile(path.join(broken, 'run-ledger.jsonl'), 'utf8'), '{"schemaVersion":0}\n');
+  const manifest = path.join(root, 'reports', 'runs', next.runId, 'run-completion.json'), before = await readFile(manifest, 'utf8');
+  assert.equal(run('summary').runId, next.runId);
+  assert.equal(await readFile(manifest, 'utf8'), before);
+  await assert.rejects(initializeRun(root, next.runId), /never overwrite/);
 });
 console.log(`${passed} run-state scenarios passed (temporary fixtures only).`);

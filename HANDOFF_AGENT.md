@@ -1,38 +1,22 @@
 # Agent handoff
 
-Updated 2026-11-20T19:15Z, Claude. Scope: orchestration roadmap milestone 6 (small-model acceptance rehearsal). main at 18a85df [Agent] Check finds against inventory before rating, 7 commits ahead of origin/main, not pushed; remote/CI unverified. `design/` is unrelated untracked work. No code, prompt, template, packaging or installed-automation change.
+Updated 2026-11-20T21:50Z, Claude. Scope: slim the search state helper after the milestone 6 rehearsal and Codex's review, plus three fixes from Codex's code review. main at a341f34 (Wrapper commits by another assistant on top of 232d5ed), level with the local origin/main ref; remote/CI unverified. The slim helper below is **uncommitted**. `design/` is unrelated untracked work. No packaging or installed-automation change.
 
-## Done (uncommitted documentation only)
+## Changed (uncommitted)
 
-- Rehearsal in `rehearsal/runs/2026-11-21-small-model-acceptance/` (Git-ignored): PROTOCOL.md (written before any run, two amendments), arm A (helpers, 18a85df) and arm B (no helpers, b66c262) installations, answer keys, streams, scoring scripts, `evaluation/comparison.json` and `evaluation/REPORT.md`.
-- Updated: roadmap milestone 6 marked with its result and next action, ORCHESTRATION_HISTORY.md entry, root HISTORY.md entry, runs README row.
+- `app/run-state.mjs` v3, the agent's only state helper: `init` (generates the run ID, writes `data/reports/runs/CURRENT`, prints run folder, batch file name and carried finds with saved fit/reasoning), `capture` (accepts subagent JSONL as written; saves first, then auto-resolves finds sharing a provider ID or URL with any jobs.json record or dropped entry as duplicate; returns new / known / similar / decidedBefore with 8-character ids), `resolve` (flat decisions, short ids, profile hash added), `summary`, `next`. `--root` defaults to `data`. Task list, `task`/`read`, scope fields removed; v2 manifests still readable.
+- Codex review fixes: delivery needs a shared provider ID or URL (name match only for finds with neither; otherwise carried as `similar`); rediscovered vacancies keep one open entry (decision copied to today, earlier rows become duplicates); `resolve` requires explicit basis and, for Posting reviewed, evidence.
+- Routine and setup (source = template): command lines inline, one resolve per rating round, coverage counts from source-evidence.jsonl and unfinished work in coverage.json, postings delegated from three up. Routine 41.4k → 42.3k characters.
+- RUN_STATE.md rewritten; CANDIDATE_STATE.md, SEARCH_WORKFLOW.md, INTERFACE_FOR_TRACKER.md aligned. Roadmap amended (invariants, milestone 7 done, milestone 8 next); ORCHESTRATION_HISTORY, HISTORY and PLAN updated.
 
-## Result
+## Verification
 
-Lead `claude -p --safe-mode --model claude-sonnet-5-5`; subagent aliases pinned to claude-haiku-5-5 / claude-sonnet-5-5 (CLI 2.1.233's bare aliases resolve to Sonnet 5 / Haiku 4.5). Every logged message was verified on the 5.5 models.
+8 run-state fixture scenarios pass, including the three Codex review cases, CLI end to end, known/similar/dropped/other-employer IDs, rejected and ambiguous imports carried, repeated import, interruption resume reusing earlier decisions, profile change and read-only summary. Full `npm test` exit 0; prompt parity and `git diff --check` pass. No agent run on this version.
 
-Three Greenhouse boards (42 listings) were seeded with Applied, Dismissed and dropped traps.
+## Known limits
 
-- **Outcomes:** both arms kept 8/8 relevant postings, made 0 trap reads and reported exact counts.
-- **Tokens:** A used 1.09M input in 115 s; B used 0.69M in 139 s, so A cost 57% more (its lead 91% more).
-- **Decision rule:** cut further.
-
-Limits:
-- One run per arm.
-- No interruption or multi-run state.
-- A read the postings itself while B delegated them to Haiku.
-- The traps were exact-ID matches, which B also caught.
-
-## Known issues
-
-- Both leads wrote the run ID to `/tmp`, outside ROOT; A's PowerShell import step then hard-coded the ID.
-- Launching `claude` from inside the desktop app needs the desktop app's CLAUDE*/ANTHROPIC* environment variables stripped (see `evaluation/run-arm.mjs`).
-- The personal tracker, profile and workbook were verified unchanged by hash.
+Name-only matches are returned as `similar`, not skipped, so aliases and reworded titles still need the agent's judgment. Dropped entries without ID or URL never match. Whether the slim version recovers the 57% overhead is an estimate, not measured. The installed scheduled routine was not checked or changed.
 
 ## Next action
 
-The user decides how far to cut the helpers. Candidates:
-- Keep only the `next` known check, used when subagents return finds.
-- Drop the task manifest and capture for small runs.
-
-Any recovery claim needs a multi-run or interrupted rehearsal. Committing these documentation changes (`[Agent]`) is also the user's call. No active operations.
+User decides on committing (`[Agent]`). Then roadmap milestone 8: a hand-off and recovery rehearsal (same reader model and delegation in both arms, delegated employer batch with known vacancies under alternate URLs/IDs, interruption after assessment) against b66c262, reusing `rehearsal/runs/2026-11-21-small-model-acceptance/evaluation/run-arm.mjs`. No active operations.

@@ -1,6 +1,6 @@
 # Candidate capture contract (version 1)
 
-This helper preserves discoveries and assessments. It does not itself import jobs, mark deliveries complete, schedule work or certify source coverage. [RUN_STATE.md](RUN_STATE.md) describes the companion helper for the run task list, cross-run pending work and summary counts. Existing inventory/import contracts remain unchanged.
+This helper preserves discoveries and assessments. It does not itself import jobs, mark deliveries complete, schedule work or certify source coverage. The search agent calls it through `run-state.mjs` capture and resolve ([RUN_STATE.md](RUN_STATE.md)), which also checks finds against the inventory; the commands below remain for inspection and repair. Existing inventory/import contracts remain unchanged.
 
 ## Commands
 
@@ -46,9 +46,9 @@ Excluded/duplicate updates require `reason` and the current `profileRevision`; r
 
 ## Setup handover and retention
 
-Keep the setup capture folder when starting the first routine. Pass its path into the routine conversation and list its pending/assessed candidates; do not copy or recapture them merely to obtain a new run ID. The routine's current run can reference that folder and update its ledger through the helper. If the path was lost, inspect setup run folders explicitly; run `run-state next` as described in RUN_STATE.md to discover old captures automatically.
+Keep the setup capture folder when starting the first routine. `run-state init` lists its remaining finds; do not copy or recapture them merely to obtain a new run ID.
 
-Preserve all ledger folders for now, including assessed candidates awaiting import and legacy evidence. `run-state next` treats an assessed candidate as delivered once a matching record is in jobs.json; automatic deletion remains disabled. A run ending or becoming old is not evidence that its candidates were delivered.
+Preserve all ledger folders for now, including assessed candidates awaiting import and legacy evidence. run-state treats an assessed candidate as delivered once a matching record is in jobs.json; automatic deletion remains disabled. A run ending or becoming old is not evidence that its candidates were delivered.
 
 ## Write safety
 
