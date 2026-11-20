@@ -1,6 +1,6 @@
 # Candidate capture contract (version 1)
 
-This helper preserves discoveries and assessments. It does not itself import jobs, mark deliveries complete, schedule work or certify source coverage. [RUN_STATE.md](RUN_STATE.md) describes the companion helper for cross-run recovery and import receipts. Existing inventory/import contracts remain unchanged.
+This helper preserves discoveries and assessments. It does not itself import jobs, mark deliveries complete, schedule work or certify source coverage. [RUN_STATE.md](RUN_STATE.md) describes the companion helper for the run task list, cross-run pending work and summary counts. Existing inventory/import contracts remain unchanged.
 
 ## Commands
 
@@ -34,10 +34,10 @@ Repeated capture merges new source occurrences but never resets a disposition/as
 
 Each line in `run-ledger.jsonl` is a validated version-1 record: `schemaVersion`, `id`, original `discovery`, `sources`, system-clock `discoveredAt`/`updatedAt`, `state`, and an assessment or disposition reason when applicable. The helper is the validator; do not hand-edit the ledger. Unknown/legacy formats fail closed and remain intact; no automatic migration is provided.
 
-States are pending, assessed, excluded and duplicate. Any state can be explicitly revised with the current ledger revision, including reopening as pending. Reads return a SHA-256 revision; pass it to resolve to reject stale decisions after another write. Each resolve call either updates all entries or none.
+States are pending, assessed, excluded and duplicate. Any state can be explicitly revised, including reopening as pending. Each resolve call either updates all entries or none. Reads return a SHA-256 `revision`; passing it to resolve is optional and rejects the update if the ledger changed since that read.
 
 ```json
-{"revision":"<revision from list>","updates":[{"id":"<candidate id>","state":"assessed","assessment":{"fit":4,"basis":"Posting reviewed","reasoning":"Core skills match","gaps":"Office days unknown","evidence":"Concise requirements/responsibilities and availability evidence, with source reference; not a page dump.","profileRevision":"<hash of approved profile>"}}]}
+{"updates":[{"id":"<candidate id>","state":"assessed","assessment":{"fit":4,"basis":"Posting reviewed","reasoning":"Core skills match","gaps":"Office days unknown","evidence":"Concise requirements/responsibilities and availability evidence, with source reference; not a page dump.","profileRevision":"<hash of approved profile>"}}]}
 ```
 
 Fit is null or an integer 1–5; basis is Title only or Posting reviewed. Reasoning, evidence and profileRevision must be nonempty; gaps may be empty. Save the facts needed to reuse the assessment, including an actual reading failure for Title only. Before profile approval during setup, leave candidates pending; save calibration assessments after approval and tag them with the actual profile revision. If the profile changes, reassess against it rather than blindly reuse old ratings.
@@ -48,7 +48,7 @@ Excluded/duplicate updates require `reason` and the current `profileRevision`; o
 
 Keep the setup capture folder when starting the first routine. Pass its path into the routine conversation and list its pending/assessed candidates; do not copy or recapture them merely to obtain a new run ID. The routine's current run can reference that folder and update its ledger through the helper. If the path was lost, inspect setup run folders explicitly; run `run-state next` as described in RUN_STATE.md to discover old captures automatically.
 
-Preserve all ledger folders for now, including assessed candidates awaiting import and legacy evidence. The run-state helper reconciles delivery from receipts; automatic deletion remains disabled. A run ending or becoming old is not evidence that its candidates were delivered.
+Preserve all ledger folders for now, including assessed candidates awaiting import and legacy evidence. `run-state next` treats an assessed candidate as delivered once a matching record is in jobs.json; automatic deletion remains disabled. A run ending or becoming old is not evidence that its candidates were delivered.
 
 ## Write safety
 

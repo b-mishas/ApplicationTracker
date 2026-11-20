@@ -48,10 +48,6 @@ Use Node 22 or newer in the actual execution environment. The Windows x64 packag
 
 From ROOT run node app/self-check.mjs. The legacy --require-configured option is accepted for compatibility and adds no search-configuration requirement. It checks schema, settings, valid inventory, required folders, writes/backups in a temporary data subfolder, Excel export/readback and the employer workbook. Temporary files are removed; actual jobs are not changed. Exit 0 means checks passed, exit 1 means setup needs attention. This is the installation test. An empty-batch --validate-only test checks batch parsing, not inventory access, saving or export.
 
-## Recovery-managed discovery imports
-
-New state-managed searches use [RUN_STATE.md](RUN_STATE.md): prepare the normal incoming batch with an ordered candidate mapping, then call `run-state import`. It invokes this same importer after validation, saves intent and full attempt receipts, and recovers matching reports after interruption. It never writes inventory directly. Unknown prior outcomes require explicit inspected retry reasons; partial/ambiguous records need repair. Do not also import the same tracked batch with the direct CLI below. Legacy/unmapped batches retain the original workflow.
-
 ## Discovery commands
 
 From app/:
@@ -80,7 +76,7 @@ If the workbook cannot be updated, record employer check dates/career URLs in da
 
 ## Candidate capture
 
-Use [CANDIDATE_STATE.md](CANDIDATE_STATE.md) and `candidate-ledger.mjs` for versioned candidate capture, saved assessments and pending queries, starting before setup discovery. The helper writes only search-owned run ledgers; it never writes jobs.json. Assessed is not imported. Keep earlier setup capture folders and all unresolved evidence; [RUN_STATE.md](RUN_STATE.md) now provides live tasks, cross-run discovery and import recovery. All run evidence remains retained; deletion and generated summaries are not implemented.
+Use [CANDIDATE_STATE.md](CANDIDATE_STATE.md) and `candidate-ledger.mjs` for per-run candidate capture and saved assessments, starting before setup discovery. [RUN_STATE.md](RUN_STATE.md) adds the run task list, cross-run pending work and a derived summary. Both helpers write only search-owned files under data/reports/runs/; they never write jobs.json. Imports use the commands above; rerunning an interrupted import is safe. Run folders are kept.
 
 ## Agent search coverage
 
@@ -117,5 +113,3 @@ The `Start` file reuses this installation’s running server. The `Restart` file
 The tracker Settings checkbox Start server at login installs/removes a per-user Windows Startup shortcut or macOS LaunchAgent for this folder. It is off by default, starts without opening a browser, and applies from the next login. It is independent of agent scheduling and is not stored in exported JSON or portable export preferences. Disable it before moving/deleting the folder; enable it again after moving. `--background` suppresses browser opening; `--foreground` keeps the launcher attached for macOS login supervision.
 
 Settings → Advanced exposes Local port and the current Local address through /api/port-settings. A revision-protected save validates availability and stages data/server-port.json without restarting; Start reuses the existing server while the new value is pending. Restart probes the new port before stopping, with recovery to the previous address if a late startup failure occurs. JOBTRACKER_PORT overrides disable the field. Export settings and the position schema are unchanged. The Start/Restart files use --interactive to offer a replacement port or cancellation when blocked; automatic login/--background launches never prompt.
-
-Derived run reporting: `run-state.mjs summary --root data --run <run-id>` returns candidate/task counts, unique confirmed import outcomes, unknown attempts and outstanding work. See app/RUN_STATE.md (RUN_STATE.md from app/) for scope and limitations. Source coverage still requires source evidence.

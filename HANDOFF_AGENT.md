@@ -1,11 +1,25 @@
 # Agent handoff
 
-Updated 2026-11-20T16:52:44.435Z, Codex. Scope: step-4 rehearsal evidence audit after model-selection error. main b66c2629638f7c1ab14284f872fcfe477ea06592, origin/main ahead 3 at last check; remote/CI unverified. Preserve all uncommitted work; no commits, push or packaging authorized.
+Updated 2026-11-20T18:10Z, Claude. Scope: simplify Codex's state-driven orchestration after review. main: Codex's work is 72a1467 [Agent] Add state-driven search orchestration, the prefix rule de0abb8, and this simplification is committed on top as [Agent] Simplify search state helpers; 6 commits ahead of origin/main, not pushed; remote/CI unverified. No packaging or installed-automation change.
 
-Milestones 1–3 implemented, fixtures previously passed. Narrow step-4 evaluation concluded with explicit limitations. Evidence: rehearsal/runs/agent-pair-2026-11-20T16-35-39-299Z/REPORT.md, verification.json and native-usage.json. Baseline and interrupted inventories each contain one fit-4 Contentful vacancy with one successful receipt. Interrupted pre-import checkpoint preserved. Fresh resume agent read saved files, made no external calls and imported once before being stopped. Orchestrator locally reconciled the receipt, archived the exact batch, completed task statuses and wrote coverage/final summary; zero unfinished tasks, inventory bytes unchanged. No repeat search or import.
+## Changed
 
-All three agents wrongly inherited Astra. User explicitly prohibits this cost pattern: Astra orchestrator only; use explicit gpt-6.1-sol Medium for subagents, fork_turns none, never silent inheritance or expensive fallback. Rule saved to persistent memory at explicit request. All agents finished/interrupted; no replacement agents running. Empty Sol rehearsal folders were prepared but unused.
+- `app/run-state.mjs`: only init, task, read, next, summary. Removed manifest/ledger revision requirements, call budgets, deadline, stop/context/resume and prepare/import/reconcile/receipt. Manifest schemaVersion 2; v1 files are warned about and left as they are. Task text fields default to empty; nextAction is required only for partial/deferred/failed.
+- Delivery comes from jobs.json (same-company provider ID or posting URL, else company+title with location). `summary.inventory.addedThisRun` = records whose first source is this run's batch, so additions stay correct after retries; `importReports` lists counts and records to repair.
+- `app/candidate-ledger.mjs`: resolve revision optional.
+- `app/RUN_STATE.md` rewritten (~60 lines); `CANDIDATE_STATE.md`, `SEARCH_WORKFLOW.md` and `INTERFACE_FOR_TRACKER.md` aligned.
+- Routine (source + template identical): direct importer restored, interrupted import = rerun; state/summary rules shortened; the "always four sections" vs "omit if empty" contradiction fixed. 43.8k → 41.4k characters.
+- Setup (source + template identical): capture starts with `run-state init`; dead text after COPY UNTIL HERE removed.
+- Roadmap: design amended, milestone 5 (simplification) done, milestone 6 (small-model acceptance) next. ORCHESTRATION_HISTORY, HISTORY and PLAN updated; dangling COMPACTION.md links fixed (user deleted the file).
 
-Baseline reporting exposed omitted Flags and excluded LinkedIn recorded failed. Corrected routine/pristine copy to require all four sections and permit skipped with null attempt timestamp, aligned SEARCH_WORKFLOW.md, corrected stale RUN_STATE.md introductory text. Corrections passed static parity checks and local output checks; fresh-agent retest remains unperformed. Native counters are recorded but interrupted reporting means no complete cost comparison or token-savings claim.
+## Verification
 
-Current user requested useful conclusions from existing work; audited rather than reran. Detailed history is agent/orchestration/ORCHESTRATION_HISTORY.md. Local closure is complete. No further work running. A smaller-model reporting retest and broader acceptance remain optional follow-up; no token savings claimed. No real inventory edits, scheduling changes or ZIP rebuilds.
+Ledger tests and 6 run-state fixture scenarios pass, including a provider-ID collision with another employer (bug found and fixed while drafting). Full `npm test` passed (exit 0); source/template parity and `git diff --check` passed. No agent rehearsal ran on the simplified routine.
+
+## Known limits
+
+Name-based delivery fallback can miss aliases or reworded titles; those candidates stay visible in `next`. Per-source tasks still overlap with coverage.json `unfinished`, which was kept deliberately: the tasks feed the derived employer/portal counts.
+
+## Next action
+
+Milestone 6: a multi-posting rehearsal on the intended small models, measuring retained vacancies, summary accuracy and native tokens against a run without the helpers. No active operations.

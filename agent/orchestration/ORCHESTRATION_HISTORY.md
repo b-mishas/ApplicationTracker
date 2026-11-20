@@ -1,6 +1,12 @@
 # Orchestration implementation history
 
-Detailed, durable record for future development sessions. Newest verified milestone first. Record implementation, rationale, verification and limitations here; amend [ORCHESTRATION_ROADMAP.md](ORCHESTRATION_ROADMAP.md) only when the overall plan changes. Runtime command/field contracts belong in the linked app documentation; checkout status belongs in [HANDOFF_AGENT.md](../../HANDOFF_AGENT.md). Root [HISTORY.md](../../HISTORY.md) remains the brief project-wide record.
+Detailed, durable record for future development sessions. Newest verified milestone first. Record implementation, rationale, verification and limitations here; amend [ORCHESTRATION_ROADMAP.md](ORCHESTRATION_ROADMAP.md) only when the overall plan changes. Runtime command/field contracts belong in the linked app documentation; checkout status belongs in [HANDOFF_AGENT.md](../../HANDOFF_AGENT.md). $1## 2026-11-20 — Simplified state helpers (Claude)
+
+- Removed from run-state: manifest/ledger revision requirements (ledger revision now optional), call budgets, deadline, stop/context/resume, and prepare/import/reconcile/receipt with snapshots and fingerprints. Manifest is schemaVersion 2; version-1 files are warned about and preserved.
+- Delivery is read from jobs.json: same-company strong key (provider ID or posting URL), else normalised company+title with a location match. `summary` lists `inventory.addedThisRun` from records whose first source file is this run's batch, so retries cannot distort additions; importer reports give counts and records to repair. Task text fields default to empty; nextAction only for partial/deferred/failed.
+- Routine returns to the direct importer, drops receipt/unknown-outcome reporting rules, resolves the four-sections contradiction and removes duplicated summary text. Setup capture uses `run-state init`; the dead line after COPY UNTIL HERE was removed. Routine 43.8k → 41.4k characters.
+- Rationale: the rehearsal used ~400–500k input tokens for one posting, and the first init failed on missing empty fields; the removed layers guarded rare cases already covered by the idempotent importer.
+- Verified: 6 run-state fixture scenarios and ledger tests pass, including a provider-ID collision with another employer (found and fixed during this work). Not verified by any agent run.
 
 ## 2026-11-20 — Local rehearsal closure
 
@@ -43,7 +49,7 @@ Detailed, durable record for future development sessions. Newest verified milest
 
 ## 2026-11-20 — Documentation organization and stop boundary
 
-- Renamed ROADMAP.md to ORCHESTRATION_ROADMAP.md, preserving its existing content rather than shortening it. Added links to this history and [COMPACTION.md](COMPACTION.md).
+- Renamed ROADMAP.md to ORCHESTRATION_ROADMAP.md, preserving its existing content rather than shortening it. Added a link to this history and a compaction note (COMPACTION.md, later deleted as no longer needed).
 - User clarified: do not inflate the roadmap; amend it only for changes to the overall plan. Routine progress, tests and implementation details belong here. Updated both project rule files accordingly.
 - Implementation remains stopped after recovery. The user's earlier “steps 1 and 2” meant recovery and reporting; their later instruction stopped work after recovery. In roadmap numbering, candidate capture and recovery are milestones 1 and 2; reporting is milestone 3. Do not confuse these numbering schemes or treat compaction as authorization to start reporting.
 - At this record's creation, main is at b66c2629638f7c1ab14284f872fcfe477ea06592, three commits ahead of origin/main. Capture/recovery work is uncommitted alongside unrelated changes. No push, packaging, installed automation update or live search occurred. Remote/CI state is unverified; recheck the actual checkout before continuing.
@@ -118,4 +124,4 @@ Helper/builder syntax, exact source/template parity, Markdown targets, release-f
 
 ## Next session
 
-Follow [COMPACTION.md](COMPACTION.md). Recheck current checkout and owning code. Preserve unrelated work. Wait for the user's next instruction before starting reporting; this record does not authorize committing, pushing, packaging, changing installed automations or launching a live search.
+Recheck the current checkout and owning code; follow the roadmap's current next action. This record does not authorize committing, pushing, packaging, changing installed automations or launching a live search.

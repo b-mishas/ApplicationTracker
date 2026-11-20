@@ -44,7 +44,7 @@ The tracker must not depend on `data/reports/coverage.json` or the workbook; bot
 
 ## Candidate capture helper
 
-`app/candidate-ledger.mjs` and `app/CANDIDATE_STATE.md` define version-1 per-run capture/assessment state. Setup starts capture before reading postings; the routine may update an earlier setup capture ledger under data/reports/runs/ through the helper. This is agent-owned state, independent of inventory and coverage schemas. `app/run-state.mjs` and `app/RUN_STATE.md` add a version-1 live run-completion manifest, cross-run pending discovery, scope/profile guards and immutable import snapshots/attempt receipts. The wrapper calls the existing importer and does not write inventory directly. Earlier run manifests/ledgers may be updated through the helpers within the runs tree. Scheduling decisions and summaries remain agent-owned; preserve run evidence rather than deleting by age.
+`app/candidate-ledger.mjs` (`app/CANDIDATE_STATE.md`) keeps per-run candidate capture and assessments; `app/run-state.mjs` (`app/RUN_STATE.md`) keeps the run task list, lists unfinished work across runs and derives summary counts, reading jobs.json but never writing it. Both are agent-owned state under data/reports/runs/, independent of inventory and coverage schemas. Imports still use the import command below. Run folders are kept, not deleted by age.
 
 ## Import command
 From `app/`: `node import-discoveries.mjs incoming/<file>.json --root ../data [--validate-only | --dry-run]`. Exit codes 0 / 2 / 3 / 4 / 5 and the final `RESULT` line as today. The agent follows `SEARCH_WORKFLOW.md` if it documents something else.
@@ -58,5 +58,3 @@ Part B uses deadline/urgency fields only if the installed schema has them and `S
 The recipient's computer may have no Python (Windows and macOS ship without a usable one). The agent reads the workbook without installing anything and falls back to `coverage.json` for writes, so nothing in the tracker should require Python either.
 
 Calendar dates use execution-local time. Hosted agents set standard process TZ from their Part A timezone before importing; see SEARCH_WORKFLOW.md. Browser Today uses desktop-local time. Automatic groupColours metadata in jobs.json belongs to the tracker, never the agent.
-
-Derived run reporting: `run-state.mjs summary --root data --run <run-id>` returns candidate/task counts, unique confirmed import outcomes, unknown attempts and outstanding work. See app/RUN_STATE.md (RUN_STATE.md from app/) for scope and limitations. Source coverage still requires source evidence.

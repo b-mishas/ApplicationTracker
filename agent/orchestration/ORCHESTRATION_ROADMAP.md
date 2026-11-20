@@ -12,11 +12,11 @@ The [routine](../ROUTINE_PROMPT.md), [workflow](../../app/SEARCH_WORKFLOW.md), [
 
 | Artifact | Purpose |
 |---|---|
-| run-completion.json | **Guide and resume the current run.** Records its tasks, progress, limits and next actions, together with scope/profile context and saved import attempts. |
+| run-completion.json | **Guide and resume the current run.** Records its tasks, outcomes and continuation points, with this run's exclusions and profile hash. |
 | run-ledger.jsonl | **Keep track of every discovered job vacancy.** Preserves its identity, sources, assessment and current disposition so unfinished work is not lost. |
 | source-evidence.jsonl | **Show what was actually checked.** Records search methods, pages/items inspected, coverage evidence, failures and where to continue. |
 | coverage.json | **Decide what to check next time.** Remembers successful source checks, reusable access methods, dropped vacancies and refresh/recheck history across runs. |
-| Batches and receipts | **Track what was submitted and stored.** Preserve exact import payloads, hashes, vacancy mappings and confirmed or uncertain outcomes for each attempt. |
+| Inventory and importer reports | **Show what was stored.** jobs.json source files tell which run added or touched a record, regardless of retries; importer reports give counts and records to repair. |
 
 Use existing `candidate-ledger.mjs` and `run-state.mjs` helpers for bookkeeping; the agent judges relevance and evidence. **Only the existing importer writes inventory.** Contracts: [CANDIDATE_STATE.md](../../app/CANDIDATE_STATE.md), [RUN_STATE.md](../../app/RUN_STATE.md).
 
@@ -31,25 +31,28 @@ Use existing `candidate-ledger.mjs` and `run-state.mjs` helpers for bookkeeping;
 - Save after discovery/result batches, assessments, source attempts and imports, and before blocking calls—not after every tool call. On restart, inspect saved pending work before repeating external work.
 - Respect current scope, profile revisions, stops, deadlines and budgets. Temporary exclusions never become permanent preferences. Resume mutable listings with overlap and deduplication.
 - **Source coverage needs evidence.** Partial listings never earn successful check dates; cached methods and task labels do not prove coverage.
-- Preserve immutable import attempts and mappings. Missing receipts leave original outcomes **unknown**, even after successful retries. The importer commits inventory before writing its report, and retries may overwrite the report path. Preserve batch hashes, job-vacancy-to-batch mappings and per-attempt receipts; never use a later report to invent an earlier outcome. Inventory and receipt writes are not one transaction.
+- Derive delivery and "added this run" from the inventory, not from per-attempt receipts. The importer is idempotent, so an interrupted import is simply rerun; its report describes the latest attempt only.
 - Preserve unresolved work and all dependencies. Current policy retains all runs; destructive pruning remains deferred. No automatic legacy migration.
 - Derive counts from saved state and evidence. Identify uncertainty and differing count scopes explicitly; never invent missing metrics or coverage.
-- Use one lead writer and atomic updates. State cannot interrupt blocked tools or recover discoveries the agent never captured.
+- Use one lead writer and atomic updates; a lock serializes writers, so callers need not pass revisions. State cannot interrupt blocked tools or recover discoveries the agent never captured.
 
-Avoid a database/framework, transcript archives, **serialized conversation state**, copied page dumps, duplicate manual counters and per-call narrative diaries. Keep compact evidence sufficient for decisions and recovery.
+Avoid self-reported call budgets, mid-run stop/resume protocols, a database/framework, transcript archives, **serialized conversation state**, copied page dumps, duplicate manual counters and per-call narrative diaries. Keep compact evidence sufficient for decisions and recovery.
 
 ## Milestones and acceptance
 
 - [x] **1. Capture:** durable job-vacancy ingestion and reusable assessments across setup/routine boundaries. Seven captured, three assessed, four pending survive fresh-process recovery.
-- [x] **2. Recovery:** scope/profile guards, pending queries, saved cursors, immutable import attempts, unknown-outcome reconciliation and safe retention. Required interruption checks cover extraction, assessment, batch creation, inventory commit, report write and archival, including partial/ambiguous imports, missing/overwritten reports and preserved user fields. See history for which checks are implemented and their limits.
+- [x] **2. Recovery:** profile staleness, pending queries, saved cursors and safe retention (receipt-based import recovery was later replaced by inventory-derived delivery, see milestone 5). Required interruption checks cover extraction, assessment, batch creation, inventory commit, report write and archival, including partial/ambiguous imports, missing/overwritten reports and preserved user fields. See history for which checks are implemented and their limits.
 - [x] **3. Reporting:** generated job-vacancy/task/import totals and aligned prompts. Counts reconcile or expose uncertainty; no unsupported source-coverage claims. Details and limitations are in the history.
 - [x] **4. Live measurement (narrow evaluation concluded, limitations recorded):** compare equivalent continuous and interrupted agent runs for retained job vacancies, outcomes, repeated external reads and native token use. Report excluded capabilities and unavailable measurements. A narrow check is not full setup, browser or platform acceptance.
 
 Use isolated rehearsal inventories and fictional profiles, **never real application records**. Include stale profiles, run-only exclusions, changed pagination, a 31-day-old unresolved job vacancy and its referenced payload and user-owned fields in relevant tests. Measure token savings before claiming them.
 
+- [x] **5. Simplification:** keep capture, cross-run `next` and the derived summary; drop revision checks, call budgets, stop/context/resume and the import receipt layer; derive delivery from jobs.json. Fixture-tested; no agent run yet.
+- [ ] **6. Small-model acceptance:** a multi-posting rehearsal on the routine's intended models (smallest/middle subagents) with and without the state helpers, comparing retained vacancies, summary accuracy and native token use.
+
 ## Current next action
 
-Narrow live measurement is concluded: fresh-agent assessment reuse and one import per arm verified, native usage recorded. Resumed reporting was completed locally after interruption; autonomous reporting acceptance and token savings remain unproven. See the history for results. Broader discovery, smaller-model acceptance and additional measurements are follow-up work, not established by this rehearsal.
+Milestone 6. Until it runs, token savings and autonomous reporting remain unproven.
 
 ## Why this design
 

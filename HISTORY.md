@@ -4,6 +4,10 @@
 
 --------------------
 
+## 2026-11-20 — Simplified search state helpers
+
+- run-state.mjs reduced to init/task/read/next/summary: no revision checks, call budgets, stop/resume or import receipts. Delivery and positions added this run are read from jobs.json, so interrupted or repeated imports no longer need reconciliation. The routine is back on the direct importer; summary rules shortened and the four-sections contradiction fixed; dead setup text removed. Fixture tests pass; no agent rehearsal yet. Details: agent/orchestration/ORCHESTRATION_HISTORY.md.
+
 ## 2026-11-20 — Local rehearsal closure
 
 - Reconciled the existing successful resumed receipt, archived exact batch bytes and completed import/coverage/summary tasks. Inventory bytes unchanged; no new import, external call or subagent. Derived summary has zero unfinished tasks and one confirmed addition.

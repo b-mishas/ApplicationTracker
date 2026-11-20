@@ -55,6 +55,9 @@ try {
   await changeLedger(run, 'resolve', {revision: state.revision, updates: [{id: state.rows[3].id, state: 'excluded', reason: 'Outside approved geography', profileRevision: 'fixture-profile-v1'}]});
   state = await readLedger(run);
   await assert.rejects(changeLedger(run, 'resolve', {revision: state.revision, updates: [{id: state.rows[4].id, state: 'assessed'}]}));
+  // Revision is optional; the lock serializes writers.
+  await changeLedger(run, 'resolve', {updates: [{id: state.rows[4].id, state: 'duplicate', reason: 'Same requisition as row 1', profileRevision: 'fixture-profile-v1'}]});
+  assert.equal((await readLedger(run)).rows[4].state, 'duplicate');
   // Existing unversioned evidence must never be silently replaced during initialization.
   const legacy = path.join(root, 'legacy'); await mkdir(legacy);
   await writeFile(path.join(legacy, 'run-ledger.jsonl'), '{"title":"Old evidence"}\n');

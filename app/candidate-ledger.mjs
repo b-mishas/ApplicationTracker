@@ -88,7 +88,8 @@ export async function changeLedger(runDirectory, command, input, {beforeRename} 
   let temporary;
   try {
     const state = await readLedger(runDirectory);
-    if (command === 'resolve' && input.revision !== state.revision) throw Error('Ledger revision changed; read current state before resolving');
+    // Revision is optional: the lock already serializes writers; pass it only to guard a decision made from an older read.
+    if (command === 'resolve' && input.revision !== undefined && input.revision !== state.revision) throw Error('Ledger revision changed; read current state before resolving');
     const now = new Date().toISOString();
     const affected = [];
     for (const entry of entries) {
