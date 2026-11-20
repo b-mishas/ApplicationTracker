@@ -110,6 +110,21 @@ await test('profile change, scope exclusions and legacy manifests are reported, 
   assert.equal(await readFile(path.join(legacy, 'run-completion.json'), 'utf8'), '{"schemaVersion":1}');
 });
 
+await test('pending finds already stored or dropped are marked known; duplicates stay resolved', async root => {
+  await initializeRun(root, 'run-aaaa');
+  await commit(root, data => { data.jobs.push({id: 'r5', company: 'Example GmbH', title: 'Engineer 5', status: 'Applied', provider: 'ATS', providerJobId: '5', url: 'https://example.test/jobs/5', linkType: 'posting', city: 'Berlin', locationRaw: 'Berlin', notes: ''}); });
+  await writeFile(path.join(root, 'reports', 'coverage.json'), JSON.stringify({dropped: [{provider: 'ATS', providerJobId: '6', url: '', company: 'Example', title: 'Engineer 6', reason: 'Too junior', droppedAt: '2026-11-01'}]}));
+  const directory = runFolder(root, 'run-aaaa');
+  // Company-page find: different city and no URL, but the same provider ID as the stored application.
+  await changeLedger(directory, 'capture', {candidates: [5, 6, 7].map(n => ({company: 'Example', title: `Engineer ${n}`, location: n === 5 ? 'Vienna' : 'Berlin', provider: 'ATS', providerJobId: String(n), source: {label: 'Example', ref: `page1:${n}`}}))});
+  const rows = (await pending(root, 'run-aaaa')).candidates;
+  assert.deepEqual(rows.map(row => row.known ?? null), [{record: 'r5', status: 'Applied'}, {status: 'dropped', reason: 'Too junior'}, null]);
+  const profile = await profileRevision(root);
+  await changeLedger(directory, 'resolve', {updates: rows.slice(0, 2).map(row => ({id: row.id, state: 'duplicate', reason: row.known.record || 'dropped', profileRevision: profile}))});
+  await writeFile(path.resolve(root, '../profile/candidate_profile.md'), 'Changed profile');
+  assert.deepEqual((await pending(root, 'run-aaaa')).candidates.map(row => row.title), ['Engineer 7'], 'Duplicates do not resurface after a profile change');
+});
+
 await test('summary is read-only and counts task statuses', async root => {
   await initializeRun(root, 'run-aaaa', {tasks: [{id: 'employer:A', kind: 'employer', source: 'A', status: 'partial', reason: 'Page limit', nextAction: 'Page 3'}]});
   const before = await readFile(path.join(runFolder(root, 'run-aaaa'), 'run-completion.json'), 'utf8');

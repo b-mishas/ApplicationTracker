@@ -37,9 +37,9 @@ Update a task when a source finishes or stops, not after every call. Keep full r
 
 ## Next
 
-`next` scans every run folder and returns, per run, unfinished tasks and candidates that still need work: pending ones, assessed ones not yet in the inventory, and exclusions or duplicates decided under an older profile. With `--run`, it also flags `profileChanged` and marks items whose source is excluded today (`excludedNow`). Unreadable or older-format files are listed under `warnings` and left untouched.
+`next` scans every run folder and returns, per run, unfinished tasks and candidates that still need work: pending ones, assessed ones not yet in the inventory, and exclusions decided under an older profile (a duplicate points at a record or candidate that is reassessed itself). A pending candidate that matches an inventory record of any status, or an entry of the `dropped` list in `coverage.json`, carries `known`: `{"record": "<id>", "status": "Applied"}` or `{"status": "dropped", "reason": "..."}`. Resolve it as duplicate without reading or rating it. With `--run`, it also flags `profileChanged` and marks items whose source is excluded today (`excludedNow`). Unreadable or older-format files are listed under `warnings` and left untouched.
 
-Delivery is read from `jobs.json`: an assessed candidate counts as stored when an inventory record of the same company shares its provider ID or posting URL or, failing that, has the same normalised title and a matching location. A candidate the importer rejected or marked ambiguous therefore stays in `next` until it is repaired and imported. Inspect saved candidates before repeating a search; reuse assessments only when the profile has not changed.
+Delivery is read from `jobs.json`: an assessed candidate counts as stored, and a pending one as known, when an inventory record of the same company shares its provider ID or posting URL or, failing that, has the same normalised title and a matching location. Dropped entries carry no location, so they match by provider ID or URL only. A candidate the importer rejected or marked ambiguous therefore stays in `next` until it is repaired and imported, or resolved as duplicate or excluded. Inspect saved candidates before repeating a search; reuse assessments only when the profile has not changed.
 
 ## Summary
 

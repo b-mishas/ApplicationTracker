@@ -42,7 +42,7 @@ States are pending, assessed, excluded and duplicate. Any state can be explicitl
 
 Fit is null or an integer 1–5; basis is Title only or Posting reviewed. Reasoning, evidence and profileRevision must be nonempty; gaps may be empty. Save the facts needed to reuse the assessment, including an actual reading failure for Title only. Before profile approval during setup, leave candidates pending; save calibration assessments after approval and tag them with the actual profile revision. If the profile changes, reassess against it rather than blindly reuse old ratings.
 
-Excluded/duplicate updates require `reason` and the current `profileRevision`; older decisions without a revision remain readable but are flagged for review by run-state. Pending updates contain only id/state. Assessment fields and reasons inappropriate to the target state are rejected. Assessed means reusable judgment, not batch-ready or imported. Build schema-valid batches separately using the saved discovery and assessment; import validation remains mandatory. Do not infer delivery from this ledger.
+Excluded/duplicate updates require `reason` and the current `profileRevision`; run-state flags exclusions decided under another profile for review; duplicates are not reassessed. Pending updates contain only id/state. Assessment fields and reasons inappropriate to the target state are rejected. Assessed means reusable judgment, not batch-ready or imported. Build schema-valid batches separately using the saved discovery and assessment; import validation remains mandatory. Do not infer delivery from this ledger.
 
 ## Setup handover and retention
 

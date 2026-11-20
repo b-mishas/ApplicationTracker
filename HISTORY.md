@@ -4,6 +4,10 @@
 
 --------------------
 
+## 2026-11-20 — Known finds checked before rating
+
+- run-state `next` marks pending finds from every source that are already in jobs.json (any status) or on the dropped list as `known`; the routine resolves them as duplicate before any reading or rating. Duplicates no longer return after a profile change. Fixture tests and full npm test pass; no agent run yet. Details in agent/orchestration/ORCHESTRATION_HISTORY.md.
+
 ## 2026-11-20 — Simplified search state helpers
 
 - run-state.mjs reduced to init/task/read/next/summary: no revision checks, call budgets, stop/resume or import receipts. Delivery and positions added this run are read from jobs.json, so interrupted or repeated imports no longer need reconciliation. The routine is back on the direct importer; summary rules shortened and the four-sections contradiction fixed; dead setup text removed. Fixture tests pass; no agent rehearsal yet. Details: agent/orchestration/ORCHESTRATION_HISTORY.md.

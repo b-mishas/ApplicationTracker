@@ -1,6 +1,16 @@
 # Orchestration implementation history
 
-Detailed, durable record for future development sessions. Newest verified milestone first. Record implementation, rationale, verification and limitations here; amend [ORCHESTRATION_ROADMAP.md](ORCHESTRATION_ROADMAP.md) only when the overall plan changes. Runtime command/field contracts belong in the linked app documentation; checkout status belongs in [HANDOFF_AGENT.md](../../HANDOFF_AGENT.md). $1## 2026-11-20 — Simplified state helpers (Claude)
+Detailed, durable record for future development sessions. Newest verified milestone first. Record implementation, rationale, verification and limitations here; amend [ORCHESTRATION_ROADMAP.md](ORCHESTRATION_ROADMAP.md) only when the overall plan changes. Runtime command/field contracts belong in the linked app documentation; checkout status belongs in [HANDOFF_AGENT.md](../../HANDOFF_AGENT.md).
+
+## 2026-11-20 — Known finds and queue cleanup (Claude)
+
+- Run finding daily-0042-y9k4: employer-page finds went to a full rating pass although jobs.json already held them (Applied and Dismissed); only alert candidates had been compared, by an ad hoc script.
+- `run-state next` now marks pending candidates of every source that match a jobs.json record of any status (same-company provider ID or URL, else company+title with location) or the coverage.json dropped list (ID/URL only, no location stored) as `known` with record id and status. The routine requires capture plus `next` before opening or rating any find and resolves known ones as duplicate unread; the alert step uses the same check instead of its own script.
+- Duplicates no longer resurface after a profile change; only exclusions are reassessed. The routine tells the agent to resolve assessed candidates stored under another name as duplicate and unrepairable or closed ones as excluded.
+- Not adopted: giving employer subagents full per-company record lists; the scripted check after capture is cheaper and does not depend on subagent judgment.
+- Verified: 7 run-state scenarios (new: stored Applied record matched by provider ID across cities, dropped entry, no resurfacing after profile change); full npm test passed. Not verified by an agent run.
+
+## 2026-11-20 — Simplified state helpers (Claude)
 
 - Removed from run-state: manifest/ledger revision requirements (ledger revision now optional), call budgets, deadline, stop/context/resume, and prepare/import/reconcile/receipt with snapshots and fingerprints. Manifest is schemaVersion 2; version-1 files are warned about and preserved.
 - Delivery is read from jobs.json: same-company strong key (provider ID or posting URL), else normalised company+title with a location match. `summary` lists `inventory.addedThisRun` from records whose first source file is this run's batch, so retries cannot distort additions; importer reports give counts and records to repair. Task text fields default to empty; nextAction only for partial/deferred/failed.

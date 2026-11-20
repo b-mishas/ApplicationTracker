@@ -114,22 +114,28 @@ async function inventory(root) {
   const raw = await optionalRead(path.join(root, 'jobs.json'));
   return raw === null ? [] : JSON.parse(raw.replace(/^﻿/, '')).jobs || [];
 }
-function deliveryIndex(jobs) {
-  const strong = new Set(), byName = new Map();
-  // Strong keys are company-qualified: the importer treats a shared id at another employer as ambiguous.
-  for (const job of jobs) {
-    for (const key of strongKeys(job).keys) strong.add(key + '@' + normCompany(job.company));
-    const key = nameKey(job.company, job.title);
-    byName.set(key, [...(byName.get(key) || []), squash([job.locationRaw, job.city].join(' '))]);
+async function droppedList(root) {
+  const raw = await optionalRead(path.join(root, 'reports', 'coverage.json'));
+  return raw === null ? [] : (JSON.parse(raw.replace(/^﻿/, '')).dropped || []);
+}
+// Maps identity keys to {record, status} (inventory) or {status: 'dropped', reason} (coverage.json dropped list).
+function matchIndex(entries, label) {
+  const strong = new Map(), byName = new Map();
+  for (const entry of entries) {
+    const hit = label(entry);
+    // Strong keys are company-qualified: the importer treats a shared id at another employer as ambiguous.
+    for (const key of strongKeys({...entry, linkType: entry.linkType || 'posting'}).keys) strong.set(key + '@' + normCompany(entry.company), hit);
+    const key = nameKey(entry.company, entry.title);
+    byName.set(key, [...(byName.get(key) || []), {place: squash([entry.locationRaw, entry.city].join(' ')), hit}]);
   }
   return {strong, byName};
 }
-// shortcut: name fallback matches company+title and a location substring; aliases or reworded titles stay undelivered (visible in next), upgrade if that clutters the queue.
-function delivered(index, discovery) {
+// shortcut: name fallback needs company+title and a location substring (dropped entries carry no location, so they match by ID/URL only); aliases or reworded titles stay unmatched and are resolved by the agent.
+function match(index, discovery) {
   const keys = strongKeys({provider: discovery.provider, providerJobId: discovery.providerJobId, url: discovery.url, linkType: discovery.url ? 'posting' : 'search'}).keys;
-  if ([...keys].some(key => index.strong.has(key + '@' + normCompany(discovery.company)))) return true;
+  for (const key of keys) { const hit = index.strong.get(key + '@' + normCompany(discovery.company)); if (hit) return hit; }
   const location = squash(discovery.location);
-  return (index.byName.get(nameKey(discovery.company, discovery.title)) || []).some(place => discovery.location === 'Unknown' || place.includes(location) || location.includes(place) && place);
+  return (index.byName.get(nameKey(discovery.company, discovery.title)) || []).find(({place}) => discovery.location === 'Unknown' || place && (place.includes(location) || location.includes(place)))?.hit || null;
 }
 const excludedSource = (state, source) => !!state && (!(state.scope.sources.includes('*') || state.scope.sources.includes(source)) || state.scope.exclusions.some(item => item.source === source));
 
@@ -137,7 +143,8 @@ const excludedSource = (state, source) => !!state && (!(state.scope.sources.incl
 export async function outstanding(root, currentRunId = null) {
   const directory = await runsDirectory(root), profile = await profileRevision(root);
   const current = currentRunId ? await readRun(root, currentRunId) : null;
-  const index = deliveryIndex(await inventory(root));
+  const stored = matchIndex(await inventory(root), job => ({record: job.id, status: job.status}));
+  const dropped = matchIndex(await droppedList(root), entry => ({status: 'dropped', reason: entry.reason}));
   const runs = [], warnings = [];
   for (const entry of await readdir(directory, {withFileTypes: true})) {
     if (!entry.isDirectory() || entry.isSymbolicLink()) { warnings.push({runId: entry.name, reason: 'Not an ordinary run directory; preserved'}); continue; }
@@ -150,11 +157,15 @@ export async function outstanding(root, currentRunId = null) {
     const stale = row => (row.assessment?.profileRevision || row.profileRevision) !== profile;
     const tasks = (state?.tasks || []).filter(task => !terminal.has(task.status))
       .map(task => ({...task, excludedNow: excludedSource(current, task.source)}));
+    // A duplicate points at a record or candidate that is reassessed itself, so only exclusions go stale.
     const candidates = rows.filter(row => row.state === 'pending'
-        || row.state === 'assessed' && !delivered(index, row.discovery)
-        || ['excluded', 'duplicate'].includes(row.state) && stale(row))
-      .map(row => ({id: row.id, company: row.discovery.company, title: row.discovery.title, state: row.state,
-        needsReassessment: row.state !== 'pending' && stale(row), excludedNow: excludedSource(current, row.discovery.source.label)}));
+        || row.state === 'assessed' && !match(stored, row.discovery)
+        || row.state === 'excluded' && stale(row))
+      .map(row => {
+        const known = row.state === 'pending' ? match(stored, row.discovery) || match(dropped, row.discovery) : null;
+        return {id: row.id, company: row.discovery.company, title: row.discovery.title, state: row.state,
+          ...(known && {known}), needsReassessment: row.state !== 'pending' && stale(row), excludedNow: excludedSource(current, row.discovery.source.label)};
+      });
     if (tasks.length || candidates.length) runs.push({runId: entry.name, tasks, candidates});
   }
   return {profileRevision: profile, profileChanged: !!current && current.profileRevision !== profile, warnings, runs};
