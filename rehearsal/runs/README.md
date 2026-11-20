@@ -10,6 +10,7 @@ Run folders are deliberately excluded from Git and release packages. The links b
 | `terra-rehearsal-20261118-1416/` | [Evaluation report](terra-rehearsal-20261118-1416/evaluation/REPORT.md). |
 | `terra-followup-20261119/` | [Contentful follow-up report](terra-followup-20261119/evidence/REPORT.md). |
 | `terra-rehearsal-20261119T201042Z/` | [Evaluation report](terra-rehearsal-20261119T201042Z/evaluation/REPORT.md) and [candidate–Terra prompt log](terra-rehearsal-20261119T201042Z/evaluation/REHEARSAL_PROMPT_LOG.md). |
+| `2026-11-21-small-model-acceptance/` | [Milestone 6 report](2026-11-21-small-model-acceptance/evaluation/REPORT.md): Claude Sonnet 5.5 lead with Haiku 5.5 subagent, helpers (18a85df) vs no helpers (b66c262) on three Greenhouse boards; equal outcomes, helpers 57% more input. |
 
 The latest listed run used separate Terra agents for interactive setup and a daily-style continuation. Its scoped exclusions do not establish full setup acceptance. Read its evaluation report for passed, failed and blocked checks.
 

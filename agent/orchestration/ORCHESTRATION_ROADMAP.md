@@ -48,11 +48,11 @@ Avoid self-reported call budgets, mid-run stop/resume protocols, a database/fram
 Use isolated rehearsal inventories and fictional profiles, **never real application records**. Include stale profiles, run-only exclusions, changed pagination, a 31-day-old unresolved job vacancy and its referenced payload and user-owned fields in relevant tests. Measure token savings before claiming them.
 
 - [x] **5. Simplification:** keep capture, cross-run `next` and the derived summary; drop revision checks, call budgets, stop/context/resume and the import receipt layer; derive delivery from jobs.json. Fixture-tested; no agent run yet.
-- [ ] **6. Small-model acceptance:** a multi-posting rehearsal on the routine's intended models (smallest/middle subagents) with and without the state helpers, comparing retained vacancies, summary accuracy and native token use.
+- [x] **6. Small-model acceptance:** a multi-posting rehearsal on the routine's intended models (smallest/middle subagents) with and without the state helpers, comparing retained vacancies, summary accuracy and native token use. **Result (2026-11-20, one run per arm):** equal retention, no trap reads and exact counts in both arms; helpers cost 57% more input, so the decision rule says cut further. Recovery across runs was not exercised.
 
 ## Current next action
 
-Milestone 6. Until it runs, token savings and autonomous reporting remain unproven.
+Decide how far to cut the helpers after milestone 6 (helpers won nothing at 57% more input in a single-run scenario). Token savings remain unproven.
 
 ## Why this design
 

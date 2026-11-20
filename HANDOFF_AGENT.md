@@ -1,26 +1,38 @@
 # Agent handoff
 
-Updated 2026-11-20T19:00Z, Claude. Scope: state-driven orchestration — simplification (committed) and known-find check (uncommitted). main at 03af8a8 [Agent] Simplify search state helpers, on de0abb8 and 72a1467; 6 commits ahead of origin/main, not pushed; remote/CI unverified. No packaging or installed-automation change.
+Updated 2026-11-20T19:15Z, Claude. Scope: orchestration roadmap milestone 6 (small-model acceptance rehearsal). main at 18a85df [Agent] Check finds against inventory before rating, 7 commits ahead of origin/main, not pushed; remote/CI unverified. `design/` is unrelated untracked work. No code, prompt, template, packaging or installed-automation change.
 
-## Committed (03af8a8)
+## Done (uncommitted documentation only)
 
-`app/run-state.mjs` reduced to init, task, read, next, summary (manifest schemaVersion 2; v1 files warned about and left alone). Delivery and `summary.inventory.addedThisRun` are read from jobs.json, so the routine uses the plain importer again and reruns an interrupted import. Ledger resolve revision optional. Routine and setup shortened (source = template). Roadmap milestone 5 done.
+- Rehearsal in `rehearsal/runs/2026-11-21-small-model-acceptance/` (Git-ignored): PROTOCOL.md (written before any run, two amendments), arm A (helpers, 18a85df) and arm B (no helpers, b66c262) installations, answer keys, streams, scoring scripts, `evaluation/comparison.json` and `evaluation/REPORT.md`.
+- Updated: roadmap milestone 6 marked with its result and next action, ORCHESTRATION_HISTORY.md entry, root HISTORY.md entry, runs README row.
 
-## Uncommitted
+## Result
 
-- `run-state next` marks pending candidates of every source that match a jobs.json record of any status, or the coverage.json `dropped` list (provider ID/URL only), as `known` with record id and status. Answers run finding daily-0042-y9k4 (employer finds rated although already Applied/Dismissed).
-- Only exclusions resurface after a profile change; duplicates no longer do.
-- Routine (source + template identical): capture plus `next` before opening or rating any find; resolve `known` as duplicate unread; alerts use the same check instead of an ad hoc script; resolve assessed candidates stored under another name as duplicate, unrepairable or closed ones as excluded.
-- RUN_STATE.md, CANDIDATE_STATE.md, HISTORY.md and ORCHESTRATION_HISTORY.md updated (also fixed a garbled heading there).
+Lead `claude -p --safe-mode --model claude-sonnet-5-5`; subagent aliases pinned to claude-haiku-5-5 / claude-sonnet-5-5 (CLI 2.1.233's bare aliases resolve to Sonnet 5 / Haiku 4.5). Every logged message was verified on the 5.5 models.
 
-## Verification
+Three Greenhouse boards (42 listings) were seeded with Applied, Dismissed and dropped traps.
 
-7 run-state fixture scenarios pass (new: Applied record matched by provider ID across cities, dropped entry, no resurfacing). Full `npm test` exit 0; routine/setup parity and `git diff --check` pass. No agent run on the simplified routine.
+- **Outcomes:** both arms kept 8/8 relevant postings, made 0 trap reads and reported exact counts.
+- **Tokens:** A used 1.09M input in 115 s; B used 0.69M in 139 s, so A cost 57% more (its lead 91% more).
+- **Decision rule:** cut further.
 
-## Known limits
+Limits:
+- One run per arm.
+- No interruption or multi-run state.
+- A read the postings itself while B delegated them to Haiku.
+- The traps were exact-ID matches, which B also caught.
 
-Name fallback needs company+title plus location, so aliases or reworded titles are not flagged `known`; the agent must still judge them. Dropped entries without ID or URL never match. Per-source tasks overlap with coverage.json `unfinished` by design. Whether the installed routine is the current one was not checked.
+## Known issues
+
+- Both leads wrote the run ID to `/tmp`, outside ROOT; A's PowerShell import step then hard-coded the ID.
+- Launching `claude` from inside the desktop app needs the desktop app's CLAUDE*/ANTHROPIC* environment variables stripped (see `evaluation/run-arm.mjs`).
+- The personal tracker, profile and workbook were verified unchanged by hash.
 
 ## Next action
 
-User decides on committing the known-find fix. Then milestone 6: multi-posting rehearsal on the intended small models, measuring retained vacancies, summary accuracy and native tokens with and without the helpers. No active operations.
+The user decides how far to cut the helpers. Candidates:
+- Keep only the `next` known check, used when subagents return finds.
+- Drop the task manifest and capture for small runs.
+
+Any recovery claim needs a multi-run or interrupted rehearsal. Committing these documentation changes (`[Agent]`) is also the user's call. No active operations.

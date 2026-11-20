@@ -2,6 +2,15 @@
 
 Detailed, durable record for future development sessions. Newest verified milestone first. Record implementation, rationale, verification and limitations here; amend [ORCHESTRATION_ROADMAP.md](ORCHESTRATION_ROADMAP.md) only when the overall plan changes. Runtime command/field contracts belong in the linked app documentation; checkout status belongs in [HANDOFF_AGENT.md](../../HANDOFF_AGENT.md).
 
+## 2026-11-20 — Small-model acceptance rehearsal, milestone 6 (Claude)
+
+- Arms: A at 18a85df (ledger, run-state with `known` check and summary) vs B at b66c262 (direct parent; plain-file ledger written by the agent). Isolated installations built by script from pristine templates; fictional Alex Weber; identical jobs.json (Solaris backend Applied, Dataiku full-stack Dismissed), coverage.json (Solaris SRE dropped) and workbook (Grover, Dataiku, Solaris on Greenhouse, 42 listings, unchanged between before/after answer keys). Gmail, LinkedIn, portals and gap searches excluded as run-only user exclusions.
+- Launch: `claude -p --safe-mode` (CLI 2.1.233) with `--model claude-sonnet-5-5`, subagent aliases pinned by ANTHROPIC_DEFAULT_HAIKU_MODEL/SONNET_MODEL to the 5.5 models; desktop-app environment stripped (it broke CLI auth). Every logged message verified as claude-sonnet-5-5 or claude-haiku-5-5. The bare aliases resolve to claude-sonnet-5 and claude-haiku-4-5 in this CLI; a first arm A on Sonnet 5 was stopped and discarded.
+- Results: both retained 8/8 relevant postings (same fit-4 import, 7 dropped with reason), 0 trap reads or rating passes, all summary counters exact, no tool errors. A: 17 lead messages, no subagent, 1,089,406 input (34 uncached, 1,005,879 cache read, 83,493 cache write), 14,529 output, 115 s. B: 10 lead messages plus one Haiku extractor, 691,768 input, 24,567 output, 139 s. A/B input 1.57 (lead 1.91).
+- Decision rule outcome: cut further (A costs more and wins nothing here). Confounds: one run per arm; A read four postings itself while B delegated; traps matched by exact provider ID, which B's own jobs.json comparison also caught; no interruption or multi-run state, the helpers' intended benefit.
+- Observed: both leads wrote the run ID to /tmp outside ROOT; A's PowerShell import step then hard-coded the run ID. No helper failure.
+- Evidence: rehearsal/runs/2026-11-21-small-model-acceptance/ (PROTOCOL.md, evaluation/REPORT.md, comparison.json, streams, scoring scripts).
+
 ## 2026-11-20 — Known finds and queue cleanup (Claude)
 
 - Run finding daily-0042-y9k4: employer-page finds went to a full rating pass although jobs.json already held them (Applied and Dismissed); only alert candidates had been compared, by an ad hoc script.
