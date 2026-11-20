@@ -3,11 +3,87 @@
 [PLAN.md](PLAN.md) lists remaining work. [HANDOFF_AGENT.md](HANDOFF_AGENT.md) and [HANDOFF_WRAPPER.md](HANDOFF_WRAPPER.md) record the latest verification details. Entries are newest first; add new ones directly below the separator line.
 
 --------------------
+
+## 2026-11-20 — Local rehearsal closure
+
+- Reconciled the existing successful resumed receipt, archived exact batch bytes and completed import/coverage/summary tasks. Inventory bytes unchanged; no new import, external call or subagent. Derived summary has zero unfinished tasks and one confirmed addition.
+- Verified all four narrative sections, skipped/null LinkedIn test, no employer successful date, and source/template parity. Original baseline failures preserved. Fresh-agent reporting retest not performed; resumed reporting completed by orchestrator.
+- Narrow step-4 measurement concluded with limitations, not full autonomous acceptance or demonstrated savings. Existing native usage and recovery findings retained in rehearsal/runs/agent-pair-2026-11-20T16-35-39-299Z/REPORT.md.
+
+
+
+## 2026-11-20 — Agent-pair evidence recovered after model-selection error
+
+- Three rehearsal agents incorrectly inherited Astra. Stopped active agents; no replacement agents launched. Explicit user rule: Astra orchestrates; subagents use gpt-6.1-sol Medium explicitly, no inherited Astra.
+- Audited both inventories and receipts: one fit-4 vacancy imported once in each. Preserved pre-import checkpoint; fresh resume agent reused files with zero external reads and imported successfully before interruption. Import/coverage/summary task closure remains pending.
+- Baseline omitted Flags and encoded an excluded LinkedIn test as failed. Corrected source/template instructions and workflow contract; agent retest pending. Not full step-4 completion or a valid completed cost comparison.
+- Evidence and native usage: rehearsal/runs/agent-pair-2026-11-20T16-35-39-299Z/REPORT.md, verification.json, native-usage.json. Recover local reporting from existing state; no discovery/import rerun needed.
+
+
+
+## 2026-11-20 — Roadmap safeguards restored (side conversation)
+
+- Restored plan-only maintenance rule, root history/plan pointers, essential artifact responsibilities, batch-hash/report-overwrite rationale and explicit interruption/31-day retention verification cases. Prohibited serialized conversation state explicitly.
+- Defined job vacancy versus human candidate; roadmap prose now uses job vacancy, preserving code/file identifiers. Added authoritative detail locations; field/command details checked against CANDIDATE_STATE.md, RUN_STATE.md and routine evidence instructions. No runtime changes or rehearsal execution.
+
+
+
+## 2026-11-20 — Step 4 preliminary live check
+
+- Simplified roadmap while retaining responsibilities, invariants, milestones, acceptance and limitations.
+- One live Contentful posting plus controlled continuous/resumed processing in isolated inventories: one addition each; fresh-process pending response 451 bytes; zero repeated external reads. Evidence: rehearsal/runs/orchestration-live-20261120/REPORT.md and comparison.json.
+- Step 4 remains open: not separate live agents, no native token measurement, and manifest initialized after discovery. No token-saving or capture-before-discovery acceptance claim. Next: properly initialized agent-level pair.
+
+
+
+## 2026-11-20 — Reporting verification completed (Codex)
+
+- Expanded summary assertions across failure/recovery fixtures; twelve scenarios passed. Fixed unknown-count and coverage-summary instructions; marked roadmap milestone 3 complete. See ORCHESTRATION_HISTORY.md for limits.
+
+
+## 2026-11-20 — Derived summary implemented
+
+- Added read-only run-state summary command: ledger dispositions, task statuses, unique candidate import outcomes, unknown attempts and cross-run pending work. Updated routine/setup and pristine copies plus runtime/interface guidance. Unrecorded source metrics remain unknown; task statuses cannot prove source coverage.
+- Eleven temporary-fixture recovery/reporting scenarios passed, including repeated-import counting. No live rehearsal, installed prompt update or package build. Summary reads assume one lead writer between updates.
+
+
+
+## 2026-11-20 — Orchestration filenames standardized (Codex)
+
+- Renamed the documents to agent/orchestration/ORCHESTRATION_HISTORY.md and ORCHESTRATION_ROADMAP.md and updated references. Documentation only; overall plan unchanged.
+
+## 2026-11-20 — Orchestration documentation and compaction handover (Codex)
+
+- Renamed the roadmap to agent/orchestration/ORCHESTRATION_ROADMAP.md without shortening its existing content. Added ORCHESTRATION_HISTORY.md for detailed implementation/verification records and COMPACTION.md for a continuation instruction.
+- Updated links and both project rules: amend the roadmap only when the overall plan changes; routine progress belongs in the detailed history. Preserved the user-requested stop before reporting. Documentation only; no runtime changes or tests rerun.
+
+## 2026-11-20 — Persistent search recovery (Codex)
+
+- Added run-state.mjs and RUN_STATE.md: live task manifests, cross-run pending discovery, profile/scope/deadline/stop guards, saved cursors, immutable batch snapshots and per-attempt importer receipts. Existing importer remains the only inventory writer.
+- Reconciliation recovers matching reports after interruption, preserves unknown original outcomes through retries, retains partial/ambiguous work and refuses blind retries. All evidence is retained; no destructive pruning or summary generator. Updated setup/routine and exact pristine copies, workflow/interface docs, tests and future release inclusion.
+- Ten temporary-fixture recovery scenarios and candidate-ledger regression checks passed. Importer suite passed 57/57 with localhost access; its initial sandbox run had 56/57 because loopback fetch was blocked with EACCES. Syntax, template parity and whitespace checks passed. Live adherence, other platforms and token savings remain unverified. Stopped after recovery per user instruction; no commit, push, real-data change, installed automation update or ZIP rebuild.
+
+## 2026-11-19 — Persistent candidate capture (Codex)
+
+- Implemented versioned run-ledger capture and assessment helper, compact pending queries, conservative identity, source-occurrence merging, stale-revision checks and atomic locked writes. Added the runtime contract and focused regression suite.
+- Setup initializes capture before posting reads/discovery; routine uses the helper and retains setup evidence. Suspended age-only cleanup. Updated identical pristine prompts, workflow/interface docs and future release file inclusion; no ZIP built.
+- Fresh-process seven/three/four recovery, source merging, distinct IDs/shared URLs, UTF-8 BOM CLI input, stale revisions, failed-write preservation, lock refusal, dispositions and legacy preservation passed. Live adherence, other platforms, full orchestration/import recovery and token savings remain untested. No real records, installed automations, commits or pushes changed.
+
 ## 2026-11-19 — Posting access and employer coverage prompt corrections (Codex)
 
 - Adapted the supplied JobTracker changes in the routine and identical pristine template: user-established sign-in sessions with unattended fallback, full-description access tests, task-specific delegation, employer-first company/title searches and one finder round per candidate.
 - Required reconciliation of selected employers against results and follow-up for missing names/methods or unsupported access within existing limits. Did not port the deferred board fetcher or invent adapter configuration. Existing coverage schema and importer interface unchanged.
 - Static consistency review, exact source/template parity and git diff --check passed. No live search, installed automation update, commit, push or ZIP rebuild; practical access/coverage improvement remains unverified.
+
+## 2026-11-19 — State-driven orchestration roadmap (Codex)
+
+- Recorded the rehearsal-informed design in agent/orchestration/ORCHESTRATION_ROADMAP.md: immediate candidate capture, live work state, reusable assessments, interruption/import recovery, safe retention, deterministic bookkeeping and staged verification.
+- Added consultation and maintenance rules to AGENTS.md and CLAUDE.md and a PLAN.md pointer. This milestone records documentation only; helper, schema and runtime changes remain planned. No search, commit, push or package.
+
+## 2026-11-19 — Retained rehearsal storage (Codex)
+
+- Moved five rehearsal folders from .build-cache/ into rehearsal/runs/ and the older root sandbox into rehearsal/runs/legacy-sam-rehearsal/installation/. Added directory guides, a run index, local path mapping and a current-run pointer. Updated project report references; original evidence and prompts retain their recorded contents.
+- Shared ignore rules keep run data, logs and local helpers outside Git while allowing the two guides; removed the superseded local blanket exclusion. SHA-256 checks passed for all 13,536 moved files; all 568 original data/profile/settings files unchanged. Ignore coverage and guide links verified. No new search, full-suite run, automation change, commit, push or package.
 
 ## 2026-11-19 — Review of rehearsal prompt corrections applied (Claude)
 
@@ -23,11 +99,6 @@
 
 - Table headings now match wrapper-directions.html: bold 11 px Segoe UI, sentence case, normal letter spacing. Headless Chromium compared computed typography with the sketch and verified filter opening.
 
-## 2026-11-19 — Applied preset ordering (Codex)
-
-- Applied now groups Offer, Interview and Applied in that order; the selected column continues sorting within each group. Focused model tests passed.
-
-
 ## 2026-11-19 — rehearsal-driven prompt corrections (Codex)
 
 - Restricted delegated models and prohibited nested delegation; missing supported models and small employer-only workloads use direct reading. Required bounded browser recovery for JavaScript/incomplete pages, compact source/completion evidence and reconciled counters/exclusions.
@@ -36,13 +107,13 @@
 ## 2026-11-19 — focused Terra follow-up (Codex)
 
 - One fresh Terra agent, no helpers, Contentful only, 93 seconds: reused saved reading method and refreshed the existing Shortlisted record. Independent local comparisons verified zero additions, one update, status/notes/manual urgency preserved, other nine records unchanged, correct coverage/workbook dates, archived clean batch and original runtime hashes unchanged.
-- Native agent usage: 35,109 uncached input, 373,504 cached input, 3,596 output tokens. One unrelated process-inspection attempt failed; no broader searches. Failed refresh and UI acceptance remain untested. Evidence: `.build-cache/terra-followup-20261119/evidence/REPORT.md`. No code/prompt changes, commit, push or packaging.
+- Native agent usage: 35,109 uncached input, 373,504 cached input, 3,596 output tokens. One unrelated process-inspection attempt failed; no broader searches. Failed refresh and UI acceptance remain untested. Evidence: `rehearsal/runs/terra-followup-20261119/evidence/REPORT.md`. No code/prompt changes, commit, push or packaging.
 
 ## 2026-11-18 — isolated Terra rehearsal evaluation (Codex)
 
 - Fictional candidate, three employers, snapshot 5c6c101: ten discoveries imported, six reviewed and four unverified. Contentful complete; Zalando/n8n partial. Independent browser review found at least two plausible missed openings and an unused browser recovery route. Search completeness failed; incomplete coverage reported honestly.
 - Original runtime/personal files and copied app code unchanged; Part B identical. Nine synthetic importer checks and five offline replay/preservation checks passed, zero duplicate additions. No second live run or UI acceptance; cached-method reuse and actual Shortlisted refresh untested. Model fallback and evaluator overhead consumed excessive resources; no further agents used for final conclusions.
-- Local report/evidence: `.build-cache/terra-rehearsal-20261118-1416/evaluation/REPORT.md`. No production code/prompt change, commit, push or ZIP build.
+- Local report/evidence: `rehearsal/runs/terra-rehearsal-20261118-1416/evaluation/REPORT.md`. No production code/prompt change, commit, push or ZIP build.
 
 ## 2026-11-18 — preset layouts and Last interview (Codex)
 

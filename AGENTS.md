@@ -10,6 +10,10 @@ Select the handoff by function, regardless of which assistant performs the work:
 
 Read the relevant handoff at the start. Read both when scope is unclear, work spans both areas, or the shared interface is affected. Verify the actual checkout state; either snapshot may describe an earlier branch or HEAD.
 
+## State-driven orchestration roadmap
+
+Before designing, implementing or reviewing search sequencing, candidate capture, persistent state, checkpointing, interruption recovery, run-evidence retention or summary reconciliation, read [agent/orchestration/ORCHESTRATION_ROADMAP.md](agent/orchestration/ORCHESTRATION_ROADMAP.md). Use it to select the next milestone and its verification criteria; check current code before treating any item as implemented. Amend the roadmap only when the overall plan changes (scope, priorities, sequencing or design direction); do not expand it or update it for routine implementation progress. Record implementation details, decisions, verification and limitations in [agent/orchestration/ORCHESTRATION_HISTORY.md](agent/orchestration/ORCHESTRATION_HISTORY.md), with brief entries in root HISTORY.md and current state in the relevant handoff. It is maintainer guidance, not a replacement for the installed routine, profile or importer contract; do not load it into every scheduled search or copy it into pristine templates. Unrelated tracker UI work does not require reading it.
+
 ## Scope and collaboration
 
 Codex primarily owns app/, tracker settings, importer, Excel helpers, tests, launchers and packaging. Claude primarily owns agent/, guides/, profile/ and pristine templates/. Coordinate shared interface changes and keep INTERFACE_FOR_TRACKER.md and app/SEARCH_WORKFLOW.md consistent with implemented behavior.

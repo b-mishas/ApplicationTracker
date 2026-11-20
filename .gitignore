@@ -15,6 +15,12 @@ Thumbs.db
 /settings/*.lock*
 /settings/*.tmp
 /.build-cache/
+# Retained rehearsal evidence is local; only the two directory guides are shared.
+/rehearsal/*
+!/rehearsal/README.md
+!/rehearsal/runs/
+/rehearsal/runs/*
+!/rehearsal/runs/README.md
 /audit-result.json
 /profile/backups/
 /profile/*.lock*

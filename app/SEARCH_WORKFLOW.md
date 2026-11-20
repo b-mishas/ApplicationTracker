@@ -48,6 +48,10 @@ Use Node 22 or newer in the actual execution environment. The Windows x64 packag
 
 From ROOT run node app/self-check.mjs. The legacy --require-configured option is accepted for compatibility and adds no search-configuration requirement. It checks schema, settings, valid inventory, required folders, writes/backups in a temporary data subfolder, Excel export/readback and the employer workbook. Temporary files are removed; actual jobs are not changed. Exit 0 means checks passed, exit 1 means setup needs attention. This is the installation test. An empty-batch --validate-only test checks batch parsing, not inventory access, saving or export.
 
+## Recovery-managed discovery imports
+
+New state-managed searches use [RUN_STATE.md](RUN_STATE.md): prepare the normal incoming batch with an ordered candidate mapping, then call `run-state import`. It invokes this same importer after validation, saves intent and full attempt receipts, and recovers matching reports after interruption. It never writes inventory directly. Unknown prior outcomes require explicit inspected retry reasons; partial/ambiguous records need repair. Do not also import the same tracked batch with the direct CLI below. Legacy/unmapped batches retain the original workflow.
+
 ## Discovery commands
 
 From app/:
@@ -74,13 +78,17 @@ From ROOT:
 
 If the workbook cannot be updated, record employer check dates/career URLs in data/reports/coverage.json and report the fallback. The agent owns that file.
 
+## Candidate capture
+
+Use [CANDIDATE_STATE.md](CANDIDATE_STATE.md) and `candidate-ledger.mjs` for versioned candidate capture, saved assessments and pending queries, starting before setup discovery. The helper writes only search-owned run ledgers; it never writes jobs.json. Assessed is not imported. Keep earlier setup capture folders and all unresolved evidence; [RUN_STATE.md](RUN_STATE.md) now provides live tasks, cross-run discovery and import recovery. All run evidence remains retained; deletion and generated summaries are not implemented.
+
 ## Agent search coverage
 
 `data/reports/coverage.json` is the agent's run-to-run search record, not tracker configuration or an import batch. Neither the tracker nor the importer reads it. Fields missing from an older file mean empty. Follow `agent/ROUTINE_PROMPT.md` Part B for its exact JSON structure and completion rules.
 
 - `updatedAt`, `gmailCheckedThrough`, `gmailLastAttempt` and `sources` record attempts and successful coverage. Preserve earlier successful checkpoints for failed, skipped or partial scans; counts describe the current attempt.
 - `employers` records, under the exact workbook company name, `lastChecked` (complete successful checks only, including when workbook writes are unavailable), `lastAttempt` (every attempt), `careersUrl` and `method`: one short line describing how the full listing was read (ATS or site, public search/API URL, filters, paging, end of list), reused by the next run. It holds no code or credentials.
-- `linkedinAccess` is an object with `attemptedAt` (UTC Z), `browser`, `status` (`ok` or `failed`), `postingsRead`, `postingsFailed` and `reason`. It records the observed browser-access result for the run.
+- `linkedinAccess` is an object with `attemptedAt` (UTC Z), `browser`, `status` (`ok`, `failed` or `skipped`), `postingsRead`, `postingsFailed` and `reason`. It records the observed browser-access result for the run. Excluded tests use skipped, attemptedAt null, zero read/failed counts and the exclusion reason.
 - `dropped` is an array of candidates dropped by the agent that are not in jobs.json. Each entry has `provider`, `providerJobId`, `url`, `company`, `title`, `reason` and `droppedAt` (YYYY-MM-DD). Keep existing entries and remove only those older than 60 days. This memory is separate from the user's Dismissed status in the tracker.
 - `recheck` is an array counting re-check attempts for saved "Title only" or Unverified records. Each entry has `jobId`, `attempts` and `lastAttempt` (YYYY-MM-DD). Remove an entry when its record is resolved or no longer New/Shortlisted; stop re-checking after three attempts.
 - `refreshed` maps a Shortlisted record id to the date (YYYY-MM-DD) of its last successful refresh. Remove an entry when the record is no longer Shortlisted.
@@ -109,3 +117,5 @@ The `Start` file reuses this installation’s running server. The `Restart` file
 The tracker Settings checkbox Start server at login installs/removes a per-user Windows Startup shortcut or macOS LaunchAgent for this folder. It is off by default, starts without opening a browser, and applies from the next login. It is independent of agent scheduling and is not stored in exported JSON or portable export preferences. Disable it before moving/deleting the folder; enable it again after moving. `--background` suppresses browser opening; `--foreground` keeps the launcher attached for macOS login supervision.
 
 Settings → Advanced exposes Local port and the current Local address through /api/port-settings. A revision-protected save validates availability and stages data/server-port.json without restarting; Start reuses the existing server while the new value is pending. Restart probes the new port before stopping, with recovery to the previous address if a late startup failure occurs. JOBTRACKER_PORT overrides disable the field. Export settings and the position schema are unchanged. The Start/Restart files use --interactive to offer a replacement port or cancellation when blocked; automatic login/--background launches never prompt.
+
+Derived run reporting: `run-state.mjs summary --root data --run <run-id>` returns candidate/task counts, unique confirmed import outcomes, unknown attempts and outstanding work. See app/RUN_STATE.md (RUN_STATE.md from app/) for scope and limitations. Source coverage still requires source evidence.
