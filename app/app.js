@@ -487,10 +487,13 @@ $('search-clear').onclick=()=>{
 };
 $('reset').onclick=()=>{
  if(!canChangeView())return;
+ const preset=selectedPreset()??'All';
  for(const key of Object.keys(filters))delete filters[key];
- filters.status=defaultStatusFilter();$('search').value='';closeFilter();
- // Restore the normal columns first, then override its remembered sort.
- syncViewLayout();sort='star';direction=-1;render();
+ filters.status=[...statusPresets[preset]];
+ if(preset==='Urgent')filters.star=['Urgent'];
+ $('search').value='';closeFilter();
+ // Save a departing custom view before replacing this preset's remembered layout.
+ syncViewLayout();applyLayout(defaultColumnLayout(preset));render();
 };
 $('columns').onchange=e=>{if(!canChangeView()){e.target.checked=!e.target.checked;return;}e.target.checked?visible.add(e.target.value):visible.delete(e.target.value);render();};
 $('export').onclick=async e=>{e.preventDefault();if(pendingSave){$('message').textContent='Wait for the current save to finish.';return;}try{const r=await fetch('/api/jobs');if(!r.ok)throw Error('Export failed');const {data:latest}=await r.json();const url=URL.createObjectURL(new Blob([JSON.stringify(latest,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`jobs-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(err){$('message').textContent=err.message;}};

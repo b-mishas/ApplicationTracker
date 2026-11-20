@@ -4,6 +4,10 @@
 
 --------------------
 
+## 2026-11-20 — Reset current preset (Codex)
+
+- Reset restores the selected preset’s default filters, search, column visibility/order/widths and sorting; Urgent stays urgent. Custom status combinations fall back to All positions. Other presets retain their saved layouts. Independent Chromium checks passed for all eight presets, reload and preserving other layouts.
+
 ## 2026-11-20 — Statistics sorting (Codex)
 
 - All Statistics presets default to application date, newest first. A one-time upgrade replaces the former default sort in saved layouts while preserving custom sorting and columns. Focused layout/model suites and isolated Chromium preset checks passed.
