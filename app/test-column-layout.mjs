@@ -38,3 +38,13 @@ assert.equal(versionTwo.Shortlisted,versionOne.Shortlisted,'Do not repeat the ea
 assert.equal(versionTwo['Applied in total'],versionOne['Applied in total']);
 const hiddenAgain={'In progress':oldApplied};assert.equal(upgradePresetLayouts(hiddenAgain,2),hiddenAgain);
 console.log('PASS: Applied retains Actions, upgrades old saved layouts once and leaves Applications sent and prior manual choices unchanged.');
+
+for(const preset of ['All','Applied in total','Interviews in total','Offers in total']){
+ assert.equal(defaultColumnLayout(preset).sort,'applicationDate');assert.equal(defaultColumnLayout(preset).direction,-1);
+ const old={...defaultColumnLayout(preset),sort:'star',widths:{company:240}};
+ const updated=upgradePresetLayouts({[preset]:old},2)[preset];
+ assert.equal(updated.sort,'applicationDate');assert.deepEqual(updated.widths,old.widths);
+ const custom={...old,sort:'company',direction:1};assert.equal(upgradePresetLayouts({[preset]:custom},2)[preset],custom);
+ const later={[preset]:old};assert.equal(upgradePresetLayouts(later,3),later);
+}
+console.log('PASS: statistics default to descending application date; old defaults upgrade once while custom sorting is preserved.');

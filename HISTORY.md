@@ -4,6 +4,10 @@
 
 --------------------
 
+## 2026-11-20 — Statistics sorting (Codex)
+
+- All Statistics presets default to application date, newest first. A one-time upgrade replaces the former default sort in saved layouts while preserving custom sorting and columns. Focused layout/model suites and isolated Chromium preset checks passed.
+
 ## 2026-11-20 — Small-model acceptance rehearsal (milestone 6)
 
 - Ran the search routine headless on Claude Sonnet 5.5 (lead) and Haiku 5.5 as subagent model, with the state helpers (18a85df) and without them (b66c262), on three Greenhouse boards with three seeded traps. Both arms kept all 8 relevant postings, read no trap and reported exact counts. Helpers used 57% more input tokens (1.09M vs 0.69M), so the decision rule says cut further. One run per arm; recovery not exercised. Report: rehearsal/runs/2026-11-21-small-model-acceptance/evaluation/REPORT.md; details in agent/orchestration/ORCHESTRATION_HISTORY.md.

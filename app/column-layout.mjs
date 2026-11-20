@@ -23,13 +23,14 @@ export const PRESET_COLUMNS={
  'Offers in total':[...applicationColumns,'lastInterview'],
  Custom:[...standardColumns]
 };
+const dateSortedPresets=['In progress','All','Applied in total','Interviews in total','Offers in total'];
 export function defaultColumnLayout(preset){
  const columns=[...(PRESET_COLUMNS[preset]??standardColumns)];
- return {columns,order:[...columns,...Object.keys(COLUMN_WIDTHS).filter(key=>!columns.includes(key))],widths:{},sort:preset==='In progress'?'applicationDate':'star',direction:-1};
+ return {columns,order:[...columns,...Object.keys(COLUMN_WIDTHS).filter(key=>!columns.includes(key))],widths:{},sort:dateSortedPresets.includes(preset)?'applicationDate':'star',direction:-1};
 }
 
 // Upgrade previously saved defaults once, while respecting later user customizations.
-export const PRESET_DEFAULTS_VERSION=2;
+export const PRESET_DEFAULTS_VERSION=3;
 export function upgradePresetLayouts(layouts,version=0){
  if(version>=PRESET_DEFAULTS_VERSION)return layouts;
  const upgraded={...layouts};let changed=false;
@@ -42,6 +43,10 @@ export function upgradePresetLayouts(layouts,version=0){
  if(version<2&&applied&&!applied.columns.includes('star')){
   const insertActions=keys=>{const order=keys.filter(key=>key!=='star');const title=order.indexOf('title');order.splice(title>=0?title+1:Math.max(0,order.indexOf('country')),0,'star');return order;};
   upgraded['In progress']={...applied,columns:insertActions(applied.columns),order:insertActions(applied.order??defaultColumnLayout('In progress').order)};changed=true;
+ }
+ if(version<3)for(const preset of dateSortedPresets.filter(name=>name!=='In progress')){
+  const layout=upgraded[preset];
+  if(layout?.sort==='star'&&layout.direction===-1){upgraded[preset]={...layout,sort:'applicationDate',direction:-1};changed=true;}
  }
  return changed?upgraded:layouts;
 }
