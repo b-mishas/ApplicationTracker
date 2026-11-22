@@ -52,21 +52,24 @@ await test('init names the run and batch; capture reads subagent JSONL; resolve 
   const file = path.join(directory, 'finds.jsonl');
   await writeFile(file, [line(1, {mailId: 'm1'}), line(2), JSON.stringify({company: 'Example', title: 'Engineer 3'})].join('\n'));
   const captured = run('capture', '--input', file);
-  assert.equal(captured.captured, 3); assert.equal(captured.new.length, 3); assert.equal(captured.new[0].id.length, 8);
+  assert.equal(captured.captured, 3); assert.equal(captured.new.length, 3);
+  // The command line prints one compact line per find: id | company | title | location | url.
+  assert.match(captured.new[0], /^[0-9a-f]{8} | Example | Engineer 1 | Berlin | https:/); assert.match(captured.note, /do not read or rate/);
+  const ids = captured.new.map(row => row.slice(0, 8));
   const decisions = path.join(directory, 'decisions.json');
-  await writeFile(decisions, JSON.stringify([{id: captured.new[0].id, state: 'assessed', basis: 'Posting reviewed', fit: 4, reasoning: 'Java match', evidence: 'Requires Java'},
-    {id: captured.new[1].id, state: 'excluded', reason: 'Too junior'}]));
+  await writeFile(decisions, JSON.stringify([{id: ids[0], state: 'assessed', basis: 'Posting reviewed', fit: 4, reasoning: 'Java match', evidence: 'Requires Java'},
+    {id: ids[1], state: 'excluded', reason: 'Too junior'}]));
   assert.deepEqual(run('resolve', '--input', decisions).candidates, {total: 3, pending: 1, assessed: 1, excluded: 1, duplicate: 0});
   const {rows} = await readLedger(path.join(root, 'reports', 'runs', started.runId));
   assert.equal(rows[0].assessment.basis, 'Posting reviewed'); assert.match(rows[0].assessment.profileRevision, /^[a-f0-9]{64}$/);
   assert.equal(rows[2].discovery.location, 'Unknown'); assert.equal(rows[2].discovery.source.label, 'finds');
   await assert.rejects(resolveFinds(root, [{id: 'abc', state: 'excluded', reason: 'x'}]), /Unknown or ambiguous id/);
-  await assert.rejects(resolveFinds(root, [{id: captured.new[2].id, state: 'done'}]), /State must be/);
-  await assert.rejects(resolveFinds(root, [{id: captured.new[2].id, state: 'excluded'}]), /reason/);
+  await assert.rejects(resolveFinds(root, [{id: ids[2], state: 'done'}]), /State must be/);
+  await assert.rejects(resolveFinds(root, [{id: ids[2], state: 'excluded'}]), /reason/);
   // Evidence is never upgraded by defaults.
-  await assert.rejects(resolveFinds(root, [{id: captured.new[2].id, state: 'assessed', fit: 3, reasoning: 'Title fits'}]), /needs basis/);
-  await assert.rejects(resolveFinds(root, [{id: captured.new[2].id, state: 'assessed', basis: 'Posting reviewed', fit: 3, reasoning: 'Title fits'}]), /needs evidence/);
-  await resolveFinds(root, [{id: captured.new[2].id, state: 'assessed', basis: 'Title only', fit: 3, reasoning: 'Title fits'}]);
+  await assert.rejects(resolveFinds(root, [{id: ids[2], state: 'assessed', fit: 3, reasoning: 'Title fits'}]), /needs basis/);
+  await assert.rejects(resolveFinds(root, [{id: ids[2], state: 'assessed', basis: 'Posting reviewed', fit: 3, reasoning: 'Title fits'}]), /needs evidence/);
+  await resolveFinds(root, [{id: ids[2], state: 'assessed', basis: 'Title only', fit: 3, reasoning: 'Title fits'}]);
   const titleOnly = (await readLedger(path.join(root, 'reports', 'runs', started.runId))).rows[2].assessment;
   assert.deepEqual([titleOnly.basis, titleOnly.evidence], ['Title only', 'Title only']);
 });
@@ -128,7 +131,9 @@ await test('an interrupted run is resumed from files: carried work and earlier d
   // Reused decisions are saved on today's rows and earlier rows point here, so a restart carries each vacancy once.
   assert.deepEqual((await summarizeRun(root)).candidates, {total: 3, pending: 1, assessed: 1, excluded: 1, duplicate: 0});
   const restart = await initializeRun(root);
-  assert.deepEqual(restart.carried.map(row => [row.run, row.title, row.state]), [[resumed.runId, 'Engineer 1', 'assessed'], [resumed.runId, 'Engineer 3', 'pending']]);
+  // Open finds move into the new run, so they are decided there without --run.
+  assert.deepEqual(restart.carried.map(row => [row.run, row.title, row.state, row.fit ?? null]), [[restart.runId, 'Engineer 1', 'assessed', 5], [restart.runId, 'Engineer 3', 'pending', null]]);
+  assert.deepEqual((await summarizeRun(root)).carriedIn, 2);
 });
 
 await test('a new requisition with a stored title survives an interruption as similar, not delivered', async () => {
@@ -179,7 +184,7 @@ await test('a same-day restart continues the run and lists result files never ca
   await writeFile(path.join(folder, 'employer-a.jsonl'), [line(1), line(2)].join('\n'));
   await writeFile(path.join(folder, 'postings-a.jsonl'), JSON.stringify({url: job(1).url, advertisedTitle: 'Engineer 1', company: 'Example', requirements: ['Java']}));
   const found = run('capture', '--input', path.join(folder, 'employer-a.jsonl'));
-  await writeFile(path.join(folder, 'decisions-1.json'), JSON.stringify([{id: found.new[0].id, state: 'assessed', basis: 'Posting reviewed', fit: 4, reasoning: 'Java match', evidence: 'Requires Java'}]));
+  await writeFile(path.join(folder, 'decisions-1.json'), JSON.stringify([{id: found.new[0].slice(0, 8), state: 'assessed', basis: 'Posting reviewed', fit: 4, reasoning: 'Java match', evidence: 'Requires Java'}]));
   run('resolve', '--input', path.join(folder, 'decisions-1.json'));
   // Killed after a subagent wrote its file, before capture.
   await writeFile(path.join(folder, 'employer-b.jsonl'), line(3));
@@ -203,5 +208,26 @@ await test('a same-day restart continues the run and lists result files never ca
   run('summary');
   assert.equal(JSON.parse(await readFile(path.join(root, 'reports', 'runs', later.runId, 'run-completion.json'), 'utf8')).closedBy, nextRun.runId);
   assert.deepEqual(run('init').uncaptured, []);
+});
+await test('summary counts this run\'s ratings and source outcomes; re-captured and carried finds are reported, not re-decided', async () => {
+  const first = await initializeRun(root), folder = path.join(root, 'reports', 'runs', first.runId);
+  const found = await capture([line(1), line(2), line(3)]);
+  await resolveFinds(root, [{id: found.new[0].id, state: 'assessed', basis: 'Posting reviewed', fit: 4, reasoning: 'Java match', evidence: 'Java essential'},
+    {id: found.new[1].id, state: 'assessed', basis: 'Title only', fit: 3, reasoning: 'Title fits'}]);
+  await writeFile(path.join(folder, 'source-evidence.jsonl'), [{source: 'Example', kind: 'employer', status: 'checked'}, {source: 'Other', kind: 'employer', state: 'partial'},
+    {source: 'Shortlist r1', kind: 'refresh', status: 'failed'}].map(entry => JSON.stringify(entry)).join('\n') + '\nnot json\n');
+  const again = await capture([line(1)]);
+  assert.deepEqual(again.decidedBefore.map(row => [row.title, row.state, row.fit, row.run]), [['Engineer 1', 'assessed', 4, first.runId]]);
+  const summary = await summarizeRun(root);
+  assert.deepEqual(summary.ratedThisRun, {postingReviewed: 1, titleOnly: 1});
+  assert.deepEqual(summary.sources, {employer: {checked: 1, partial: 1}, refresh: {failed: 1}, unreadableLines: 1});
+  // Next day: open finds are moved in and decided here by short id; carried ratings are not counted as today's reads.
+  await nextDay();
+  const next = await initializeRun(root);
+  assert.deepEqual(next.carried.map(row => [row.run, row.title, row.state]), [[next.runId, 'Engineer 1', 'assessed'], [next.runId, 'Engineer 2', 'assessed'], [next.runId, 'Engineer 3', 'pending']]);
+  await resolveFinds(root, [{id: next.carried[2].id, state: 'excluded', reason: 'Too junior'}]);
+  const later = await summarizeRun(root);
+  assert.deepEqual([later.ratedThisRun, later.carriedIn, later.candidates.excluded], [{postingReviewed: 0, titleOnly: 0}, 3, 1]);
+  assert.ok((await readLedger(folder)).rows.every(row => row.state === 'duplicate' && row.reason === `Carried into run ${next.runId}`));
 });
 console.log(`${passed} run-state scenarios passed (temporary fixtures only).`);

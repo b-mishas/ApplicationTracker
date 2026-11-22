@@ -4,6 +4,16 @@
 
 --------------------
 
+## 2026-11-22 — Break-even search state helper (milestone 11)
+
+- Compact capture output, carried finds moved into the current run, summary counts for ratings and source outcomes, and routine rules for filtered reads and grouped tool calls. Fixture tests and full npm test pass; no agent run yet (milestone 12). Details in agent/orchestration/ORCHESTRATION_HISTORY.md.
+
+## 2026-11-22 — Unannounced interruption and next-day rehearsal (milestone 10)
+
+- Ran one pair on 7d2529c with an unannounced kill after the first subagent result file, then a synthetic next-day run. The fixture had two employers, a paged listing, one 503, aliases, a same-title requisition, an out-of-scope role and a due refresh.
+- Both arms imported all 5 relevant vacancies with no losses, wrong or duplicate imports, and finished all due work. run-state cost 12% more (USD 1.17 vs 1.04).
+- The verdict rule says shrink. Report: rehearsal/runs/2026-11-22-stress-recovery/evaluation/REPORT.md; details in agent/orchestration/ORCHESTRATION_HISTORY.md.
+
 ## 2026-11-22 — Cheaper resume for the search state helper
 
 - `run-state init` continues today's unfinished run instead of starting a new one and lists result files an interruption left uncaptured; `summary` ends a run. Routine tells a resumed run to continue sources from saved evidence and reuse saved extracts. Fixture tests and full npm test pass; no agent run yet. Details in agent/orchestration/ORCHESTRATION_HISTORY.md.

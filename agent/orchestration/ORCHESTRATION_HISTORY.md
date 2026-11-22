@@ -2,6 +2,39 @@
 
 Detailed, durable record for future development sessions. Newest verified milestone first. Record implementation, rationale, verification and limitations here; amend [ORCHESTRATION_ROADMAP.md](ORCHESTRATION_ROADMAP.md) only when the overall plan changes. Runtime command/field contracts belong in the linked app documentation; checkout status belongs in [HANDOFF_AGENT.md](../../HANDOFF_AGENT.md).
 
+## 2026-11-22 — Unannounced interruption and next-day rehearsal, milestone 10 (Claude)
+
+- Base 7d2529c for both arms, one repetition each:
+  - A: the routine with run-state.
+  - B: its four run-state paragraphs replaced by plain-ledger prose with the same save points and carry-over rules; helper files and SEARCH_WORKFLOW's "Candidate capture" section removed.
+  - Shared: Sonnet 5.5 lead, Haiku 5.5 subagents.
+- Fixture on 127.0.0.1:18765, 19 openings:
+  - Nordkamm listing paged in two pages, with relevant NK-24415 only on page 2;
+  - Veltrum's first listing request returns 503;
+  - aliases of StepStone/LinkedIn records, an exact-ID record and a dropped entry;
+  - NK-24388 (second requisition, same title), NK-24318 (out of scope);
+  - a due Shortlisted refresh.
+- Procedure: p1 killed unannounced once the first subagent find file was complete, before the lead used it. Dates were then shifted back one day (synthetic). p2 ran the normal prompt with no note.
+- Measured, both arms:
+  - 5/5 relevant imported; 0 silent losses, inappropriate imports, duplicate imports or known vacancies rated;
+  - all due work finished (both employers checked, refresh done, `unfinished` empty);
+  - p1's find file taken in and the old run closed;
+  - p1's refresh reading lost with the kill and repeated.
+- Cost: A USD 1.17 vs B 1.04 (+12%; p1 estimated from native tokens, p2 billed +17%). Cache read +18%, cache write +25%; uncached input 70 vs 62.
+- Excluded attempt: the first arm B found run-state through SEARCH_WORKFLOW.md and ran `init` itself; it was stopped and rebuilt. Total spend USD 2.78 of a USD 5 cap.
+- Verdict rule: shrink. The carry-over prevented nothing that the plain arm missed. In this pair the prose duplicate rule matched capture, so the capture script is a fallback, not a demonstrated need. Not tested: a kill after saved ratings, a same-day resume, a listing that changes between sessions, and variance.
+- Evidence: rehearsal/runs/2026-11-22-stress-recovery/ (PROTOCOL.md, evaluation/REPORT.md, comparison.json, streams, native logs, server logs, snapshots, prompt/app diffs, scripts).
+
+## 2026-11-22 — Break-even helper, milestone 11 (Claude)
+
+- Cost analysis of milestones 6/8/10 (from CLI per-model usage at Sonnet 5.5 rates, which reproduce billed totals): cache writes are the largest component in both arms (41–49%), then cache reads (26–34%) and output (21–25%); Haiku subagents $0.01–0.03. The helper's extra lead turns fell from 7 (M6) to 2.5 (M8) to 1 (M10); M10's remaining +12% came from tool output entering the lead's context (69k vs 47k characters: full capture listing, the same file printed again, unfiltered extracts, a RUN_STATE.md read) and run-to-run variance.
+- `capture` on the command line prints one line per find (`id | company | title | location | url`, `≈ record` for similar, `= decision` for decidedBefore) plus a short note on the groups; the library still returns objects. Finds already decided in the current run are reported as decidedBefore or known instead of being omitted.
+- `init` moves open finds of earlier runs into the current run with state and assessment (`carriedIn` in the manifest; earlier entries become duplicates), on new runs and on same-day resumes, without overwriting finds already in the current run. `resolve --run` is no longer needed for carried work.
+- `summary` adds `ratedThisRun` (assessed by basis, excluding carried ratings) and `sources` (source-evidence.jsonl per `kind` and `status`); the routine asks for those two fields in each evidence line and takes Postings and source counts from the summary.
+- Routine (source = template): no printing of captured files and no RUN_STATE.md read; filtered reads of saved result files; independent lead tool calls in one turn. 42.8k → 43.6k characters.
+- Real runs use the Claude desktop scheduled task or a Codex automation, not the CLI; cache lifetime and pricing there are not measured. Reducing what enters the lead's context and the number of lead turns lowers input either way; a daily run also starts with a cold cache, so the fixed prompt is written every run.
+- Verified: 10 run-state fixture scenarios (new: ratings and source counts, re-captured and carried finds, carried finds decided without --run); full npm test exit 0; prompt parity. Not verified by an agent run (milestone 12).
+
 ## 2026-11-22 — Cheaper resume after milestone 8 review (Claude)
 
 - Cause addressed: in milestone 8 the resumed helper arm started a new run, inspected the old one and rebuilt its batch (16 vs 11.5 lead messages; p2 +46% input), and one resume re-fetched postings it already had.

@@ -57,10 +57,16 @@ Use isolated rehearsal inventories and fictional profiles, **never real applicat
   - Both arms lost nothing, made no duplicate imports, kept the same-title new requisition and reused every saved rating.
   - The helper rated no known vacancy (plain: 3 per repetition, none imported), but it repeated more work after resuming.
   - It cost 15% more, so the decision rule says shrink to the capture check.
+- [x] **9. Cheaper resume:** after Codex's review of milestone 8. `init` continues today's unfinished run and lists result files never captured; `summary` ends a run. The routine resumes from saved source evidence and extracts and retries only under the retry rules (7d2529c). Fixture-tested; no agent run yet.
+- [x] **10. Unannounced interruption and next-day rehearsal:** one capped pair (about USD 5) on the same base, with state handling as the only difference; a plain ledger with equally explicit save points is the comparator. Several sources with aliases, a same-title requisition, an out-of-scope role, partial pagination, a transient failure and a due refresh. An unannounced kill once a subagent result file is saved, then a next-day run with the normal prompt. Judge against frozen ground truth: retained vacancies, inappropriate imports, unfinished due work, redundant reads and ratings, duplicate imports, summary accuracy, billed cost (cached and uncached input separately). Keep the carry-over only if it prevents a loss or unfinished due work that the plain ledger misses. **Result (2026-11-22, one pair on 7d2529c, USD 2.78):**
+  - Both arms imported 5/5 relevant vacancies, made no wrong or duplicate imports, rated no known vacancy and finished all due work.
+  - The carry-over prevented nothing the plain ledger missed and cost 12% more, so the rule says shrink.
+- [x] **11. Break-even helper:** cut what milestone 10 showed costing more: compact one-line `capture` output with a short note, no re-printing of captured files or reading RUN_STATE.md, open finds of earlier runs moved into the current run (no `--run`), and `summary` counting this run's ratings by basis and source outcomes from source-evidence.jsonl. The routine also asks for filtered file reads and independent tool calls in one turn, which applies with or without the helper. Fixture-tested; no agent run yet.
+- [ ] **12. Break-even check:** repeat milestone 10's pair on the milestone 11 base, with the same general output rules in both arms, and a cost cap. Keep the helper if it costs at most about the plain arm's and loses nothing; otherwise shrink to the capture check. Not started.
 
 ## Current next action
 
-Following Codex's review of milestone 8, recovery is made cheaper before anything is removed: `init` continues today's unfinished run and lists result files never captured; `summary` ends a run. Next, one capped stress scenario per arm on the same base (state handling the only difference): normal work over several sources, an unannounced kill after a subagent result file is saved, then a next-day run with the normal prompt. Keep the carry-over only if it prevents a loss the plain ledger misses; otherwise shrink to the capture check.
+Milestone 12, when the user starts it. Real runs are Claude desktop scheduled tasks or Codex automations, not the CLI: rehearsal costs compare arms, but absolute costs and cache pricing differ there.
 
 ## Why this design
 

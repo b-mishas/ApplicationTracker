@@ -47,14 +47,14 @@ const reserved = new Set(['run-ledger.jsonl', 'run-completion.json', 'source-evi
 async function describe(root, state, resumed) {
   const data = path.basename(root);
   return {runId: state.runId, folder: `${data}/reports/runs/${state.runId}`, batch: `${data}/incoming/${localDate(new Date(state.startedAt))}-${state.runId}.json`,
-    ...(resumed && {resumed: true}), ...await outstanding(root, state.runId, resumed)};
+    ...(resumed && {resumed: true}), ...await outstanding(root, state.runId, true)};
 }
 export async function initializeRun(root, runId = null) {
   const started = new Date();
   if (!runId) {
     // A same-day run never summarized is continued, so a restarted session keeps its finds, extracts and batch name.
     const open = (await optionalRead(pointer(root)))?.trim(), state = open && await readRun(root, open).catch(() => null);
-    if (state?.schemaVersion === 3 && !state.finishedAt && localDate(new Date(state.startedAt)) === localDate(started)) return describe(root, state, true);
+    if (state?.schemaVersion === 3 && !state.finishedAt && localDate(new Date(state.startedAt)) === localDate(started)) { await adopt(root, state); return describe(root, state, true); }
   }
   runId = name(runId || `run-${started.toISOString().replace(/\D/g, '').slice(0, 12)}-${randomBytes(2).toString('hex')}`);
   const directory = await runDirectory(root, runId, true), manifest = path.join(directory, 'run-completion.json');
@@ -64,8 +64,35 @@ export async function initializeRun(root, runId = null) {
   const state = {schemaVersion: 3, runId, startedAt: started.toISOString(), profileRevision: profile};
   await writeJsonAtomic(manifest, state);
   await writeFile(pointer(root), runId + '\n');
+  await adopt(root, state);
   return describe(root, state, false);
 }
+// Open finds of earlier runs move into this run, so the agent decides them here and never needs --run.
+async function adopt(root, state) {
+  const directory = await runsDirectory(root), today = path.join(directory, state.runId), profile = await profileRevision(root), {stored: inv} = await indexes(root);
+  const present = new Set((await readLedger(today)).rows.map(row => row.id)), latest = new Map(), byRun = new Map();
+  for (const entry of await readdir(directory, {withFileTypes: true})) {
+    if (!entry.isDirectory() || entry.name === state.runId || await optionalRead(path.join(directory, entry.name, 'run-ledger.jsonl')) === null) continue;
+    let rows; try { rows = (await readLedger(path.join(directory, entry.name))).rows; } catch { continue; } // reported by outstanding, left untouched
+    for (const row of rows.filter(row => open(row, inv, profile))) {
+      byRun.set(entry.name, [...(byRun.get(entry.name) || []), row.id]);
+      if (!present.has(row.id) && !(latest.get(row.id)?.updatedAt > row.updatedAt)) latest.set(row.id, row);
+    }
+  }
+  // shortcut: one ledger change holds at most 500 entries; chunk if carried work ever grows that large.
+  if (latest.size) {
+    await changeLedger(today, 'capture', {candidates: [...latest.values()].map(row => row.discovery)});
+    const decided = [...latest.values()].filter(row => row.state !== 'pending');
+    if (decided.length) await changeLedger(today, 'resolve', {updates: decided.map(({id, state: rowState, reason, assessment, profileRevision: revision}) =>
+      ({id, state: rowState, ...(reason !== undefined && {reason}), ...(assessment && {assessment}), ...(revision && {profileRevision: revision})}))});
+    const manifest = path.join(today, 'run-completion.json'), current = parse(await readFile(manifest, 'utf8'));
+    await writeJsonAtomic(manifest, {...current, carriedIn: [...new Set([...(current.carriedIn || []), ...latest.keys()])]});
+  }
+  for (const [run, ids] of byRun) await changeLedger(path.join(directory, run), 'resolve', {updates: ids.map(id => ({id, state: 'duplicate', reason: `Carried into run ${state.runId}`, profileRevision: profile}))});
+}
+// Still needs work: undecided, assessed but not in the inventory, or excluded under another profile.
+const stale = (row, profile) => (row.assessment?.profileRevision || row.profileRevision) !== profile;
+const open = (row, inv, profile) => ['pending', 'assessed'].includes(row.state) && !delivered(inv, row.discovery) || row.state === 'excluded' && stale(row, profile);
 // Files the helper has read are listed in their run's manifest, so init can point at result files an interruption left uncaptured.
 async function noteInputs(root, files) {
   const runs = await runsDirectory(root);
@@ -151,13 +178,17 @@ export async function captureFinds(root, files, runId = null) {
   runId = await currentRun(root, runId);
   const directory = await runDirectory(root, runId), finds = [];
   for (const file of files) finds.push(...findsOf(await readFile(file, 'utf8'), file));
-  const {affected} = await changeLedger(directory, 'capture', {candidates: finds});
+  const decidedHere = new Map((await readLedger(directory)).rows.map(row => [row.id, row])), {affected} = await changeLedger(directory, 'capture', {candidates: finds});
   const profile = await profileRevision(root), {stored: inv, dropped} = await indexes(root), earlier = await earlierRows(root, runId);
   const rows = new Map((await readLedger(directory)).rows.map(row => [row.id, row]));
   const result = {runId, captured: affected.length, new: [], known: [], similar: [], decidedBefore: []}, updates = [], superseded = new Map();
   for (const id of affected) {
     const row = rows.get(id), d = row.discovery, line = {id: short(id), company: d.company, title: d.title, location: d.location, ...(d.url && {url: d.url})};
-    if (row.state !== 'pending') continue;
+    if (row.state !== 'pending') {
+      // Already decided in this run (carried in, or captured earlier today): report, do not re-decide.
+      if (decidedHere.has(id)) row.state === 'duplicate' ? result.known.push({...line, match: row.reason}) : result.decidedBefore.push({...line, run: runId, state: row.state, ...(row.assessment ? {fit: row.assessment.fit, reasoning: row.assessment.reasoning} : {reason: row.reason})});
+      continue;
+    }
     const hit = strongMatch(inv, d) || strongMatch(dropped, d);
     if (hit) { updates.push({id, state: 'duplicate', reason: hit, profileRevision: profile}); result.known.push({...line, match: hit}); continue; }
     // One actionable entry per vacancy: earlier rows point here, and a current-profile decision is copied onto today's row.
@@ -222,13 +253,12 @@ export async function outstanding(root, currentRunId = null, includeCurrent = fa
     catch (error) { warnings.push({run: entry.name, reason: `Ledger: ${error.message}; preserved`}); continue; }
     try { files.push(...await uncaptured(root, entry.name, path.join(directory, entry.name))); }
     catch (error) { warnings.push({run: entry.name, reason: `Manifest: ${error.message}; preserved`}); }
-    const stale = row => (row.assessment?.profileRevision || row.profileRevision) !== profile;
     // A duplicate points at a record or candidate that is reassessed itself, so only exclusions go stale.
     for (const row of rows) {
-      const d = row.discovery, inInventory = delivered(inv, d), similar = !inInventory && nameMatch(inv, d);
-      if (row.state === 'pending' && !inInventory || row.state === 'assessed' && !inInventory || row.state === 'excluded' && stale(row))
+      const d = row.discovery, similar = !delivered(inv, d) && nameMatch(inv, d);
+      if (open(row, inv, profile))
         carried.push({run: entry.name, id: short(row.id), state: row.state, company: d.company, title: d.title, location: d.location, ...(d.url && {url: d.url}),
-          ...(row.assessment && {fit: row.assessment.fit, reasoning: row.assessment.reasoning, gaps: row.assessment.gaps}), ...(row.reason && {reason: row.reason}), ...(similar && {similar}), ...(row.state !== 'pending' && stale(row) && {reassess: true})});
+          ...(row.assessment && {fit: row.assessment.fit, reasoning: row.assessment.reasoning, gaps: row.assessment.gaps}), ...(row.reason && {reason: row.reason}), ...(similar && {similar}), ...(row.state !== 'pending' && stale(row, profile) && {reassess: true})});
     }
   }
   return {profileChanged: !!current && current.profileRevision !== profile, carried, uncaptured: files, warnings};
@@ -249,7 +279,16 @@ export async function summarizeRun(root, runId = null) {
   }
   const {carried, warnings} = await outstanding(root, runId);
   await finish(root, state);
-  return {runId, startedAt: state.startedAt, generatedAt: now(), ...await candidateCounts(directory),
+  const carriedIn = new Set(state.carriedIn || []), ratedThisRun = {postingReviewed: 0, titleOnly: 0};
+  // shortcut: a carried rating counts as carried even if re-rated today; per-row history would be needed to tell.
+  for (const row of (await readLedger(directory)).rows) if (row.state === 'assessed' && !carriedIn.has(row.id)) ratedThisRun[row.assessment.basis === 'Posting reviewed' ? 'postingReviewed' : 'titleOnly']++;
+  const sources = {}, evidence = await optionalRead(path.join(directory, 'source-evidence.jsonl'));
+  for (const text of (evidence || '').split(/\r?\n/).filter(text => text.trim())) {
+    let entry; try { entry = JSON.parse(text); } catch { sources.unreadableLines = (sources.unreadableLines || 0) + 1; continue; }
+    const kind = entry.kind || 'unspecified', status = entry.status || entry.state || 'unspecified';
+    sources[kind] = {...sources[kind], [status]: (sources[kind]?.[status] || 0) + 1};
+  }
+  return {runId, startedAt: state.startedAt, generatedAt: now(), ...await candidateCounts(directory), ratedThisRun, carriedIn: carriedIn.size, sources,
     addedThisRun: added.map(({id, fit, company, title, availability, assessmentBasis, url}) => ({id, fit, company, title, availability, assessmentBasis, url})),
     touchedThisRun: jobs.filter(job => (job.sources || []).some(source => batch.test(source.file || ''))).length,
     importReports: reports, carriedFromEarlierRuns: carried.length, warnings};
@@ -267,6 +306,15 @@ async function finish(root, state) {
   }
 }
 
+const line = row => [row.id, row.company, row.title, row.location, row.url].filter(Boolean).join(' | ');
+function brief(result) {
+  return {runId: result.runId, captured: result.captured,
+    note: 'known: stored or dropped, saved as duplicate; do not read or rate. decidedBefore: decision kept. similar: same company, title and location as the named record; decide. new: read and rate. Resolve by id.',
+    new: result.new.map(line), similar: result.similar.map(row => `${line(row)} ≈ ${row.match}`),
+    known: result.known.map(row => `${row.company} | ${row.title} = ${row.match}`),
+    decidedBefore: result.decidedBefore.map(row => `${line(row)} = ${row.state}${row.fit != null ? ' fit ' + row.fit : ''}${row.reason ? ': ' + row.reason : ''}`)};
+}
+
 async function cli() {
   const [command, ...args] = process.argv.slice(2), options = {}, inputs = [];
   for (let i = 0; i < args.length; i += 2) {
@@ -275,7 +323,7 @@ async function cli() {
   }
   const root = path.resolve(options['--root'] || 'data'), runId = options['--run'];
   if (command === 'init') return initializeRun(root, runId);
-  if (command === 'capture') { check(inputs.length, 'Use --input FILE (repeatable)'); const result = await captureFinds(root, inputs, runId); await noteInputs(root, inputs); return result; }
+  if (command === 'capture') { check(inputs.length, 'Use --input FILE (repeatable)'); const result = await captureFinds(root, inputs, runId); await noteInputs(root, inputs); return brief(result); }
   if (command === 'resolve') { check(inputs.length === 1, 'Use --input FILE'); const result = await resolveFinds(root, parse(await readFile(inputs[0], 'utf8')), runId); await noteInputs(root, inputs); return result; }
   if (command === 'next') return outstanding(root, runId ? runId : (await optionalRead(pointer(root)))?.trim() || null);
   if (command === 'summary') return summarizeRun(root, runId);

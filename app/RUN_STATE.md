@@ -16,16 +16,16 @@ node app/run-state.mjs next
 
 ## init
 
-Run once, before the first external call. If the current run started today and has no summary yet, `init` continues it and prints `resumed: true`; its own open finds then appear in `carried` with its run ID. Otherwise it creates `data/reports/runs/<run-id>/` with the candidate ledger and a manifest (`runId`, `startedAt`, profile hash), makes it the current run and never overwrites an existing run. `uncaptured` lists `.json`/`.jsonl` files in unfinished run folders that capture or resolve never read (the manifest's `inputs`): subagent find lists left by an interruption, or posting extracts that can be reused instead of read again. It also prints `runId`, the run `folder`, the `batch` file name to use for this run's import, and `carried`: finds from earlier runs, including setup captures, that still need work (pending, assessed but not in the inventory, or excluded under a different profile, marked `reassess`). Assessed ones include fit, reasoning and gaps, so they can go into today's batch without another read. A find counts as stored only when an inventory record shares its provider ID or posting URL (or, for a find with neither, its company, title and location); a find that matches a record by name alone is carried with `similar` naming that record. `warnings` lists unreadable ledgers; they are left untouched.
+Run once, before the first external call. If the current run started today and has no summary yet, `init` continues it and prints `resumed: true`; its own open finds then appear in `carried` with its run ID. Otherwise it creates `data/reports/runs/<run-id>/` with the candidate ledger and a manifest (`runId`, `startedAt`, profile hash), makes it the current run and never overwrites an existing run. Either way, open finds of earlier runs are moved into the current run with their state and saved assessment (`carriedIn` in the manifest); their earlier entries become duplicates, so every carried find is decided in the current run without `--run`. `uncaptured` lists `.json`/`.jsonl` files in unfinished run folders that capture or resolve never read (the manifest's `inputs`): subagent find lists left by an interruption, or posting extracts that can be reused instead of read again. It also prints `runId`, the run `folder`, the `batch` file name to use for this run's import, and `carried`: the current run's finds, including those moved in from earlier runs and setup captures, that still need work (pending, assessed but not in the inventory, or excluded under a different profile, marked `reassess`). Assessed ones include fit, reasoning and gaps, so they can go into today's batch without another read. A find counts as stored only when an inventory record shares its provider ID or posting URL (or, for a find with neither, its company, title and location); a find that matches a record by name alone is carried with `similar` naming that record. `warnings` lists unreadable ledgers; they are left untouched.
 
 ## capture
 
 Pass one or more files: subagent result files as written (JSONL, one find per line), a JSON array, or `{"candidates": [...]}`. Each find needs `company` and `title`; `location` (default `Unknown`), `url`, `provider` with `providerJobId`, and `source` (a label, or `{label, ref}`; default the file name) are used when present. Other fields are ignored.
 
-It saves all finds first, then returns them in four groups:
+It saves all finds first, then returns them in four groups. On the command line each find is one line, `id | company | title | location | url`, followed by `≈ <record>` for similar ones and `= <decision>` for decidedBefore; `known` lines give company, title and the matching record; `note` says what each group means.
 
 - `known`: same company and the same provider job ID or posting URL as an inventory record of any status, or as a dropped entry. Saved as duplicate (`r5 (Applied)`, `dropped: <reason>`); do not read or rate them.
-- `decidedBefore`: assessed or excluded in an earlier run under the current profile. The decision is copied onto today's entry; reuse it without another read.
+- `decidedBefore`: already decided in this run, or assessed or excluded in an earlier run under the current profile (copied onto today's entry). Reuse the decision without another read.
 - `similar`: same company, title and location as an inventory record, but no shared ID or URL. Decide yourself whether it is the same vacancy.
 - `new`: everything else. Read, rate or drop these.
 
@@ -41,7 +41,7 @@ Input is a JSON list of decisions, one per find:
  {"id": "9c0d1e2f", "state": "duplicate", "reason": "Same as r12"}]
 ```
 
-`assessed` needs `basis` and `reasoning`. With basis `Posting reviewed` it also needs `evidence`: the posting lines the rating rests on. Use `Title only` when the posting was not read. `fit` and `gaps` are optional. Nothing is filled in by default, so incomplete input is rejected while the source is still at hand. `excluded` and `duplicate` need `reason`. `pending` reopens a find. The profile hash is added automatically. Resolve carried finds with `--run` set to the run they came from. Assessed means rated, not imported.
+`assessed` needs `basis` and `reasoning`. With basis `Posting reviewed` it also needs `evidence`: the posting lines the rating rests on. Use `Title only` when the posting was not read. `fit` and `gaps` are optional. Nothing is filled in by default, so incomplete input is rejected while the source is still at hand. `excluded` and `duplicate` need `reason`. `pending` reopens a find. The profile hash is added automatically. Assessed means rated, not imported.
 
 ## summary
 
@@ -50,9 +50,11 @@ Run it once, before writing the final summary. It ends the run: it sets `finishe
 - `candidates`: this run's finds by state.
 - `addedThisRun`: every inventory record whose first source is this run's batch. It is read from the inventory, so a repeated or interrupted import does not change it. `touchedThisRun` counts all records carrying this run's batch.
 - `importReports`: each importer report for this run's batch with counts and the ambiguous or rejected records still to repair.
+- `ratedThisRun`: assessed finds by basis (`postingReviewed`, `titleOnly`), not counting ratings carried in; `carriedIn` the number of finds moved in from earlier runs.
+- `sources`: source-evidence.jsonl lines counted per `kind` and `status` (`unspecified` when missing, `unreadableLines` for invalid lines).
 - `carriedFromEarlierRuns` and `warnings`.
 
-Source coverage (employers, portals, alerts) is not derived here; take it from `source-evidence.jsonl` and `coverage.json`. Report metrics recorded nowhere as unknown, never as zero.
+Due sources are not derived here; take them from `coverage.json`. Report metrics recorded nowhere as unknown, never as zero.
 
 ## next
 
