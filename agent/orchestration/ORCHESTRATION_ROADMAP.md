@@ -60,7 +60,7 @@ Use isolated rehearsal inventories and fictional profiles, **never real applicat
 
 ## Current next action
 
-Decide whether to shrink `run-state.mjs` to the capture check and return to the routine's plain ledger. The proposals are in the milestone 8 report. An unannounced-kill or next-day-resume test remains untested.
+Following Codex's review of milestone 8, recovery is made cheaper before anything is removed: `init` continues today's unfinished run and lists result files never captured; `summary` ends a run. Next, one capped stress scenario per arm on the same base (state handling the only difference): normal work over several sources, an unannounced kill after a subagent result file is saved, then a next-day run with the normal prompt. Keep the carry-over only if it prevents a loss the plain ledger misses; otherwise shrink to the capture check.
 
 ## Why this design
 

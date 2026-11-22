@@ -4,6 +4,10 @@
 
 --------------------
 
+## 2026-11-22 — Cheaper resume for the search state helper
+
+- `run-state init` continues today's unfinished run instead of starting a new one and lists result files an interruption left uncaptured; `summary` ends a run. Routine tells a resumed run to continue sources from saved evidence and reuse saved extracts. Fixture tests and full npm test pass; no agent run yet. Details in agent/orchestration/ORCHESTRATION_HISTORY.md.
+
 ## 2026-11-22 — Review of slimmer orchestration rehearsal (Codex)
 
 - Checked retained inventories and CLI costs; recorded limits and a targeted unexpected-interruption/next-day test proposal before removing carry-over. No runtime changes or new runs. See agent/orchestration/ORCHESTRATION_HISTORY.md and HANDOFF_AGENT.md.

@@ -41,18 +41,49 @@ export async function readRun(root, runId) {
   return state;
 }
 
+const pad = n => String(n).padStart(2, '0');
+const localDate = date => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+const reserved = new Set(['run-ledger.jsonl', 'run-completion.json', 'source-evidence.jsonl']);
+async function describe(root, state, resumed) {
+  const data = path.basename(root);
+  return {runId: state.runId, folder: `${data}/reports/runs/${state.runId}`, batch: `${data}/incoming/${localDate(new Date(state.startedAt))}-${state.runId}.json`,
+    ...(resumed && {resumed: true}), ...await outstanding(root, state.runId, resumed)};
+}
 export async function initializeRun(root, runId = null) {
   const started = new Date();
+  if (!runId) {
+    // A same-day run never summarized is continued, so a restarted session keeps its finds, extracts and batch name.
+    const open = (await optionalRead(pointer(root)))?.trim(), state = open && await readRun(root, open).catch(() => null);
+    if (state?.schemaVersion === 3 && !state.finishedAt && localDate(new Date(state.startedAt)) === localDate(started)) return describe(root, state, true);
+  }
   runId = name(runId || `run-${started.toISOString().replace(/\D/g, '').slice(0, 12)}-${randomBytes(2).toString('hex')}`);
   const directory = await runDirectory(root, runId, true), manifest = path.join(directory, 'run-completion.json');
   check(await optionalRead(manifest) === null, 'Run already exists; never overwrite it');
   const profile = await profileRevision(root);
   await initializeLedger(directory);
-  await writeJsonAtomic(manifest, {schemaVersion: 3, runId, startedAt: started.toISOString(), profileRevision: profile});
+  const state = {schemaVersion: 3, runId, startedAt: started.toISOString(), profileRevision: profile};
+  await writeJsonAtomic(manifest, state);
   await writeFile(pointer(root), runId + '\n');
-  const local = `${started.getFullYear()}-${String(started.getMonth() + 1).padStart(2, '0')}-${String(started.getDate()).padStart(2, '0')}`;
-  const data = path.basename(root);
-  return {runId, folder: `${data}/reports/runs/${runId}`, batch: `${data}/incoming/${local}-${runId}.json`, ...await outstanding(root, runId)};
+  return describe(root, state, false);
+}
+// Files the helper has read are listed in their run's manifest, so init can point at result files an interruption left uncaptured.
+async function noteInputs(root, files) {
+  const runs = await runsDirectory(root);
+  for (const file of files) {
+    const folder = await realpath(path.dirname(path.resolve(file)));
+    if (path.dirname(folder) !== runs) continue;
+    const manifest = path.join(folder, 'run-completion.json'), raw = await optionalRead(manifest);
+    if (raw === null) continue;
+    const state = parse(raw);
+    await writeJsonAtomic(manifest, {...state, inputs: [...new Set([...(state.inputs || []), path.basename(file)])]});
+  }
+}
+async function uncaptured(root, run, folder) {
+  const state = parse(await optionalRead(path.join(folder, 'run-completion.json')) ?? 'null');
+  if (state?.schemaVersion !== 3 || state.finishedAt) return [];
+  const used = new Set(state.inputs || []);
+  return (await readdir(folder, {withFileTypes: true})).filter(file => file.isFile() && /\.jsonl?$/.test(file.name) && !reserved.has(file.name) && !used.has(file.name))
+    .map(file => `${path.basename(root)}/reports/runs/${run}/${file.name}`);
 }
 
 // Identity matching against the inventory (any status) and the coverage.json dropped list.
@@ -179,16 +210,18 @@ async function candidateCounts(directory) {
 }
 
 // Work carried from earlier runs: undecided finds, assessed finds not in the inventory, exclusions made under another profile.
-export async function outstanding(root, currentRunId = null) {
+export async function outstanding(root, currentRunId = null, includeCurrent = false) {
   const directory = await runsDirectory(root), profile = await profileRevision(root);
   const current = currentRunId ? await readRun(root, currentRunId) : null;
-  const {stored: inv} = await indexes(root), carried = [], warnings = [];
+  const {stored: inv} = await indexes(root), carried = [], files = [], warnings = [];
   for (const entry of await readdir(directory, {withFileTypes: true})) {
     if (entry.isFile()) continue;
     if (!entry.isDirectory()) { warnings.push({run: entry.name, reason: 'Not an ordinary run directory; preserved'}); continue; }
-    if (entry.name === currentRunId || await optionalRead(path.join(directory, entry.name, 'run-ledger.jsonl')) === null) continue;
+    if (entry.name === currentRunId && !includeCurrent || await optionalRead(path.join(directory, entry.name, 'run-ledger.jsonl')) === null) continue;
     let rows; try { rows = (await readLedger(path.join(directory, entry.name))).rows; }
     catch (error) { warnings.push({run: entry.name, reason: `Ledger: ${error.message}; preserved`}); continue; }
+    try { files.push(...await uncaptured(root, entry.name, path.join(directory, entry.name))); }
+    catch (error) { warnings.push({run: entry.name, reason: `Manifest: ${error.message}; preserved`}); }
     const stale = row => (row.assessment?.profileRevision || row.profileRevision) !== profile;
     // A duplicate points at a record or candidate that is reassessed itself, so only exclusions go stale.
     for (const row of rows) {
@@ -198,7 +231,7 @@ export async function outstanding(root, currentRunId = null) {
           ...(row.assessment && {fit: row.assessment.fit, reasoning: row.assessment.reasoning, gaps: row.assessment.gaps}), ...(row.reason && {reason: row.reason}), ...(similar && {similar}), ...(row.state !== 'pending' && stale(row) && {reassess: true})});
     }
   }
-  return {profileChanged: !!current && current.profileRevision !== profile, carried, warnings};
+  return {profileChanged: !!current && current.profileRevision !== profile, carried, uncaptured: files, warnings};
 }
 
 // Records whose first source is this run's batch were added by this run, however many attempts it took.
@@ -215,10 +248,23 @@ export async function summarizeRun(root, runId = null) {
       unresolved: (report.outcomes || []).filter(item => ['ambiguous', 'rejected'].includes(item.outcome)).map(({index, company, title, outcome}) => ({index, company, title, outcome}))});
   }
   const {carried, warnings} = await outstanding(root, runId);
+  await finish(root, state);
   return {runId, startedAt: state.startedAt, generatedAt: now(), ...await candidateCounts(directory),
     addedThisRun: added.map(({id, fit, company, title, availability, assessmentBasis, url}) => ({id, fit, company, title, availability, assessmentBasis, url})),
     touchedThisRun: jobs.filter(job => (job.sources || []).some(source => batch.test(source.file || ''))).length,
     importReports: reports, carriedFromEarlierRuns: carried.length, warnings};
+}
+
+// Summary ends the run, and any earlier unfinished one: their open finds stay carried, but init no longer resumes them or lists their files.
+async function finish(root, state) {
+  const directory = await runsDirectory(root);
+  for (const entry of await readdir(directory, {withFileTypes: true})) {
+    if (!entry.isDirectory()) continue;
+    const manifest = path.join(directory, entry.name, 'run-completion.json');
+    let other; try { other = parse(await optionalRead(manifest) ?? 'null'); } catch { continue; }
+    if (other?.schemaVersion === 3 && !other.finishedAt && other.startedAt <= state.startedAt)
+      await writeJsonAtomic(manifest, {...other, finishedAt: now(), ...(other.runId !== state.runId && {closedBy: state.runId})});
+  }
 }
 
 async function cli() {
@@ -229,8 +275,8 @@ async function cli() {
   }
   const root = path.resolve(options['--root'] || 'data'), runId = options['--run'];
   if (command === 'init') return initializeRun(root, runId);
-  if (command === 'capture') { check(inputs.length, 'Use --input FILE (repeatable)'); return captureFinds(root, inputs, runId); }
-  if (command === 'resolve') { check(inputs.length === 1, 'Use --input FILE'); return resolveFinds(root, parse(await readFile(inputs[0], 'utf8')), runId); }
+  if (command === 'capture') { check(inputs.length, 'Use --input FILE (repeatable)'); const result = await captureFinds(root, inputs, runId); await noteInputs(root, inputs); return result; }
+  if (command === 'resolve') { check(inputs.length === 1, 'Use --input FILE'); const result = await resolveFinds(root, parse(await readFile(inputs[0], 'utf8')), runId); await noteInputs(root, inputs); return result; }
   if (command === 'next') return outstanding(root, runId ? runId : (await optionalRead(pointer(root)))?.trim() || null);
   if (command === 'summary') return summarizeRun(root, runId);
   throw Error('Commands: init, capture, resolve, next, summary');

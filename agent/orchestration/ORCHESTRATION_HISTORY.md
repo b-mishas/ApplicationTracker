@@ -2,6 +2,15 @@
 
 Detailed, durable record for future development sessions. Newest verified milestone first. Record implementation, rationale, verification and limitations here; amend [ORCHESTRATION_ROADMAP.md](ORCHESTRATION_ROADMAP.md) only when the overall plan changes. Runtime command/field contracts belong in the linked app documentation; checkout status belongs in [HANDOFF_AGENT.md](../../HANDOFF_AGENT.md).
 
+## 2026-11-22 — Cheaper resume after milestone 8 review (Claude)
+
+- Cause addressed: in milestone 8 the resumed helper arm started a new run, inspected the old one and rebuilt its batch (16 vs 11.5 lead messages; p2 +46% input), and one resume re-fetched postings it already had.
+- `init` now continues the current run when it started today and has no summary (`resumed: true`, same run ID and batch name; its own open finds appear in `carried`). A next-day run still starts a new run and carries open finds.
+- Capture and resolve record their input file names in the manifest (`inputs`); `init` and `next` list `uncaptured` .json/.jsonl files in unfinished run folders: subagent find lists left by an interruption, or posting extracts to reuse.
+- `summary` ends the run (`finishedAt`) and any earlier unfinished one (`closedBy`), so their files are listed once; open finds stay carried. It still writes no ledger or inventory.
+- Routine (source = template): on `resumed`, continue the run; take source attempts from source-evidence.jsonl, continue partial or unstarted sources, retry failures only under the retry rules (an attempt is not a check); capture uncaptured find lists and rate from saved extracts. Codex's point adopted: no blanket same-day no-fetch rule. Routine 42.3k → 42.8k characters.
+- Verified: 9 run-state fixture scenarios (new: same-day resume with uncaptured files, summary ending it, next-day listing of an earlier run's file until a summary closes it); earlier scenarios now model next-day runs. Full npm test exit 0; prompt parity. Not verified by an agent run.
+
 ## 2026-11-22 — Codex review of milestone 8
 
 - Independently checked final inventories and CLI costs; retained findings support reducing resume overhead, not deleting untested cross-day recovery. Plain r1's out-of-scope import and helper r2's missed refresh prevent describing correctness as fully equal.

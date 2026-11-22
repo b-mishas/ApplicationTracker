@@ -34,6 +34,12 @@ async function importJobs(runId, jobs) {
   await writeFile(path.join(root, 'incoming', filename), JSON.stringify(payload));
   return importBatch({root, batchPath: path.join('incoming', filename)});
 }
+// The next scheduled run: the current one is moved to yesterday, so init starts a new run instead of continuing it.
+async function nextDay() {
+  const id = (await readFile(path.join(root, 'reports', 'runs', 'CURRENT'), 'utf8')).trim(), file = path.join(root, 'reports', 'runs', id, 'run-completion.json');
+  const state = JSON.parse(await readFile(file, 'utf8'));
+  await writeFile(file, JSON.stringify({...state, startedAt: new Date(Date.parse(state.startedAt) - 86400000).toISOString()}));
+}
 const run = (...args) => JSON.parse(execFileSync(process.execPath, [cli, ...args, '--root', root], {encoding: 'utf8'}));
 let passed = 0;
 async function test(label, fn) { await fixture(fn); console.log(`ok ${++passed} ${label}`); }
@@ -112,7 +118,8 @@ await test('an interrupted run is resumed from files: carried work and earlier d
   await initializeRun(root);
   const found = await capture([line(1), line(2), line(3)]);
   await resolveFinds(root, [{id: found.new[0].id, state: 'assessed', basis: 'Posting reviewed', fit: 5, reasoning: 'Strong Java match', evidence: 'Java 17 essential'}, {id: found.new[1].id, state: 'excluded', reason: 'On-site in another country'}]);
-  // Interrupted before import. The next run starts, lists the leftovers, and meets the same finds again.
+  // Interrupted before import. The next day's run lists the leftovers and meets the same finds again.
+  await nextDay();
   const resumed = await initializeRun(root);
   assert.deepEqual(resumed.carried.map(row => [row.title, row.state]), [['Engineer 1', 'assessed'], ['Engineer 3', 'pending']]);
   const again = await capture([line(1), line(2), line(3)]);
@@ -130,6 +137,7 @@ await test('a new requisition with a stored title survives an interruption as si
   const found = await capture([line(8, {providerJobId: '88', url: 'https://example.test/jobs/88'})]);
   assert.equal(found.similar.length, 1);
   await resolveFinds(root, [{id: found.similar[0].id, state: 'assessed', basis: 'Posting reviewed', fit: 4, reasoning: 'Second opening', evidence: 'Requisition 88, Java essential'}]);
+  await nextDay();
   const next = await initializeRun(root);
   assert.deepEqual(next.carried.map(row => [row.title, row.state, row.similar]), [['Engineer 8', 'assessed', 'r8 (Applied)']]);
 });
@@ -138,6 +146,7 @@ await test('an exclusion reused after rediscovery stays resolved across restarts
   await initializeRun(root);
   const first = await capture([line(4)]);
   await resolveFinds(root, [{id: first.new[0].id, state: 'excluded', reason: 'Too junior'}]);
+  await nextDay();
   await initializeRun(root);
   const again = await capture([line(4)]);
   assert.deepEqual(again.decidedBefore.map(row => [row.state, row.reason]), [['excluded', 'Too junior']]);
@@ -145,12 +154,13 @@ await test('an exclusion reused after rediscovery stays resolved across restarts
   assert.deepEqual((await initializeRun(root)).carried, []);
 });
 
-await test('profile change re-opens exclusions only; duplicates stay; summary is read-only; bad ledgers are preserved', async () => {
+await test('profile change re-opens exclusions only; duplicates stay; summary changes only the manifest; bad ledgers are preserved', async () => {
   await initializeRun(root);
   await commit(root, data => { data.jobs.push({id: 'r5', company: 'Example', title: 'Engineer 5', status: 'Applied', provider: 'ATS', providerJobId: '5', url: job(5).url, linkType: 'posting', notes: ''}); });
   const found = await capture([line(4), line(5)]);
   await resolveFinds(root, [{id: found.new[0].id, state: 'excluded', reason: 'Too junior'}]);
   await writeFile(path.resolve(root, '../profile/candidate_profile.md'), 'Changed profile');
+  await nextDay();
   const next = await initializeRun(root);
   assert.equal(next.profileChanged, false, 'New run starts on the new profile');
   assert.deepEqual(next.carried.map(row => [row.title, row.reassess]), [['Engineer 4', true]]);
@@ -158,9 +168,40 @@ await test('profile change re-opens exclusions only; duplicates stay; summary is
   await writeFile(path.join(broken, 'run-ledger.jsonl'), '{"schemaVersion":0}\n');
   assert.ok((await outstanding(root)).warnings.some(warning => warning.run === 'legacy-old'));
   assert.equal(await readFile(path.join(broken, 'run-ledger.jsonl'), 'utf8'), '{"schemaVersion":0}\n');
-  const manifest = path.join(root, 'reports', 'runs', next.runId, 'run-completion.json'), before = await readFile(manifest, 'utf8');
+  const folder = path.join(root, 'reports', 'runs', next.runId), before = await readFile(path.join(folder, 'run-ledger.jsonl'), 'utf8'), jobs = await readFile(path.join(root, 'jobs.json'), 'utf8');
   assert.equal(run('summary').runId, next.runId);
-  assert.equal(await readFile(manifest, 'utf8'), before);
+  assert.equal(await readFile(path.join(folder, 'run-ledger.jsonl'), 'utf8'), before); assert.equal(await readFile(path.join(root, 'jobs.json'), 'utf8'), jobs);
+  assert.match(JSON.parse(await readFile(path.join(folder, 'run-completion.json'), 'utf8')).finishedAt, /^\d{4}-/);
   await assert.rejects(initializeRun(root, next.runId), /never overwrite/);
+});
+await test('a same-day restart continues the run and lists result files never captured; summary ends it', async () => {
+  const first = run('init'), folder = path.join(root, 'reports', 'runs', first.runId);
+  await writeFile(path.join(folder, 'employer-a.jsonl'), [line(1), line(2)].join('\n'));
+  await writeFile(path.join(folder, 'postings-a.jsonl'), JSON.stringify({url: job(1).url, advertisedTitle: 'Engineer 1', company: 'Example', requirements: ['Java']}));
+  const found = run('capture', '--input', path.join(folder, 'employer-a.jsonl'));
+  await writeFile(path.join(folder, 'decisions-1.json'), JSON.stringify([{id: found.new[0].id, state: 'assessed', basis: 'Posting reviewed', fit: 4, reasoning: 'Java match', evidence: 'Requires Java'}]));
+  run('resolve', '--input', path.join(folder, 'decisions-1.json'));
+  // Killed after a subagent wrote its file, before capture.
+  await writeFile(path.join(folder, 'employer-b.jsonl'), line(3));
+  const again = run('init');
+  assert.deepEqual([again.runId, again.resumed, again.batch], [first.runId, true, first.batch]);
+  assert.deepEqual(again.carried.map(row => [row.run, row.title, row.state, row.fit ?? null]), [[first.runId, 'Engineer 1', 'assessed', 4], [first.runId, 'Engineer 2', 'pending', null]]);
+  assert.deepEqual(again.uncaptured.map(file => path.basename(file)).sort(), ['employer-b.jsonl', 'postings-a.jsonl']);
+  assert.equal(again.uncaptured[0].split('/').slice(0, 3).join('/'), 'data/reports/runs');
+  run('capture', '--input', path.join(folder, 'employer-b.jsonl'));
+  run('summary');
+  const later = run('init');
+  assert.notEqual(later.runId, first.runId); assert.equal(later.resumed, undefined);
+  assert.deepEqual(later.uncaptured, [], 'A finished run lists no files');
+  assert.deepEqual(later.carried.map(row => row.title), ['Engineer 1', 'Engineer 2', 'Engineer 3']);
+  // Next day after an unannounced stop: a new run lists the old run's uncaptured file until a summary closes it.
+  await writeFile(path.join(root, 'reports', 'runs', later.runId, 'employer-c.jsonl'), line(4));
+  await nextDay();
+  const nextRun = run('init');
+  assert.notEqual(nextRun.runId, later.runId);
+  assert.deepEqual(nextRun.uncaptured, [`data/reports/runs/${later.runId}/employer-c.jsonl`]);
+  run('summary');
+  assert.equal(JSON.parse(await readFile(path.join(root, 'reports', 'runs', later.runId, 'run-completion.json'), 'utf8')).closedBy, nextRun.runId);
+  assert.deepEqual(run('init').uncaptured, []);
 });
 console.log(`${passed} run-state scenarios passed (temporary fixtures only).`);

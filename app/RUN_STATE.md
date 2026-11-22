@@ -16,7 +16,7 @@ node app/run-state.mjs next
 
 ## init
 
-Run once, before the first external call. It creates `data/reports/runs/<run-id>/` with the candidate ledger and a manifest (`runId`, `startedAt`, profile hash), makes it the current run and never overwrites an existing run. It prints `runId`, the run `folder`, the `batch` file name to use for this run's import, and `carried`: finds from earlier runs, including setup captures, that still need work (pending, assessed but not in the inventory, or excluded under a different profile, marked `reassess`). Assessed ones include fit, reasoning and gaps, so they can go into today's batch without another read. A find counts as stored only when an inventory record shares its provider ID or posting URL (or, for a find with neither, its company, title and location); a find that matches a record by name alone is carried with `similar` naming that record. `warnings` lists unreadable ledgers; they are left untouched.
+Run once, before the first external call. If the current run started today and has no summary yet, `init` continues it and prints `resumed: true`; its own open finds then appear in `carried` with its run ID. Otherwise it creates `data/reports/runs/<run-id>/` with the candidate ledger and a manifest (`runId`, `startedAt`, profile hash), makes it the current run and never overwrites an existing run. `uncaptured` lists `.json`/`.jsonl` files in unfinished run folders that capture or resolve never read (the manifest's `inputs`): subagent find lists left by an interruption, or posting extracts that can be reused instead of read again. It also prints `runId`, the run `folder`, the `batch` file name to use for this run's import, and `carried`: finds from earlier runs, including setup captures, that still need work (pending, assessed but not in the inventory, or excluded under a different profile, marked `reassess`). Assessed ones include fit, reasoning and gaps, so they can go into today's batch without another read. A find counts as stored only when an inventory record shares its provider ID or posting URL (or, for a find with neither, its company, title and location); a find that matches a record by name alone is carried with `similar` naming that record. `warnings` lists unreadable ledgers; they are left untouched.
 
 ## capture
 
@@ -45,7 +45,7 @@ Input is a JSON list of decisions, one per find:
 
 ## summary
 
-Read-only. Run it before writing the final summary:
+Run it once, before writing the final summary. It ends the run: it sets `finishedAt` in the manifest of this run and of any earlier unfinished run (`closedBy` names this run), so the next `init` starts a new run and no longer lists their files; their open finds stay carried. It writes nothing else:
 
 - `candidates`: this run's finds by state.
 - `addedThisRun`: every inventory record whose first source is this run's batch. It is read from the inventory, so a repeated or interrupted import does not change it. `touchedThisRun` counts all records carrying this run's batch.
@@ -56,7 +56,7 @@ Source coverage (employers, portals, alerts) is not derived here; take it from `
 
 ## next
 
-Prints the `carried` list again without starting a run.
+Prints the `carried` and `uncaptured` lists of earlier runs again without starting or continuing a run.
 
 ## Safety and retention
 
