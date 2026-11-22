@@ -4,6 +4,21 @@
 
 --------------------
 
+## 2026-11-22 — Review of slimmer orchestration rehearsal (Codex)
+
+- Checked retained inventories and CLI costs; recorded limits and a targeted unexpected-interruption/next-day test proposal before removing carry-over. No runtime changes or new runs. See agent/orchestration/ORCHESTRATION_HISTORY.md and HANDOFF_AGENT.md.
+
+
+## 2026-11-21 — Hand-off and recovery rehearsal (milestone 8)
+
+- Ran the routine with run-state v3 (49aac06) and without it (b66c262), two repetitions each. Each repetition used a delegated employer batch with six known vacancies under other URLs or IDs, stopped after rating and resumed in a fresh session.
+- Results:
+  - Both arms imported all 4 relevant vacancies, kept the same-title new requisition and made no duplicate imports.
+  - Both recovered every saved rating.
+  - The helper avoided rating known vacancies (0 vs 3 per repetition), but repeated more work after resuming.
+  - It cost 15% more (USD 1.75 vs 1.52; input +17%).
+- Decision rule says shrink to the capture check. Report: rehearsal/runs/2026-11-21-handoff-recovery/evaluation/REPORT.md; details in agent/orchestration/ORCHESTRATION_HISTORY.md.
+
 ## 2026-11-20 — Slim search state helper
 
 - run-state.mjs reduced to init, capture, resolve, summary and next after the small-model rehearsal showed 57% more input for equal results. Capture checks every find against jobs.json and the dropped list and reports earlier decisions; no task list; the run ID stays inside ROOT. Fixture tests and full npm test pass; no agent run yet. Details in agent/orchestration/ORCHESTRATION_HISTORY.md.

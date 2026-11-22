@@ -2,6 +2,31 @@
 
 Detailed, durable record for future development sessions. Newest verified milestone first. Record implementation, rationale, verification and limitations here; amend [ORCHESTRATION_ROADMAP.md](ORCHESTRATION_ROADMAP.md) only when the overall plan changes. Runtime command/field contracts belong in the linked app documentation; checkout status belongs in [HANDOFF_AGENT.md](../../HANDOFF_AGENT.md).
 
+## 2026-11-22 — Codex review of milestone 8
+
+- Independently checked final inventories and CLI costs; retained findings support reducing resume overhead, not deleting untested cross-day recovery. Plain r1's out-of-scope import and helper r2's missed refresh prevent describing correctness as fully equal.
+- Proposed a matched-base, bounded unexpected-interruption/next-day comparison before removing carry-over, plus reuse of saved evidence without suppressing incomplete work or legitimate retries. No runtime changes or new rehearsals.
+- Detailed review: rehearsal/runs/2026-11-21-handoff-recovery/evaluation/CODEX_REVIEW.md; current state in HANDOFF_AGENT.md. Roadmap unchanged pending design decision.
+
+## 2026-11-21 — Hand-off and recovery rehearsal, milestone 8 (Claude)
+
+- Arms: A at 49aac06 (run-state v3) vs B at b66c262 (plain routine and agent-kept ledger). Two repetitions per arm, each in its own installation built from pristine templates by script. Fictional Alex Weber; one fictional employer (Nordkamm Pharma) served on 127.0.0.1:18765 with a request log. 19 openings:
+  - 6 known-vacancy traps: two name aliases of StepStone/LinkedIn records, one ID with a tracking-parameter URL, one exact ID/URL, one dropped, one reworded title identified by a stored note;
+  - NK-24388, a second requisition with a stored record's company, title and location;
+  - 3 other relevant new openings, 2 to read and drop, 7 out of scope.
+- Launch as in milestone 6 (Sonnet 5.5 lead, Haiku 5.5 subagents, desktop environment stripped), plus an identical delegation note in both arms (Haiku employer subagent; posting subagents from three postings up). p1 used a prompt-level stop after rating and before the batch, with a kill guard on importer calls that never fired. p2 was a fresh session told only that an earlier session was interrupted. Fixture first used port 8765, the personal tracker's server; it was moved before any run.
+- Measured outcomes:
+  - Both arms imported 4/4 relevant vacancies, kept NK-24388, made no duplicate imports and changed no stored record.
+  - After resume, both reused every saved rating unchanged and re-rated nothing.
+  - A rated no known vacancy; B wrote fits for 3 per repetition (name aliases and the reworded title; none imported). Both sent those 3 postings to the reader.
+  - A repeated more work after resume: r1 retried a failed refresh; r2 re-fetched the listing twice and 6 postings. B r1 re-fetched the listing once.
+  - B-r1 imported one out-of-scope role (Ingelheim on-site).
+- Cost (measured): A USD 1.75 vs B 1.52 per repetition (+15%); input 2.35M vs 2.01M (+17%). p1 was about equal (+7% cost, +1% input); p2 cost +26% and used +46% input (16 vs 11.5 lead messages: init/next, inspecting the old run, schema read).
+- Summary accuracy (manual check): B complete in both repetitions. A-r1 reported posting and subagent counters as inferred or unknown after resume; A-r2 reported refreshes due 0 although the Grover refresh was due and never attempted.
+- Decision rule: shrink. A lost nothing but repeated more work and cost over 10% more. Its one win, no ratings of known vacancies, comes from the capture check. Proposals (not implemented): capture-check-only script; the plain ledger as the record; a resume sentence against re-fetching today's attempted work; an unannounced-kill and next-day-resume test.
+- Limits: 2 repetitions, one local board, announced prompt-level stop, Windows 11, CLI 2.1.233.
+- Evidence: rehearsal/runs/2026-11-21-handoff-recovery/ (PROTOCOL.md, evaluation/REPORT.md, comparison.json, streams, native logs, server log, snapshots, scripts).
+
 ## 2026-11-20 — Slim helper after small-model rehearsal (Claude)
 
 - Milestone 6 showed equal outcomes and 57% more input with helpers, mostly from extra lead turns (helper calls, reading RUN_STATE.md, task updates, reading postings itself). Codex's review (rehearsal evaluation/CODEX_SUGGESTIONS.md) proposed the same direction: one capture-plus-check call, tasks only where work carries over, run ID kept inside ROOT, and a hand-off/interruption rehearsal next.

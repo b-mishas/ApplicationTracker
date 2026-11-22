@@ -53,11 +53,14 @@ Use isolated rehearsal inventories and fictional profiles, **never real applicat
 - [x] **6. Small-model acceptance:** a multi-posting rehearsal on the routine's intended models (smallest/middle subagents) with and without the state helpers, comparing retained vacancies, summary accuracy and native token use. **Result (2026-11-20, one run per arm):** equal retention, no trap reads and exact counts in both arms; helpers cost 57% more input, so the decision rule says cut further. Recovery across runs was not exercised.
 
 - [x] **7. Slim helper:** after milestone 6 and Codex's review, one helper with init, capture (with the inventory/dropped check and earlier-run decisions), resolve (short ids, flat fields) and summary; no task list; current run found from `CURRENT`; posting reads delegated from three postings up. Fixture-tested; no agent run yet.
-- [ ] **8. Hand-off and recovery rehearsal:** same reader model and delegation policy in both arms; a delegated employer batch containing known vacancies under alternate URLs and IDs; an interruption after assessment and before import, resumed by a fresh agent. Compare retained vacancies, repeated reads and ratings, duplicate imports, summary accuracy, native tokens and CLI cost against the plain routine (b66c262).
+- [x] **8. Hand-off and recovery rehearsal:** same reader model and delegation policy in both arms; a delegated employer batch containing known vacancies under alternate URLs and IDs; an interruption after assessment and before import, resumed by a fresh agent. Compare retained vacancies, repeated reads and ratings, duplicate imports, summary accuracy, native tokens and CLI cost against the plain routine (b66c262). **Result (2026-11-21, two repetitions per arm, prompt-level stop):**
+  - Both arms lost nothing, made no duplicate imports, kept the same-title new requisition and reused every saved rating.
+  - The helper rated no known vacancy (plain: 3 per repetition, none imported), but it repeated more work after resuming.
+  - It cost 15% more, so the decision rule says shrink to the capture check.
 
 ## Current next action
 
-Milestone 8. The helper earns its cost only if it pays for itself where work changes hands or is interrupted; if not, keep only the capture check as a small script.
+Decide whether to shrink `run-state.mjs` to the capture check and return to the routine's plain ledger. The proposals are in the milestone 8 report. An unannounced-kill or next-day-resume test remains untested.
 
 ## Why this design
 

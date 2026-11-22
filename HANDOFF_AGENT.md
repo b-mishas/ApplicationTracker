@@ -1,22 +1,23 @@
 # Agent handoff
 
-Updated 2026-11-20T21:50Z, Claude. Scope: slim the search state helper after the milestone 6 rehearsal and Codex's review, plus three fixes from Codex's code review. main at a341f34 (Wrapper commits by another assistant on top of 232d5ed), level with the local origin/main ref; remote/CI unverified. The slim helper below is **uncommitted**. `design/` is unrelated untracked work. No packaging or installed-automation change.
+Updated 2026-11-22T00:27Z, Codex. Scope: rehearsal review and actionable guidance for Claude. main at 49aac06, level with local origin/main; remote/CI unverified. run-state v3 remains implemented; further simplification is proposed.
 
-## Changed (uncommitted)
+## Verified baseline
 
-- `app/run-state.mjs` v3, the agent's only state helper: `init` (generates the run ID, writes `data/reports/runs/CURRENT`, prints run folder, batch file name and carried finds with saved fit/reasoning), `capture` (accepts subagent JSONL as written; saves first, then auto-resolves finds sharing a provider ID or URL with any jobs.json record or dropped entry as duplicate; returns new / known / similar / decidedBefore with 8-character ids), `resolve` (flat decisions, short ids, profile hash added), `summary`, `next`. `--root` defaults to `data`. Task list, `task`/`read`, scope fields removed; v2 manifests still readable.
-- Codex review fixes: delivery needs a shared provider ID or URL (name match only for finds with neither; otherwise carried as `similar`); rediscovered vacancies keep one open entry (decision copied to today, earlier rows become duplicates); `resolve` requires explicit basis and, for Posting reviewed, evidence.
-- Routine and setup (source = template): command lines inline, one resolve per rating round, coverage counts from source-evidence.jsonl and unfinished work in coverage.json, postings delegated from three up. Routine 41.4k → 42.3k characters.
-- RUN_STATE.md rewritten; CANDIDATE_STATE.md, SEARCH_WORKFLOW.md, INTERFACE_FOR_TRACKER.md aligned. Roadmap amended (invariants, milestone 7 done, milestone 8 next); ORCHESTRATION_HISTORY, HISTORY and PLAN updated.
+Milestone 8: two repetitions/arm, one fictional employer, announced stop after saved ratings. Both retained 4/4 relevant vacancies; helper cost $1.75 vs $1.52 (+14.9%). Helper avoided three known-role ratings but not their posting reads; repeated more work on resume. Plain imported one out-of-scope role; helper missed a due refresh. Codex checked final inventories and cumulative CLI costs; other measurements reviewed from retained scoring/report, not fully reconstructed. No tests/runs launched.
 
-## Verification
+[Detailed review](rehearsal/runs/2026-11-21-handoff-recovery/evaluation/CODEX_REVIEW.md) and [Claude report](rehearsal/runs/2026-11-21-handoff-recovery/evaluation/REPORT.md) are Git-ignored evidence.
 
-8 run-state fixture scenarios pass, including the three Codex review cases, CLI end to end, known/similar/dropped/other-employer IDs, rejected and ambiguous imports carried, repeated import, interruption resume reusing earlier decisions, profile change and read-only summary. Full `npm test` exit 0; prompt parity and `git diff --check` pass. No agent run on this version.
+## Guidance for Claude: proposed next work
 
-## Known limits
+**1. Representative test.** Reuse the fixture/server/scorer. Three source surfaces, about 12–20 plausible finds: cross-source aliases, a distinct same-title requisition, an out-of-scope role, partial pagination, a transient access failure and a due refresh. Freeze ground truth first. Compare plain ledger and helper on the same current base, model and delegation policy. Measure ordinary uninterrupted work as well as recovery; do not give state helpers only favourable scenarios.
 
-Name-only matches are returned as `similar`, not skipped, so aliases and reworded titles still need the agent's judgment. Dropped entries without ID or URL never match. Whether the slim version recovers the 57% overhead is an estimate, not measured. The installed scheduled routine was not checked or changed.
+**2. Cheap verification first.** Reuse existing deterministic tests for identity, stale profiles, old pending work and import-commit-before-acknowledgement; add only missing assertions. These need no model calls. Then one agent pair for normal work. Exercise fresh-session recovery from saved snapshots; label manually seeded snapshots as synthetic, not evidence of automatic checkpoint creation. One actual unannounced interruption at a saved subagent-result boundary tests checkpoint discovery. Next-day resume receives the normal daily prompt, no rescue-file hint. Keep prior partial assessments and unfinished coverage in the fixture.
 
-## Next action
+**3. Control spending.** Write the protocol and total cost ceiling before runs. Pin models explicitly; for Codex subagents use gpt-6.1-sol Medium, never inherited Astra. Use compact realistic postings, local fixtures, scripted scoring and small logs. Record cached/uncached input separately and actual cost. Stop on correctness failure, inspect artifacts, rerun only the failed case. One pair is directional; repeat only when needed for a decision. No broad browser/Gmail/portal suite yet.
 
-User decides on committing (`[Agent]`). Then roadmap milestone 8: a hand-off and recovery rehearsal (same reader model and delegation in both arms, delegated employer batch with known vacancies under alternate URLs/IDs, interruption after assessment) against b66c262, reusing `rehearsal/runs/2026-11-21-small-model-acceptance/evaluation/run-arm.mjs`. No active operations.
+**4. Simplification candidates.** Keep capture-time known/similar/new checks, durable assessments and discoverable pending work. Prefer one startup read, batched saves and inventory-derived delivery. Continue the same logical run within a day; next-day work gets a new date/run while referencing unfinished items and rechecking due work. Avoid separate helper calls solely for bookkeeping. Reuse sufficient evidence; partial/failed attempts remain incomplete and may need bounded retries. Remove extra commands only if plain state preserves these guarantees more cheaply.
+
+## Limits and checkout
+
+Recovery means continuing saved work after limits, crashes or a later scheduled run—not reconstructing conversation. Its frequency/value is unmeasured. No runtime, template, roadmap, packaging, automation, commit or push changes this review. Existing documentation edits and unrelated untracked design/ preserved. Rehearsal processes previously reported stopped; no active operations started here. Next: prepare the bounded protocol; expensive runs are not launched by this handoff.
