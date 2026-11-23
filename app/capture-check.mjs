@@ -15,22 +15,32 @@ const optional = file => fs.existsSync(file) ? parse(fs.readFileSync(file, 'utf8
 const nameKey = (company, title) => `${normCompany(company)}|${normTitle(title)}`;
 const squash = value => String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
 const findKeys = d => [...strongKeys({provider: d.provider, providerJobId: d.providerJobId, url: d.url, linkType: d.url ? 'posting' : 'search'}).keys];
+// Name variants for `similar` only (never `known`): a title may end with its own city ("…, London"), and a company may be
+// written with or without a suffix ("LabGenius Therapeutics" / "LabGenius"): one normalized name starting with the other counts.
+const titleVariants = (title, place) => {
+  const city = String(place || '').split(/[,;/(]/)[0].trim(), raw = String(title || '');
+  const trimmed = city && raw.toLowerCase().endsWith(', ' + city.toLowerCase()) ? raw.slice(0, -(city.length + 2)) : raw;
+  return [...new Set([normTitle(raw), normTitle(trimmed)])];
+};
+const sameCompany = (a, b) => a === b || Math.min(a.length, b.length) >= 4 && (a.startsWith(b) || b.startsWith(a));
 function addEntry(index, entry, hit) {
   for (const key of strongKeys({...entry, linkType: entry.linkType || 'posting'}).keys) index.strong.set(key + '@' + normCompany(entry.company), hit);
-  const key = nameKey(entry.company, entry.title);
-  index.byName.set(key, [...(index.byName.get(key) || []), {place: squash([entry.locationRaw, entry.city].join(' ')), hit}]);
+  const item = {company: normCompany(entry.company), place: squash([entry.locationRaw, entry.city].join(' ')), hit};
+  for (const title of titleVariants(entry.title, entry.city || entry.locationRaw)) index.byTitle.set(title, [...(index.byTitle.get(title) || []), item]);
 }
 function matchIndex(entries, label) {
-  const index = {strong: new Map(), byName: new Map()};
+  const index = {strong: new Map(), byTitle: new Map()};
   for (const entry of entries) addEntry(index, entry, label(entry));
   return index;
 }
 // A find as an index entry (finds carry `location`; records carry locationRaw/city).
 const asEntry = d => ({company: d.company, title: d.title, locationRaw: d.location === 'Unknown' ? '' : d.location, url: d.url, provider: d.provider, providerJobId: d.providerJobId, linkType: d.url ? 'posting' : 'search'});
 const strongMatch = (index, d) => findKeys(d).map(key => index.strong.get(key + '@' + normCompany(d.company))).find(Boolean) || null;
+// Same company and title (variants above); locations must overlap unless either side has none (dropped entries store none).
 const nameMatch = (index, d) => {
-  const location = squash(d.location);
-  return (index.byName.get(nameKey(d.company, d.title)) || []).find(({place}) => d.location === 'Unknown' || place && (place.includes(location) || location.includes(place)))?.hit || null;
+  const location = squash(d.location), company = normCompany(d.company);
+  const items = titleVariants(d.title, d.location).flatMap(title => index.byTitle.get(title) || []);
+  return items.find(({company: c, place}) => sameCompany(c, company) && (d.location === 'Unknown' || !place || place.includes(location) || location.includes(place)))?.hit || null;
 };
 
 // Accepts JSONL, a JSON array, {candidates: [...]}, or ledger lines whose find sits in `discovery`.
@@ -61,11 +71,11 @@ const inventory = root => matchIndex(optional(path.join(root, 'jobs.json')).jobs
 export function check(root, files, seen = []) {
   const stored = inventory(root);
   const dropped = matchIndex(optional(path.join(root, 'reports', 'coverage.json')).dropped || [], e => `dropped: ${e.reason}`);
-  const run = {strong: new Map(), byName: new Map()};
+  const run = {strong: new Map(), byTitle: new Map()};
   for (const d of seen.flatMap(rowsOf).map(findOf)) if (d.company && d.title) addEntry(run, asEntry(d), `ledger: ${line(d)}`);
   return files.flatMap(rowsOf).map(findOf).map(d => {
     if (!d.company || !d.title) return `invalid | ${JSON.stringify(d)} (needs company and title)`;
-    const hit = strongMatch(stored, d) || strongMatch(dropped, d), again = strongMatch(run, d), similar = nameMatch(stored, d) || nameMatch(run, d);
+    const hit = strongMatch(stored, d) || strongMatch(dropped, d), again = strongMatch(run, d), similar = nameMatch(stored, d) || nameMatch(dropped, d) || nameMatch(run, d);
     const result = hit ? `known | ${d.company} | ${d.title} = ${hit}` : again ? `repeat | ${line(d)} = ${again}` : similar ? `similar | ${line(d)} ≈ ${similar}` : `new | ${line(d)}`;
     addEntry(run, asEntry(d), `this call: ${line(d)}`);
     return result;

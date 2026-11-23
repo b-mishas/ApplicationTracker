@@ -1,6 +1,6 @@
 # Agent handoff
 
-Updated 2026-11-23, Claude. Scope: search-agent prompts and capture check after roadmap milestone 13. main at 95b447e, 3 commits ahead of origin/main (not pushed); remote/CI unverified. `design/` is unrelated untracked work. No installed-automation change.
+Updated 2026-11-23, Claude. Scope: search-agent prompts and capture check after roadmap milestone 13. main at 330274f, 5 commits ahead of origin/main (not pushed); remote/CI unverified. `design/` is unrelated untracked work. No installed-automation change.
 
 ## Committed since the last push
 
@@ -12,7 +12,7 @@ Updated 2026-11-23, Claude. Scope: search-agent prompts and capture check after 
   - a find that gains an ID or URL stays one vacancy.
 - 95b447e: posting extracts report `text` full, partial or none. The lead rereads partial or unclear extracts and accepts a full text without requirements. Also PLAN.md items for the two prose-only limits.
 
-## Changed (uncommitted)
+## Also committed (35015d1 drift test, 330274f location limits)
 
 - `app/test-templates.mjs` (agent-owned: it checks agent files) and the `package.json` test script (HANDOFF_WRAPPER notes it): a drift test between agent/, guides/, profile/ and templates/.
 - Profile template §4 (both copies): a line saying whether relocation and on-site limits are hard limits or preferences.
@@ -39,4 +39,4 @@ JobTracker's port lives in `C:/Users/misha/Claude/Code/JobTracker` (SEARCH_PORTI
 
 ## Next action
 
-Commit when the user asks. Then regenerate the installed prompts (PLAN.md, due) and observe 2–3 scheduled searches. No active operations.
+This package has no installed routine (the user's personal one is JobTracker's). The rehearsal task rehearsal-daily-job-search has the current Part B; its ROOT points at a folder that no longer exists, so repoint it at a fresh rehearsal installation before running (PLAN.md, Before shipping 4). PLAN.md planned improvements are now numbered (uncommitted). Next: a new dist (PLAN.md, Before shipping 2) when the user asks. Push when the user asks. No active operations.

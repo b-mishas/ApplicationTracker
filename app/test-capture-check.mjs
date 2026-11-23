@@ -147,6 +147,22 @@ try {
     {company: 'Kestrel', title: 'Data Lead', location: 'Berlin', state: 'assessed', fit: 4},
   ]);
   assert.deepEqual(open(other), [`profile ${profileHash(other)}`, 'open | pending | run-202611260900-bbbb | Kestrel | Data Steward | Berlin | https://kestrel.test/jobs/7']);
+  // Name variants (similar only): company suffix, title with its own city, dropped entry by name (no location stored).
+  // Traps: a short prefix is another employer, another city stays new, a second requisition stays similar, never known.
+  const variants = jsonl('variants.jsonl', [
+    {company: 'Nordkamm Pharma Therapeutics', title: 'Backend Engineer', location: 'Berlin', url: 'https://www.linkedin.com/jobs/view/1234567890/'},
+    {company: 'Veltrum', title: 'Data Engineer, Munich', location: 'Munich'},
+    {company: 'Nordkamm', title: 'Sales Lead', location: 'Hamburg', url: 'https://www.linkedin.com/jobs/view/2234567890/'},
+    {company: 'Nor', title: 'Backend Engineer', location: 'Berlin'},
+    {company: 'Nordkamm', title: 'Backend Engineer II', location: 'Berlin'},
+    {company: 'Nordkamm Pharma', title: 'Backend Engineer', location: 'Hamburg'},
+    {company: 'Nordkamm', title: 'Backend Engineer', location: 'Berlin', provider: 'Nordkamm ATS', providerJobId: 'NK-24388'},
+  ]);
+  const v = check(root, [variants]);
+  assert.deepEqual(v.map(kind), ['similar', 'similar', 'similar', 'new', 'new', 'new', 'similar']);
+  assert.match(v[0], /≈ r1 \(Applied\)$/);
+  assert.match(v[1], /≈ r2 \(New\)$/);
+  assert.match(v[2], /≈ dropped: Sales role$/);
   console.log('capture-check: all scenarios passed');
 } finally {
   fs.rmSync(directory, {recursive: true, force: true});

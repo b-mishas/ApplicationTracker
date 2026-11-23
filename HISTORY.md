@@ -4,6 +4,18 @@
 
 --------------------
 
+## 2026-11-23 — Capture check: name variants for similar
+
+- From JobTracker's port on a real alert ledger: known vacancies came out `new` when the company had a suffix, the title ended with its city, or the vacancy was on the dropped list. `check()` now matches `similar` against dropped entries too (no location = any), treats a company as the same when one normalized name starts with the other (both ≥ 4 characters) and also tries the title without a trailing ", <its city>". Only `similar`, never `known`. Routine (and template) says `similar` may name a dropped entry, counted as previously dropped. Tests include a short-prefix employer, another city and a second requisition; they fail on the previous script. Full npm test passes; dist/ predates this change.
+
+## 2026-11-23 — Release archives rebuilt
+
+- dist/ rebuilt from 330274f with `npm run build` (Windows x64, Mac Intel, Mac Apple Silicon; version 0.1.0). Build audit passed with a local private-marker list; scripts/test-release.mjs passed (checksums, contents, clean Windows extraction, start/stop without global Node). Archives contain capture-check.mjs and the current routine, and no run-state.mjs or maintainer files. Mac archives not tested on a Mac; not published.
+
+## 2026-11-23 — Rehearsal task prompt refreshed
+
+- The Claude scheduled task rehearsal-daily-job-search (rehearsals only; this package has no installed routine) now carries the current Part B verbatim with its Part A unchanged. Its ROOT no longer exists (the installation was archived under rehearsal/runs/legacy-sam-rehearsal/), so it must be repointed before a run; noted in PLAN.md.
+
 ## 2026-11-23 — Hard or soft location limits in the profile
 
 - Profile template §4 records whether relocation and on-site limits are hard limits or preferences; setup asks and never assumes; the routine drops and counts roles breaking hard limits and otherwise notes the constraint in gaps (milestone 12, NK-24318). Full npm test passes; no agent run.
