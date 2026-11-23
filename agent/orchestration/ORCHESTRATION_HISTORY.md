@@ -2,6 +2,19 @@
 
 Detailed, durable record for future development sessions. Newest verified milestone first. Record implementation, rationale, verification and limitations here; amend [ORCHESTRATION_ROADMAP.md](ORCHESTRATION_ROADMAP.md) only when the overall plan changes. Runtime command/field contracts belong in the linked app documentation; checkout status belongs in [HANDOFF_AGENT.md](../../HANDOFF_AGENT.md).
 
+## 2026-11-23 — Fix for Codex's repeat finding (Claude)
+
+- P1 confirmed and reproduced (pending find plus a same-URL duplicate line gave `open: none`); introduced in a311937. Fix in two places: the routine and setup add a `repeat`'s source to the find's existing ledger line instead of writing a duplicate line (editing earlier lines now allows this); `open()` keeps the earlier entry's state when a `duplicate` line repeats a vacancy already in the same ledger, filling in an ID or URL it lacked. Same run only, because a later run's duplicate is a real decision (for example a carried find judged the same as a stored record) and must still close the vacancy.
+- Verified: tests for pending plus repeat, rated-not-imported plus repeat, imported plus repeat (done), and a later run's duplicate decision (closes); they fail on ee6ec38's script. Full npm test exit 0; prompt and template parity; git diff --check. No agent run.
+- Codex's other point (a small model's `text: full` is self-reported) needs observation, not code. JobTracker has the same bug (reproduced with its script at fec635d; its scheduled task runs the affected prompt); reported in JobTracker/BUGS.md without changing JobTracker.
+
+## 2026-11-23 — Codex review of a311937 through ee6ec38
+
+- Reviewed the five implementation commits named in HANDOFF_AGENT: CLI guards/repeat/identity changes, posting extract completeness, template drift test, hard-versus-soft geography, and similar-name variants. Focused capture-check and template tests pass; git diff --check passes. No full suite rerun or agent rehearsal.
+- P1 confirmed: repeat occurrences can hide unresolved canonical work. Routine line 98 says record repeat finds as duplicate of the first find. open() merges same strong identity and replaces the prior row with the latest row (capture-check.mjs around 137–140), then duplicate is terminal. Isolated fixture with empty inventory, pending role URL followed by same-URL duplicate occurrence returns open: none. An unimported assessed row is likewise vulnerable. Fix occurrence handling: preserve the canonical vacancy's decision when appending another source, or explicitly follow duplicate references and keep their target open. Add regressions for pending/assessed target plus repeated occurrence, then terminal resolution. No full-helper restoration needed.
+- Other reviewed changes look reasonable: broad company prefixes only produce similar, not automatic known; hard geography drops require established facts; partial posting extracts trigger reread, while full duty-only descriptions are valid. A small model's full flag remains self-reported evidence, not independent completeness verification. Template skip paths are bounded to maintainer/private artifacts. No further confirmed blocker found in this review.
+- Release remains at 330274f, missing ee6ec38; do not rebuild without request. Installed rehearsal ROOT remains invalid as reported by Claude. No real inventory, JobTracker, automation or implementation modified. Next: fix P1 with focused tests, then ordinary-search observation.
+
 ## 2026-11-23 — Capture check fixes from Codex's JobTracker port review (Claude)
 
 - Codex reviewed JobTracker's port (source e13ae54) and listed five bugs in BUGS.md that apply here too. All confirmed by reading the code and fixed, adapting JobTracker's fixes:

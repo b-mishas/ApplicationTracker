@@ -4,6 +4,15 @@
 
 --------------------
 
+## 2026-11-23 — Repeat finds no longer hide open work (Codex P1)
+
+- A `repeat` recorded as a second, duplicate ledger line replaced the open find it repeated, so `--open` reported nothing to do. The routine and setup now add a repeat's source to the existing line; `open()` also ignores a duplicate line for a vacancy already in the same ledger, while a later run's duplicate decision still closes it. New tests fail on the previous script; full npm test passes; no agent run. Reported to JobTracker (same bug, reproduced) in its BUGS.md.
+
+## 2026-11-23 — Codex review of latest agent changes
+
+- Capture-check and template suites passed. Reproduced a repeated-source duplicate hiding a pending vacancy from --open; fix and regression requested in HANDOFF_AGENT and ORCHESTRATION_HISTORY. No implementation changes or agent rehearsal.
+
+
 ## 2026-11-23 — Capture check: name variants for similar
 
 - From JobTracker's port on a real alert ledger: known vacancies came out `new` when the company had a suffix, the title ended with its city, or the vacancy was on the dropped list. `check()` now matches `similar` against dropped entries too (no location = any), treats a company as the same when one normalized name starts with the other (both ≥ 4 characters) and also tries the title without a trailing ", <its city>". Only `similar`, never `known`. Routine (and template) says `similar` may name a dropped entry, counted as previously dropped. Tests include a short-prefix employer, another city and a second requisition; they fail on the previous script. Full npm test passes; dist/ predates this change.

@@ -1,42 +1,36 @@
 # Agent handoff
 
-Updated 2026-11-23, Claude. Scope: search-agent prompts and capture check after roadmap milestone 13. main at 330274f, 5 commits ahead of origin/main (not pushed); remote/CI unverified. `design/` is unrelated untracked work. No installed-automation change.
+Updated 2026-11-23, Claude. Scope: fix for Codex's review of a311937–ee6ec38. main at ee6ec38, 6 commits ahead of origin/main (not pushed); remote/CI unverified. `design/` is unrelated untracked work. No installed-automation change.
 
-## Committed since the last push
+## Codex review (2026-11-23)
 
-- a311937: five capture-check fixes from Codex's review of JobTracker's port:
-  - the CLI exits 2 without jobs.json or the profile;
-  - the finish check covers all runs;
-  - `reassess` beats a dropped-list match;
-  - `--seen` reports `repeat`;
-  - a find that gains an ID or URL stays one vacancy.
-- 95b447e: posting extracts report `text` full, partial or none. The lead rereads partial or unclear extracts and accepts a full text without requirements. Also PLAN.md items for the two prose-only limits.
+Verdict: directionally sound, one P1. Its details are in [ORCHESTRATION_HISTORY.md](agent/orchestration/ORCHESTRATION_HISTORY.md), in the entry "Codex review of a311937 through ee6ec38".
 
-## Also committed (35015d1 drift test, 330274f location limits)
-
-- `app/test-templates.mjs` (agent-owned: it checks agent files) and the `package.json` test script (HANDOFF_WRAPPER notes it): a drift test between agent/, guides/, profile/ and templates/.
-- Profile template §4 (both copies): a line saying whether relocation and on-site limits are hard limits or preferences.
-- Setup step 3 asks which, and never assumes.
-- Routine §3: roles breaking hard limits are dropped and counted; otherwise the constraint goes in gaps.
-- PLAN.md: both items removed as done. HISTORY entry added.
+- **P1, fixed (uncommitted):** a `repeat` written as a duplicate ledger line replaced the open find it repeated, so `--open` reported nothing to do.
+  - The routine and setup (with their templates) now add a repeat's source to the existing ledger line.
+  - `app/capture-check.mjs` `open()` keeps the earlier entry's state when a duplicate line repeats a vacancy already in the same ledger. A later run's duplicate decision still closes it.
+  - INTERFACE_FOR_TRACKER notes the rule.
+- **Not code:** a small model's `text: full` is self-reported; watch it in runs.
 
 ## Verification
 
-- Full `npm test` exit 0 with the drift test.
-- The drift test's self-check catches an edited copy and a one-sided file.
-- `git diff --check`.
-- One earlier `npm test` run failed intermittently (output not kept); later runs passed.
-- No agent run on any of this.
+- New tests (pending plus repeat, rated-not-imported plus repeat, imported plus repeat, a later run's decision) fail on ee6ec38's script and pass now.
+- Full `npm test` exit 0; drift test; `git diff --check`.
+- No agent run.
+
+## JobTracker
+
+It has the same bug, reproduced with its `scripts/capture-check.mjs` at fec635d. Its installed Cowork task (Fridays 17:15 Berlin) runs the affected prompt. Reported in `C:/Users/misha/Claude/Code/JobTracker/BUGS.md`; JobTracker itself is unchanged.
+
+## Release and rehearsal
+
+- dist/ was built from 330274f and lacks ee6ec38 and this fix; the user said not to rebuild yet.
+- This package has no installed routine. The rehearsal task's ROOT names a folder that no longer exists.
 
 ## Known limits
 
-- Finish and reassess rules are prose-enforced; LinkedIn and employer URLs of the same job are only `similar` (both in PLAN.md).
-- The location drop rule still needs posting text when the alert doesn't show the location.
-
-## Elsewhere
-
-JobTracker's port lives in `C:/Users/misha/Claude/Code/JobTracker` (SEARCH_PORTING.md, scripts/capture-check.mjs), uncommitted there.
+The finish and reassess rules are prose-enforced; a LinkedIn alert and the employer posting of one job are only `similar` (PLAN.md 2 and 3).
 
 ## Next action
 
-This package has no installed routine (the user's personal one is JobTracker's). The rehearsal task rehearsal-daily-job-search has the current Part B; its ROOT points at a folder that no longer exists, so repoint it at a fresh rehearsal installation before running (PLAN.md, Before shipping 4). PLAN.md planned improvements are now numbered (uncommitted). Next: a new dist (PLAN.md, Before shipping 2) when the user asks. Push when the user asks. No active operations.
+Commit the fix when the user asks; then rebuild dist/ and push when asked. No active operations.

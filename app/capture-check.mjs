@@ -121,7 +121,11 @@ export function open(root, ledgers = allLedgers(root)) {
       const found = findOf(row), keys = strongIds(found), slot = slotFor(newest, byKey, byName, found), before = newest[slot];
       // An entry without ID or URL keeps the earlier entry's, so an imported vacancy is still recognised.
       const d = keys.length || !before ? found : {...before.d, ...found};
-      newest[slot] = {row, d, run, profile: row.assessment?.profileRevision || row.profileRevision || profile, keyless: !keys.length && (before?.keyless ?? true)};
+      // A duplicate line for a vacancy already in the same ledger is a repeat occurrence, not a decision: it keeps the
+      // earlier entry's state (and fills in an ID or URL it lacked). A later run's duplicate decision still closes it.
+      const repeat = before && before.run === run && String(row?.state ?? '').trim().toLowerCase() === 'duplicate';
+      newest[slot] = repeat ? {...before, d: {...found, ...before.d}, keyless: before.keyless && !keys.length}
+        : {row, d, run, profile: row.assessment?.profileRevision || row.profileRevision || profile, keyless: !keys.length && (before?.keyless ?? true)};
       for (const key of keys) byKey.set(key, slot);
       const named = byName.get(nameId(found)) || []; if (!named.includes(slot)) byName.set(nameId(found), [...named, slot]);
     }

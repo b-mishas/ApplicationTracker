@@ -163,6 +163,25 @@ try {
   assert.match(v[0], /≈ r1 \(Applied\)$/);
   assert.match(v[1], /≈ r2 \(New\)$/);
   assert.match(v[2], /≈ dropped: Sales role$/);
+
+  // A repeat written as a duplicate line in the same ledger must not close the open find it repeats (Codex P1);
+  // a later run's duplicate decision does close it.
+  fs.rmSync(path.join(other, 'reports', 'runs'), {recursive: true});
+  otherRun('run-202611270900-cccc', [
+    {company: 'Kestrel', title: 'QA Lead', location: 'Berlin', url: 'https://kestrel.test/jobs/8', state: 'pending'},
+    {company: 'Kestrel', title: 'QA Lead', location: 'Berlin', url: 'https://kestrel.test/jobs/8?utm_source=mail', state: 'duplicate', reason: 'repeat'},
+    {company: 'Kestrel', title: 'Ops Lead', location: 'Berlin', state: 'assessed', fit: 4},
+    {company: 'Kestrel', title: 'Ops Lead', location: 'Berlin', url: 'https://kestrel.test/jobs/9', state: 'duplicate', reason: 'repeat'},
+    {company: 'Kestrel', title: 'Data Lead', location: 'Berlin', url: 'https://kestrel.test/jobs/6', state: 'assessed', fit: 4},
+    {company: 'Kestrel', title: 'Data Lead', location: 'Berlin', url: 'https://kestrel.test/jobs/6', state: 'duplicate', reason: 'repeat'},
+  ]);
+  const repeatOpen = [
+    'open | pending | run-202611270900-cccc | Kestrel | QA Lead | Berlin | https://kestrel.test/jobs/8',
+    'open | assessed, not imported | run-202611270900-cccc | Kestrel | Ops Lead | Berlin | https://kestrel.test/jobs/9',
+  ];
+  assert.deepEqual(open(other), [`profile ${profileHash(other)}`, ...repeatOpen]);
+  otherRun('run-202611280900-dddd', [{company: 'Kestrel', title: 'QA Lead', location: 'Berlin', url: 'https://kestrel.test/jobs/8', state: 'duplicate', reason: 'Same as k1'}]);
+  assert.deepEqual(open(other), [`profile ${profileHash(other)}`, repeatOpen[1]]);
   console.log('capture-check: all scenarios passed');
 } finally {
   fs.rmSync(directory, {recursive: true, force: true});
