@@ -4,6 +4,10 @@
 
 --------------------
 
+## 2026-11-23 — Capture check identity and company-name gaps (from JobTracker's review)
+
+- A ledger line without ID or URL no longer joins an identified entry of the same name (it could hide a pending second requisition), and merges keep known identifiers. Company names match by whole words, so Roche no longer matches Rochester. Tests added; full npm test passes; no agent run.
+
 ## 2026-11-23 — Repeat finds no longer hide open work (Codex P1)
 
 - A `repeat` recorded as a second, duplicate ledger line replaced the open find it repeated, so `--open` reported nothing to do. The routine and setup now add a repeat's source to the existing line; `open()` also ignores a duplicate line for a vacancy already in the same ledger, while a later run's duplicate decision still closes it. New tests fail on the previous script; full npm test passes; no agent run. Reported to JobTracker (same bug, reproduced) in its BUGS.md.

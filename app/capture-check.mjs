@@ -16,16 +16,23 @@ const nameKey = (company, title) => `${normCompany(company)}|${normTitle(title)}
 const squash = value => String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
 const findKeys = d => [...strongKeys({provider: d.provider, providerJobId: d.providerJobId, url: d.url, linkType: d.url ? 'posting' : 'search'}).keys];
 // Name variants for `similar` only (never `known`): a title may end with its own city ("…, London"), and a company may be
-// written with or without a suffix ("LabGenius Therapeutics" / "LabGenius"): one normalized name starting with the other counts.
+// written with or without trailing words ("LabGenius Therapeutics" / "LabGenius"): the shorter name's whole words must
+// start the longer one's (at least 4 characters), so "Roche Diagnostics" matches "Roche" but "Rochester Biotech" does not.
 const titleVariants = (title, place) => {
   const city = String(place || '').split(/[,;/(]/)[0].trim(), raw = String(title || '');
   const trimmed = city && raw.toLowerCase().endsWith(', ' + city.toLowerCase()) ? raw.slice(0, -(city.length + 2)) : raw;
   return [...new Set([normTitle(raw), normTitle(trimmed)])];
 };
-const sameCompany = (a, b) => a === b || Math.min(a.length, b.length) >= 4 && (a.startsWith(b) || b.startsWith(a));
+const companyWords = s => String(s || '').toLowerCase().replace(/\b(gmbh|ag|se|kg|inc|ltd|limited|bv|nv|sa|sl|plc|co|llc|the)\b/g, ' ').split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+const companyOf = name => ({norm: normCompany(name), words: companyWords(name)});
+const sameCompany = (a, b) => {
+  if (a.norm === b.norm) return true;
+  const [short, long] = a.words.length <= b.words.length ? [a.words, b.words] : [b.words, a.words];
+  return short.length > 0 && short.length < long.length && short.join('').length >= 4 && short.every((w, i) => w === long[i]);
+};
 function addEntry(index, entry, hit) {
   for (const key of strongKeys({...entry, linkType: entry.linkType || 'posting'}).keys) index.strong.set(key + '@' + normCompany(entry.company), hit);
-  const item = {company: normCompany(entry.company), place: squash([entry.locationRaw, entry.city].join(' ')), hit};
+  const item = {company: companyOf(entry.company), place: squash([entry.locationRaw, entry.city].join(' ')), hit};
   for (const title of titleVariants(entry.title, entry.city || entry.locationRaw)) index.byTitle.set(title, [...(index.byTitle.get(title) || []), item]);
 }
 function matchIndex(entries, label) {
@@ -38,7 +45,7 @@ const asEntry = d => ({company: d.company, title: d.title, locationRaw: d.locati
 const strongMatch = (index, d) => findKeys(d).map(key => index.strong.get(key + '@' + normCompany(d.company))).find(Boolean) || null;
 // Same company and title (variants above); locations must overlap unless either side has none (dropped entries store none).
 const nameMatch = (index, d) => {
-  const location = squash(d.location), company = normCompany(d.company);
+  const location = squash(d.location), company = companyOf(d.company);
   const items = titleVariants(d.title, d.location).flatMap(title => index.byTitle.get(title) || []);
   return items.find(({company: c, place}) => sameCompany(c, company) && (d.location === 'Unknown' || !place || place.includes(location) || location.includes(place)))?.hit || null;
 };
@@ -98,15 +105,15 @@ const allLedgers = root => {
 };
 // Identity across runs: any shared provider ID or posting URL (company-qualified), else company, title and location.
 // A find that gains an ID or URL joins the one earlier entry of its name that had neither; entries with different IDs
-// stay separate (same-title second requisitions). A later entry without ID or URL joins the only entry of its name.
+// stay separate (same-title second requisitions). A line without ID or URL joins only a single earlier entry that had
+// neither; otherwise it is its own entry, so it can never close an identified find (both stay listed until decided).
 const strongIds = d => findKeys(d).map(key => key + '@' + normCompany(d.company));
 const nameId = d => nameKey(d.company, d.title) + '|' + squash(d.location === 'Unknown' ? '' : d.location);
 function slotFor(newest, byKey, byName, d) {
-  const keys = strongIds(d), named = byName.get(nameId(d)) || [], keyless = named.filter(s => newest[s].keyless);
+  const keys = strongIds(d), keyless = (byName.get(nameId(d)) || []).filter(s => newest[s].keyless);
   const strong = keys.map(key => byKey.get(key)).find(i => i !== undefined);
   if (strong !== undefined) return strong;
-  if (keys.length) return keyless.length === 1 ? keyless[0] : newest.length;
-  return keyless.length === 1 ? keyless[0] : named.length === 1 ? named[0] : newest.length;
+  return keyless.length === 1 ? keyless[0] : newest.length;
 }
 
 // Reconciliation: one line per vacancy whose newest ledger entry still needs work. Done = duplicate, excluded under the
@@ -119,8 +126,8 @@ export function open(root, ledgers = allLedgers(root)) {
     let rows; try { rows = rowsOf(ledger); } catch (error) { lines.push(`open | unreadable ledger | ${run} | ${error.message}`); continue; }
     for (const row of rows) {
       const found = findOf(row), keys = strongIds(found), slot = slotFor(newest, byKey, byName, found), before = newest[slot];
-      // An entry without ID or URL keeps the earlier entry's, so an imported vacancy is still recognised.
-      const d = keys.length || !before ? found : {...before.d, ...found};
+      // Every merge keeps identifiers already known, so an imported vacancy is still recognised.
+      const d = {...before?.d, ...found};
       // A duplicate line for a vacancy already in the same ledger is a repeat occurrence, not a decision: it keeps the
       // earlier entry's state (and fills in an ID or URL it lacked). A later run's duplicate decision still closes it.
       const repeat = before && before.run === run && String(row?.state ?? '').trim().toLowerCase() === 'duplicate';

@@ -144,9 +144,23 @@ try {
     {company: 'Kestrel', title: 'Data Steward', location: 'Berlin', url: 'https://kestrel.test/jobs/5', state: 'excluded', reason: 'Too junior'},
     {company: 'Kestrel', title: 'Data Steward', location: 'Berlin', url: 'https://kestrel.test/jobs/7', state: 'pending'},
     {company: 'Kestrel', title: 'Data Lead', location: 'Berlin', url: 'https://kestrel.test/jobs/6', state: 'assessed', fit: 4},
+    // Without ID or URL this line never joins an identified entry: it stays listed until decided, instead of risking
+    // closing a different same-title requisition. A same-run duplicate line without ID closes nothing either.
     {company: 'Kestrel', title: 'Data Lead', location: 'Berlin', state: 'assessed', fit: 4},
+    {company: 'Kestrel', title: 'Data Lead', location: 'Berlin', state: 'duplicate', reason: 'repeat'},
+    // A later exclusion without ID must not hide the identified pending requisition (JobTracker review).
+    {company: 'Kestrel', title: 'Data Steward', location: 'Berlin', state: 'excluded', reason: 'Too junior'},
   ]);
-  assert.deepEqual(open(other), [`profile ${profileHash(other)}`, 'open | pending | run-202611260900-bbbb | Kestrel | Data Steward | Berlin | https://kestrel.test/jobs/7']);
+  assert.deepEqual(open(other), [`profile ${profileHash(other)}`,
+    'open | pending | run-202611260900-bbbb | Kestrel | Data Steward | Berlin | https://kestrel.test/jobs/7',
+    'open | assessed, not imported | run-202611260900-bbbb | Kestrel | Data Lead | Berlin']);
+  // Company names compare by whole words: Roche Diagnostics is Roche, Rochester Biotech is not, LabGenius still matches.
+  const companies = jsonl('companies.jsonl', [{company: 'Roche', title: 'Lab Lead', location: 'Basel'}, {company: 'LabGenius', title: 'Protein Engineer', location: 'London'}]);
+  assert.deepEqual(check(root, [jsonl('names.jsonl', [
+    {company: 'Roche Diagnostics', title: 'Lab Lead', location: 'Basel'},
+    {company: 'Rochester Biotech', title: 'Lab Lead', location: 'Basel'},
+    {company: 'LabGenius Therapeutics Ltd', title: 'Protein Engineer', location: 'London'},
+  ])], [companies]).map(kind), ['similar', 'new', 'similar']);
   // Name variants (similar only): company suffix, title with its own city, dropped entry by name (no location stored).
   // Traps: a short prefix is another employer, another city stays new, a second requisition stays similar, never known.
   const variants = jsonl('variants.jsonl', [

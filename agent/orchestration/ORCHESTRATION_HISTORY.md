@@ -2,6 +2,13 @@
 
 Detailed, durable record for future development sessions. Newest verified milestone first. Record implementation, rationale, verification and limitations here; amend [ORCHESTRATION_ROADMAP.md](ORCHESTRATION_ROADMAP.md) only when the overall plan changes. Runtime command/field contracts belong in the linked app documentation; checkout status belongs in [HANDOFF_AGENT.md](../../HANDOFF_AGENT.md).
 
+## 2026-11-23 — Identity and company-name gaps from JobTracker's review (Claude)
+
+- Codex's review of JobTracker's port found two gaps that also applied here; both confirmed in the code and fixed as JobTracker did.
+  1. `slotFor`: a line without ID or URL joined the only earlier entry of its name even when that entry had an ID, so a later keyless exclusion could close an identified pending second requisition. Now it joins only a single keyless entry, otherwise it is its own entry (listed until decided; no merge without an explicit reference). Every merge keeps known identifiers (`{...before?.d, ...found}`). Trade-off: a keyless assessed line for a vacancy already imported under its URL is now listed instead of silently merged; listing is the safe direction. The same-run repeat rule is unchanged.
+  2. `sameCompany`: the plain prefix test matched Roche with Rochester. Names now compare by whole words after removing legal suffixes; the shorter name's words must start the longer one's (at least 4 characters).
+- Verified: tests for a keyless exclusion next to an identified pending find, a keyless assessed line plus a keyless repeat, and Roche Diagnostics / Rochester Biotech / LabGenius Therapeutics Ltd; the identity test fails on 6412d4c. Full npm test exit 0. No agent run.
+
 ## 2026-11-23 — Fix for Codex's repeat finding (Claude)
 
 - P1 confirmed and reproduced (pending find plus a same-URL duplicate line gave `open: none`); introduced in a311937. Fix in two places: the routine and setup add a `repeat`'s source to the find's existing ledger line instead of writing a duplicate line (editing earlier lines now allows this); `open()` keeps the earlier entry's state when a `duplicate` line repeats a vacancy already in the same ledger, filling in an ID or URL it lacked. Same run only, because a later run's duplicate is a real decision (for example a carried find judged the same as a stored record) and must still close the vacancy.
