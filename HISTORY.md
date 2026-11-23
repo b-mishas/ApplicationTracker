@@ -4,6 +4,18 @@
 
 --------------------
 
+## 2026-11-22 — Codex review of milestone 12
+
+- Recommended capture-check plus persistent plain ledger; full helper now near cost-neutral but shows no incremental benefit over capture-only. Classified NK-24318 as a policy ambiguity for architecture selection, preserving the frozen result. Details and next steps in ORCHESTRATION_HISTORY and HANDOFF_AGENT. No runtime changes or new rehearsal.
+
+
+## 2026-11-22 — Three-arm break-even check (milestone 12)
+
+- Ran the full helper, capture check only and plain ledger once each on 92e1d73 with milestone 10's kill and next-day scenario. Costs were within 5% of each other (USD 1.10 / 1.05 / 1.09).
+- The plain ledger silently lost one relevant vacancy. The helper and capture-check arms kept it, but imported one out-of-scope role on a rating judgement.
+- The frozen rule's literal wording picks the plain ledger; read as "loses no vacancy", it picks capture-only. This is left for Codex review.
+- Report: rehearsal/runs/2026-11-22-three-arm-break-even/evaluation/REPORT.md; details in agent/orchestration/ORCHESTRATION_HISTORY.md.
+
 ## 2026-11-22 — Break-even search state helper (milestone 11)
 
 - Compact capture output, carried finds moved into the current run, summary counts for ratings and source outcomes, and routine rules for filtered reads and grouped tool calls. Fixture tests and full npm test pass; no agent run yet (milestone 12). Details in agent/orchestration/ORCHESTRATION_HISTORY.md.

@@ -62,7 +62,11 @@ Use isolated rehearsal inventories and fictional profiles, **never real applicat
   - Both arms imported 5/5 relevant vacancies, made no wrong or duplicate imports, rated no known vacancy and finished all due work.
   - The carry-over prevented nothing the plain ledger missed and cost 12% more, so the rule says shrink.
 - [x] **11. Break-even helper:** cut what milestone 10 showed costing more: compact one-line `capture` output with a short note, no re-printing of captured files or reading RUN_STATE.md, open finds of earlier runs moved into the current run (no `--run`), and `summary` counting this run's ratings by basis and source outcomes from source-evidence.jsonl. The routine also asks for filtered file reads and independent tool calls in one turn, which applies with or without the helper. Fixture-tested; no agent run yet.
-- [ ] **12. Break-even check:** repeat milestone 10's pair on the milestone 11 base, with the same general output rules in both arms, and a cost cap. Keep the helper if it costs at most about the plain arm's and loses nothing; otherwise shrink to the capture check. Not started.
+- [x] **12. Break-even check:** repeat milestone 10's scenario on the milestone 11 base with three arms, one run each and a USD 5 cap: the full helper, capture check only (a small script that prints `known`/`similar`/`new` and writes nothing, with the agent keeping a plain ledger), and the plain ledger. All three keep the base's general output rules. Choose the full helper only if it is measurably cheaper or more correct than both; otherwise capture-only if it loses nothing and costs no more than the plain ledger (about 10% noise allowed); otherwise the plain ledger. **Result (2026-11-22, on 92e1d73, USD 3.41):**
+  - Costs: helper USD 1.10, capture-only 1.05, plain 1.09.
+  - The plain ledger silently lost one relevant vacancy (a same-title second requisition left pending).
+  - The helper and capture-only arms kept it, but imported one out-of-scope role on a rating judgement.
+  - Under the frozen wording the rule picks the plain ledger; read as "loses no vacancy", it picks capture-only. Codex's review called NK-24318 a policy ambiguity, kept the literal result on record and recommended capture-only with a finish-time check of open finds.
 
 ## Current next action
 

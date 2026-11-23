@@ -2,6 +2,39 @@
 
 Detailed, durable record for future development sessions. Newest verified milestone first. Record implementation, rationale, verification and limitations here; amend [ORCHESTRATION_ROADMAP.md](ORCHESTRATION_ROADMAP.md) only when the overall plan changes. Runtime command/field contracts belong in the linked app documentation; checkout status belongs in [HANDOFF_AGENT.md](../../HANDOFF_AGENT.md).
 
+## 2026-11-22 — Codex review of milestone 12
+
+- Reviewed frozen protocol, report, per-arm scoring, failure inspections, fixture profile, current routine and rehearsal capture-check implementation. No agent rerun, full raw-log reconstruction or code test run. Costs include estimated killed-session usage; one run per arm and cache/order effects preclude ranking the 1–5% differences reliably.
+- Recommendation: adopt capture-check plus a durable plain ledger as the default; retire full orchestration from the default prompt, not persistent state. Preserve prior run artifacts and compatibility/readability of unfinished work. Do not delete old data or assume the rehearsal-only script is production-ready. Keep full-helper code recoverable in Git; stop expanding synthetic benchmarks to find a justification for it.
+- Full helper is now approximately cost-neutral and matched capture-only correctness. Its incremental benefit is unproven, not disproven. Strongest untested case: saved evidence/assessments become the only surviving source because a listing or alert disappears before resumption. Many interrupted runs, profile changes and smaller/weaker leads may increase the value of deterministic bookkeeping, but also its costs. No defensible numeric probability follows from these few related runs.
+- Capture-check is a useful small deterministic component (known/similar/new); NK-24388 being highlighted is consistent with preventing the observed omission, but one run does not prove causality. It writes no state and cannot itself guarantee completeness or recovery. Retain batch saves and a finish-time reconciliation: each captured find has an explicit disposition or remains visibly pending; never report nothing unfinished while pending rows exist. Prefer a small deterministic pending-row check over restoring a broad orchestration framework if needed.
+- NK-24318 is ambiguous for scoring the architecture. Geography says no relocation, supporting exclusion; explicit mismatch rules omit German on-site roles outside Berlin, while the routine says to put relocation constraints in Gaps. A/C explicitly flagged the issue. Keep the frozen score and literal plain-ledger verdict unchanged as historical evidence, but make a separate engineering recommendation based on policy ambiguity and component relevance. Do not silently rewrite the answer key or assert the state path caused the rating difference. Clarify hard exclusions versus preferences in setup/profile; do not invent the user's policy.
+- Next: promote/harden capture-check using focused tests (strong IDs, aliases, same-title distinct requisitions, invalid input), update routine/setup/template/interface references together, preserve saved assessments and unresolved work, and verify final pending reconciliation. Then observe a small number of ordinary searches already due in the actual runtime, retaining compact counts/costs where available. Revisit full-helper components only for observed failures they would prevent. No extra paid rehearsal needed for this decision; no implementation performed by this review. Roadmap unchanged pending adoption.
+
+## 2026-11-22 — Three-arm break-even check, milestone 12 (Claude, fresh session)
+
+- Base 92e1d73 for all arms, one run each, milestone 10's fixture, ground truth, kill point, date shift and models (Sonnet 5.5 lead, Haiku 5.5 subagents):
+  - A: the full helper, unchanged.
+  - B: plain-ledger prose (milestone 10's B regenerated for the base: `kind`/`status`, rating basis and source counts as prose), helper files removed.
+  - C: B, with the duplicate rule replaced by a rehearsal-only `app/capture-check.mjs` (run-state's capture matching; it prints `known`/`similar`/`new` lines and writes nothing). On all 19 fixture openings its grouping equals run-state's.
+- Measured:
+  - A: 5/5 relevant imported; one inappropriate import (NK-24318, fit 5, relocation noted in Gaps).
+  - B: one silent loss. NK-24388 stayed `pending` in its own ledger, was left out of the hand-picked reading batch, and its summary said "Not done: nothing". B dropped NK-24318 correctly.
+  - C: same outcome as A (5/5, NK-24318 imported).
+  - No duplicate imports, no known vacancies rated, and no unfinished due work in any arm.
+- Cost (p1 estimated, p2 billed): A USD 1.10, B 1.09, C 1.05; cache writes 142k/105k/109k tokens.
+- Lead context: A 20 turns and 93k characters of tool output; B 23 and 77k; C 20 and 86k. C's lead printed the find files whole alongside capture-check.
+- Total spend USD 3.41 of a USD 5 cap, including a USD 0.16 auth check.
+- Inspections:
+  - B's loss is a state-handling failure. In A and C the capture `similar` line forced a decision on NK-24388.
+  - NK-24318 is a rating judgement, outside the state path. The fixture profile says "No relocation", but §7 has no drop signal for on-site roles elsewhere in Germany.
+- Verdict:
+  - The frozen protocol rule ("loses nothing" = no correctness measure worse than B's) picks the plain ledger, because C has one more inappropriate import.
+  - Read as "loses no vacancy", as the brief worded it, the rule picks capture-only: 0 losses against 1, at −3.7%.
+  - The full helper is not chosen under either reading: at most 5% dearer than either other arm, and no more correct than C.
+  - Left for Codex review.
+- Evidence: rehearsal/runs/2026-11-22-three-arm-break-even/ (PROTOCOL.md, evaluation/REPORT.md, comparison.json, streams, native logs, server logs, snapshots, inspections, prompt/app diffs, scripts).
+
 ## 2026-11-22 — Unannounced interruption and next-day rehearsal, milestone 10 (Claude)
 
 - Base 7d2529c for both arms, one repetition each:
