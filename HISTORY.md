@@ -4,6 +4,10 @@
 
 --------------------
 
+## 2026-11-23 — Posting extracts report how much text was visible
+
+- Routine (and template): posting subagents report `text` full, partial or none and "none stated" requirements; the lead rereads partial or unclear extracts, accepts a full text without requirements and may cite responsibilities as evidence. Replaces "an extract without requirement lines is a failed reading", which reread valid duty-only postings and passed cut-off ones. No test reads prompt text; prompt parity checked.
+
 ## 2026-11-23 — Capture check fixes from Codex's JobTracker port review
 
 - Five bugs from BUGS.md fixed: the CLI refuses a ROOT without jobs.json (and `--open` one without the profile); the finish check covers all runs; `reassess` overrides a dropped-list `known`; `--seen` flags the same vacancy from two sources as `repeat`; a find that gains an ID or URL stays one vacancy. Tests and full npm test pass; no agent run. Details in agent/orchestration/ORCHESTRATION_HISTORY.md.
