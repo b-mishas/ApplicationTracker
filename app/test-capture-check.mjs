@@ -108,6 +108,45 @@ try {
   assert.deepEqual(run(['--open', done]).trim().split('\n'), [`profile ${v1}`, 'open: none']);
   assert.throws(() => execFileSync(process.execPath, [cli], {cwd: directory, stdio: 'pipe'}), /Usage/);
   assert.throws(() => execFileSync(process.execPath, [cli, path.join(directory, 'broken.jsonl')], {cwd: directory, stdio: 'pipe'}), /line 2 is not JSON/);
+  // Wrong ROOT or missing profile: the CLI refuses instead of printing everything as new or nothing as open.
+  const empty = fs.mkdtempSync(path.join(directory, 'noroot-'));
+  const status = args => { try { execFileSync(process.execPath, [cli, ...args], {cwd: empty, stdio: 'pipe'}); return 0; } catch (error) { return error.status; } };
+  assert.equal(status([finds]), 2);
+  assert.equal(status(['--open']), 2);
+  fs.mkdirSync(path.join(empty, 'data')); fs.writeFileSync(path.join(empty, 'data', 'jobs.json'), JSON.stringify({jobs: []}));
+  assert.equal(status([finds]), 0);
+  assert.equal(status(['--open']), 2);
+  assert.equal(status(['--open', '--seen', finds]), 1);
+
+  // Same vacancy from two sources in one run: `repeat` against this run's ledger and within one call.
+  const ledger = jsonl('today.jsonl', [{company: 'Kestrel', title: 'Data Steward', location: 'Berlin', url: 'https://kestrel.test/jobs/5', state: 'pending'}]);
+  const board = jsonl('board.jsonl', [
+    {company: 'Kestrel', title: 'Data Steward (m/w/d)', location: 'Berlin', url: 'https://kestrel.test/jobs/5?utm_source=board'},
+    {company: 'Kestrel', title: 'Data Lead', location: 'Berlin', url: 'https://kestrel.test/jobs/6'},
+    {company: 'Kestrel', title: 'Data Lead', location: 'Berlin', url: 'https://kestrel.test/jobs/6'},
+    {company: 'Kestrel', title: 'Data Steward', location: 'Berlin'},
+  ]);
+  assert.deepEqual(check(root, [board], [ledger]).map(kind), ['repeat', 'new', 'repeat', 'similar']);
+  assert.match(check(root, [board], [ledger])[0], /= ledger: Kestrel \| Data Steward \| Berlin/);
+  assert.deepEqual(run(['--seen', ledger, board]).trim().split('\n').map(kind), ['repeat', 'new', 'repeat', 'similar']);
+
+  // A pending find without ID or URL that later gains one is one vacancy; a same-title second requisition stays separate.
+  const other = path.join(directory, 'other', 'data');
+  fs.mkdirSync(path.join(directory, 'other', 'profile'), {recursive: true});
+  fs.writeFileSync(path.join(directory, 'other', 'profile', 'candidate_profile.md'), 'Profile v1');
+  fs.mkdirSync(other); fs.writeFileSync(path.join(other, 'jobs.json'), JSON.stringify({jobs: [{id: 'k1', status: 'New', company: 'Kestrel', title: 'Data Lead', city: 'Berlin', url: 'https://kestrel.test/jobs/6', linkType: 'posting'}]}));
+  const otherRun = (run, rows) => { const folder = path.join(other, 'reports', 'runs', run); fs.mkdirSync(folder, {recursive: true}); fs.writeFileSync(path.join(folder, 'run-completion.json'), JSON.stringify({profile: profileHash(other)})); fs.writeFileSync(path.join(folder, 'run-ledger.jsonl'), rows.map(r => JSON.stringify(r)).join('\n')); };
+  otherRun('run-202611250900-aaaa', [
+    {company: 'Kestrel', title: 'Data Steward', location: 'Berlin', state: 'pending'},
+    {company: 'Kestrel', title: 'Data Lead', location: 'Berlin', state: 'pending'},
+  ]);
+  otherRun('run-202611260900-bbbb', [
+    {company: 'Kestrel', title: 'Data Steward', location: 'Berlin', url: 'https://kestrel.test/jobs/5', state: 'excluded', reason: 'Too junior'},
+    {company: 'Kestrel', title: 'Data Steward', location: 'Berlin', url: 'https://kestrel.test/jobs/7', state: 'pending'},
+    {company: 'Kestrel', title: 'Data Lead', location: 'Berlin', url: 'https://kestrel.test/jobs/6', state: 'assessed', fit: 4},
+    {company: 'Kestrel', title: 'Data Lead', location: 'Berlin', state: 'assessed', fit: 4},
+  ]);
+  assert.deepEqual(open(other), [`profile ${profileHash(other)}`, 'open | pending | run-202611260900-bbbb | Kestrel | Data Steward | Berlin | https://kestrel.test/jobs/7']);
   console.log('capture-check: all scenarios passed');
 } finally {
   fs.rmSync(directory, {recursive: true, force: true});

@@ -2,6 +2,16 @@
 
 Detailed, durable record for future development sessions. Newest verified milestone first. Record implementation, rationale, verification and limitations here; amend [ORCHESTRATION_ROADMAP.md](ORCHESTRATION_ROADMAP.md) only when the overall plan changes. Runtime command/field contracts belong in the linked app documentation; checkout status belongs in [HANDOFF_AGENT.md](../../HANDOFF_AGENT.md).
 
+## 2026-11-23 — Capture check fixes from Codex's JobTracker port review (Claude)
+
+- Codex reviewed JobTracker's port (source e13ae54) and listed five bugs in BUGS.md that apply here too. All confirmed by reading the code and fixed, adapting JobTracker's fixes:
+  1. Wrong ROOT looked like an empty inventory: the CLI exits 2 without `data/jobs.json`, and `--open` also without the profile (releases ship an empty jobs.json). The routine stops before searching on that error.
+  2. The finish check read only today's ledger: the routine runs `--open` for all runs, before closing earlier ones.
+  3. `reassess` versus a dropped-list `known`: the routine says `reassess` wins. Wording only.
+  4. The same vacancy from two sources was read twice: `--seen <run-ledger.jsonl>` and matching within one call print `repeat`; the routine and setup check before adding finds to the ledger and keep both sources in the batch record. LinkedIn and employer URLs differ, so that pair stays `similar`.
+  5. A find gaining an ID or URL became a second vacancy: it joins the one earlier entry of its name without ID or URL; different IDs stay separate. Differences from JobTracker: a later entry without ID or URL joins only an unambiguous earlier entry, and keeps that entry's ID and URL so an imported vacancy is still recognised. The routine allows adding a later-found ID or URL to a ledger line.
+- Verified: new scenarios (CLI exit codes, `repeat` against the ledger and within a call, the ID transition next to a same-title second requisition) fail on the previous script and pass; full npm test exit 0; prompt and setup parity; git diff --check. No agent run.
+
 ## 2026-11-22 — Capture check fixes after Codex's implementation review (Claude)
 
 - All three findings held. P1 (open finds hidden once a run is finished): `--open` without a file now reads every run's ledger (oldest first by run ID) and keeps the newest entry per vacancy, matched by any shared provider ID or posting URL, else company, title and location; finished runs no longer hide open work, and a find carried into a later run is listed once. The routine runs it at start, before deciding whether to continue today's run; "finished" now only governs that resume. Chose this over Codex's "leave runs unfinished" so status keeps one meaning.

@@ -4,6 +4,10 @@
 
 --------------------
 
+## 2026-11-23 — Capture check fixes from Codex's JobTracker port review
+
+- Five bugs from BUGS.md fixed: the CLI refuses a ROOT without jobs.json (and `--open` one without the profile); the finish check covers all runs; `reassess` overrides a dropped-list `known`; `--seen` flags the same vacancy from two sources as `repeat`; a find that gains an ID or URL stays one vacancy. Tests and full npm test pass; no agent run. Details in agent/orchestration/ORCHESTRATION_HISTORY.md.
+
 ## 2026-11-23 — Routine posting threshold and orchestration origin
 
 - Routine (and template) no longer says to read up to five ready postings yourself while also saying to delegate from three; one or two are read by the lead. The summary no longer counts additions by `addedThisRun`, a field only the retired helper produced. Roadmap and ORCHESTRATION_HISTORY now note that the work began with 1fbdd54 (run evidence files), before 72a1467.

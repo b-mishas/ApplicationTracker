@@ -1,5 +1,6 @@
 // Search agent's find check. Writes nothing; the agent keeps its own run ledger (agent/ROUTINE_PROMPT.md).
-//   node app/capture-check.mjs <file> [<file> ...]   one known | similar | new line per find, against jobs.json and the coverage.json dropped list
+//   node app/capture-check.mjs [--seen <run-ledger.jsonl>] <file> [<file> ...]   one known | repeat | similar | new line per find,
+//     against jobs.json, the coverage.json dropped list, the finds in --seen (this run's ledger) and earlier finds in the same call
 //   node app/capture-check.mjs --open [<run-ledger.jsonl> ...]   current profile hash, then finds still needing work (default: all runs)
 // Replaces run-state.mjs (last in commit 92e1d73) after roadmap milestone 12.
 import fs from 'node:fs';
@@ -14,16 +15,18 @@ const optional = file => fs.existsSync(file) ? parse(fs.readFileSync(file, 'utf8
 const nameKey = (company, title) => `${normCompany(company)}|${normTitle(title)}`;
 const squash = value => String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
 const findKeys = d => [...strongKeys({provider: d.provider, providerJobId: d.providerJobId, url: d.url, linkType: d.url ? 'posting' : 'search'}).keys];
-function matchIndex(entries, label) {
-  const strong = new Map(), byName = new Map();
-  for (const entry of entries) {
-    const hit = label(entry);
-    for (const key of strongKeys({...entry, linkType: entry.linkType || 'posting'}).keys) strong.set(key + '@' + normCompany(entry.company), hit);
-    const key = nameKey(entry.company, entry.title);
-    byName.set(key, [...(byName.get(key) || []), {place: squash([entry.locationRaw, entry.city].join(' ')), hit}]);
-  }
-  return {strong, byName};
+function addEntry(index, entry, hit) {
+  for (const key of strongKeys({...entry, linkType: entry.linkType || 'posting'}).keys) index.strong.set(key + '@' + normCompany(entry.company), hit);
+  const key = nameKey(entry.company, entry.title);
+  index.byName.set(key, [...(index.byName.get(key) || []), {place: squash([entry.locationRaw, entry.city].join(' ')), hit}]);
 }
+function matchIndex(entries, label) {
+  const index = {strong: new Map(), byName: new Map()};
+  for (const entry of entries) addEntry(index, entry, label(entry));
+  return index;
+}
+// A find as an index entry (finds carry `location`; records carry locationRaw/city).
+const asEntry = d => ({company: d.company, title: d.title, locationRaw: d.location === 'Unknown' ? '' : d.location, url: d.url, provider: d.provider, providerJobId: d.providerJobId, linkType: d.url ? 'posting' : 'search'});
 const strongMatch = (index, d) => findKeys(d).map(key => index.strong.get(key + '@' + normCompany(d.company))).find(Boolean) || null;
 const nameMatch = (index, d) => {
   const location = squash(d.location);
@@ -53,15 +56,19 @@ function findOf(row) {
 const line = d => [d.company, d.title, d.location, d.url].filter(Boolean).join(' | ');
 const inventory = root => matchIndex(optional(path.join(root, 'jobs.json')).jobs || [], j => `${j.id} (${j.status})`);
 
-export function check(root, files) {
+// `seen`: files already captured (this run's ledger). A find sharing an ID or URL with a seen find, or with an earlier
+// find in the same call, is `repeat`: the same vacancy from another source, read once.
+export function check(root, files, seen = []) {
   const stored = inventory(root);
   const dropped = matchIndex(optional(path.join(root, 'reports', 'coverage.json')).dropped || [], e => `dropped: ${e.reason}`);
+  const run = {strong: new Map(), byName: new Map()};
+  for (const d of seen.flatMap(rowsOf).map(findOf)) if (d.company && d.title) addEntry(run, asEntry(d), `ledger: ${line(d)}`);
   return files.flatMap(rowsOf).map(findOf).map(d => {
     if (!d.company || !d.title) return `invalid | ${JSON.stringify(d)} (needs company and title)`;
-    const hit = strongMatch(stored, d) || strongMatch(dropped, d);
-    if (hit) return `known | ${d.company} | ${d.title} = ${hit}`;
-    const similar = nameMatch(stored, d);
-    return similar ? `similar | ${line(d)} ≈ ${similar}` : `new | ${line(d)}`;
+    const hit = strongMatch(stored, d) || strongMatch(dropped, d), again = strongMatch(run, d), similar = nameMatch(stored, d) || nameMatch(run, d);
+    const result = hit ? `known | ${d.company} | ${d.title} = ${hit}` : again ? `repeat | ${line(d)} = ${again}` : similar ? `similar | ${line(d)} ≈ ${similar}` : `new | ${line(d)}`;
+    addEntry(run, asEntry(d), `this call: ${line(d)}`);
+    return result;
   });
 }
 
@@ -80,21 +87,33 @@ const allLedgers = root => {
   return fs.existsSync(runs) ? fs.readdirSync(runs).sort().map(run => path.join(runs, run, 'run-ledger.jsonl')).filter(fs.existsSync) : [];
 };
 // Identity across runs: any shared provider ID or posting URL (company-qualified), else company, title and location.
-const identities = d => { const keys = findKeys(d).map(key => key + '@' + normCompany(d.company)); return keys.length ? keys : ['name:' + nameKey(d.company, d.title) + '|' + squash(d.location)]; };
+// A find that gains an ID or URL joins the one earlier entry of its name that had neither; entries with different IDs
+// stay separate (same-title second requisitions). A later entry without ID or URL joins the only entry of its name.
+const strongIds = d => findKeys(d).map(key => key + '@' + normCompany(d.company));
+const nameId = d => nameKey(d.company, d.title) + '|' + squash(d.location === 'Unknown' ? '' : d.location);
+function slotFor(newest, byKey, byName, d) {
+  const keys = strongIds(d), named = byName.get(nameId(d)) || [], keyless = named.filter(s => newest[s].keyless);
+  const strong = keys.map(key => byKey.get(key)).find(i => i !== undefined);
+  if (strong !== undefined) return strong;
+  if (keys.length) return keyless.length === 1 ? keyless[0] : newest.length;
+  return keyless.length === 1 ? keyless[0] : named.length === 1 ? named[0] : newest.length;
+}
 
 // Reconciliation: one line per vacancy whose newest ledger entry still needs work. Done = duplicate, excluded under the
 // current profile, or assessed and in jobs.json. Anything else, including an unknown state, is listed.
 // shortcut: after a profile change every older exclusion is listed as reassess; add a cut-off if that list grows long.
 export function open(root, ledgers = allLedgers(root)) {
-  const stored = inventory(root), current = profileHash(root), newest = [], byKey = new Map(), lines = [];
+  const stored = inventory(root), current = profileHash(root), newest = [], byKey = new Map(), byName = new Map(), lines = [];
   for (const ledger of ledgers) {
     const folder = path.dirname(ledger), run = path.basename(folder), profile = runProfile(folder);
     let rows; try { rows = rowsOf(ledger); } catch (error) { lines.push(`open | unreadable ledger | ${run} | ${error.message}`); continue; }
     for (const row of rows) {
-      const d = findOf(row);
-      const keys = identities(d), slot = keys.map(key => byKey.get(key)).find(i => i !== undefined) ?? newest.length;
-      newest[slot] = {row, d, run, profile: row.assessment?.profileRevision || row.profileRevision || profile};
+      const found = findOf(row), keys = strongIds(found), slot = slotFor(newest, byKey, byName, found), before = newest[slot];
+      // An entry without ID or URL keeps the earlier entry's, so an imported vacancy is still recognised.
+      const d = keys.length || !before ? found : {...before.d, ...found};
+      newest[slot] = {row, d, run, profile: row.assessment?.profileRevision || row.profileRevision || profile, keyless: !keys.length && (before?.keyless ?? true)};
       for (const key of keys) byKey.set(key, slot);
+      const named = byName.get(nameId(found)) || []; if (!named.includes(slot)) byName.set(nameId(found), [...named, slot]);
     }
   }
   for (const {row, d, run, profile} of newest) {
@@ -112,7 +131,11 @@ export function open(root, ledgers = allLedgers(root)) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const args = process.argv.slice(2), pending = args[0] === '--open', files = pending ? args.slice(1) : args;
-  if (!pending && !files.length) { console.error('Usage: node app/capture-check.mjs <file> [...] | --open [<run-ledger.jsonl> ...]'); process.exit(1); }
-  try { console.log((pending ? open : check)(path.resolve('data'), ...(files.length ? [files] : [])).join('\n')); } catch (error) { console.error(error.message); process.exitCode = 1; }
+  const args = process.argv.slice(2), at = args.indexOf('--seen'), seen = at < 0 ? [] : args.splice(at, 2).slice(1);
+  const pending = args[0] === '--open', files = pending ? args.slice(1) : args, root = path.resolve('data');
+  if ((!pending && !files.length) || (at >= 0 && (pending || !seen[0])) || files.some(f => f.startsWith('--'))) { console.error('Usage: node app/capture-check.mjs [--seen <run-ledger.jsonl>] <file> [...] | --open [<run-ledger.jsonl> ...]'); process.exit(1); }
+  // A wrong ROOT or a missing mount would make every find `new` and hide all open work: refuse instead.
+  if (!fs.existsSync(path.join(root, 'jobs.json'))) { console.error(`jobs.json not found in ${root}: run from the verified ROOT`); process.exit(2); }
+  if (pending && !profileHash(root)) { console.error(`profile not found: ${path.join(root, '..', 'profile', 'candidate_profile.md')}`); process.exit(2); }
+  try { console.log((pending ? open(root, ...(files.length ? [files] : [])) : check(root, files, seen.filter(f => fs.existsSync(f)))).join('\n')); } catch (error) { console.error(error.message); process.exitCode = 1; }
 }
