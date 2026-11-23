@@ -4,6 +4,19 @@
 
 --------------------
 
+## 2026-11-22 — Capture check fixes after Codex's review
+
+- Open finds of finished runs stay listed, unknown ledger states are reported, and decisions under another profile are flagged for reassessment via a per-run profile hash. Tests and full npm test pass; no agent run. Details in agent/orchestration/ORCHESTRATION_HISTORY.md.
+
+## 2026-11-22 — Capture-check implementation review (Codex)
+
+- Focused suite passed; isolated probes confirmed unknown states can falsely report no open work. Recorded fixes needed for unfinished-run discovery and profile-aware reuse in ORCHESTRATION_HISTORY and HANDOFF_AGENT. Review only; implementation unchanged.
+
+
+## 2026-11-22 — Capture check replaces the search state helper (milestone 13)
+
+- New read-only app/capture-check.mjs with an end-of-run check for open finds; routine and setup use the agent's own ledger; run-state and candidate-ledger removed (recoverable from 92e1d73). Tests and full npm test pass; no agent run yet. Details in agent/orchestration/ORCHESTRATION_HISTORY.md.
+
 ## 2026-11-22 — Codex review of milestone 12
 
 - Recommended capture-check plus persistent plain ledger; full helper now near cost-neutral but shows no incremental benefit over capture-only. Classified NK-24318 as a policy ambiguity for architecture selection, preserving the frozen result. Details and next steps in ORCHESTRATION_HISTORY and HANDOFF_AGENT. No runtime changes or new rehearsal.

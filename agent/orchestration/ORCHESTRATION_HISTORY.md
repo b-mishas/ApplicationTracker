@@ -2,6 +2,32 @@
 
 Detailed, durable record for future development sessions. Newest verified milestone first. Record implementation, rationale, verification and limitations here; amend [ORCHESTRATION_ROADMAP.md](ORCHESTRATION_ROADMAP.md) only when the overall plan changes. Runtime command/field contracts belong in the linked app documentation; checkout status belongs in [HANDOFF_AGENT.md](../../HANDOFF_AGENT.md).
 
+## 2026-11-22 — Capture check fixes after Codex's implementation review (Claude)
+
+- All three findings held. P1 (open finds hidden once a run is finished): `--open` without a file now reads every run's ledger (oldest first by run ID) and keeps the newest entry per vacancy, matched by any shared provider ID or posting URL, else company, title and location; finished runs no longer hide open work, and a find carried into a later run is listed once. The routine runs it at start, before deciding whether to continue today's run; "finished" now only governs that resume. Chose this over Codex's "leave runs unfinished" so status keeps one meaning.
+- P2 (unknown states counted as done): states are trimmed and lowercased; only duplicate, excluded under the current profile, or assessed and in jobs.json are done. Anything else is listed as `unknown state`; an unreadable or missing ledger is listed instead of aborting. The routine and setup now name the four allowed states. On milestone 12's plain-ledger evidence the check surfaces an invented state (`uncertain-duplicate`) besides NK-24388.
+- P3 (no profile marker): `--open` prints the profile hash (same SHA-256 as run-state's profileRevision, so old manifests and rows compare); the agent saves it as `profile` in run-completion.json (setup: after approval). Decisions of a run with another or no marker are listed as `reassess` unless imported. Shortcut: after a profile change every older exclusion is listed; add a cut-off if that grows long.
+- Roadmap amended for the design change (state table, helper paragraph, where details live, invariants, milestone 13, next action).
+- Verified: test-capture-check.mjs extended (finished old run with open finds, carried find superseded across runs with an extra ID, unknown and spaced states, profile change, missing marker, unreadable and missing ledgers, CLI without files); full npm test exit 0; prompt parity; git diff --check. No agent run.
+
+## 2026-11-22 — Codex implementation review of capture-check
+
+Judgement: appropriate simplification, but fix three continuity issues before normal use. No implementation changes made.
+
+- P1: ROUTINE_PROMPT.md:235 marks the current run finished even when --open lists unresolved finds (allowed to be reported under Not done). Startup at line 68 scans only unfinished runs. A pending vacancy reported today can therefore be skipped tomorrow. Keep runs with open finds discoverable: leave them unfinished or scan all ledgers for open rows. Close predecessor runs only once all work is durably transferred. Update template too.
+- P2: capture-check.mjs:70-72 treats every unknown state as closed. Reproduced with state deferred and assessed followed by a space: both print open: none. Trim/validate states; unknown states must fail visibly or stay open. Only explicit terminal dispositions or assessed rows matched to inventory should count as done. Add focused regressions.
+- P2: routine lines 68/83/98 reuse prior assessments under the current profile but no longer save a profile revision/hash or equivalent snapshot reference. A changed profile cannot reliably be distinguished from the one that produced a decision. Add one compact profile marker and invalidate/review stale decisions; old rows without a marker must not silently qualify as current. This does not require restoring full orchestration.
+
+Verified: node app/test-capture-check.mjs passed; isolated temporary-file probes reproduced unknown-state suppression; git diff --check passed. Reviewed matching, old-ledger reader, CLI, tests, prompt/setup/template integration, package test and release file-list changes. Full npm test was reported by Claude, not rerun. No paid rehearsal, packaging or real inventory writes. Matching checks cover company-qualified strong IDs, aliases and same-title distinct vacancies. Remaining agent behavior untested on this version.
+
+## 2026-11-22 — Capture check as default, milestone 13 (Claude)
+
+- Adopted Codex's milestone 12 recommendation. `app/capture-check.mjs` is the rehearsal copy promoted: same matching as run-state 92e1d73 (company plus provider job ID or posting URL, tracking parameters ignored, record `otherIds`/`postingUrls` aliases; same company, title and location gives `similar`), clearer invalid-input messages (file and line), and `--open <ledger>` listing finds pending, without a state, or assessed but not in jobs.json. It reads old run-state ledgers (`discovery` rows) too.
+- Routine and setup prompts (source = templates) use arm C's plain-ledger text plus the open check: at start on unfinished earlier ledgers (old folders: manifest `finishedAt`), and before the summary, where every listed find must be decided or reported under Not done. Routine 43.6k → 44.8k characters.
+- Removed run-state.mjs, candidate-ledger.mjs, their tests, RUN_STATE.md and CANDIDATE_STATE.md (recoverable from 92e1d73); updated package.json test, build-release file list, INTERFACE_FOR_TRACKER, SEARCH_WORKFLOW, the commit-prefix examples and a line in HANDOFF_WRAPPER.
+- Verified: new test-capture-check.mjs (ID, URL with tracking parameters, aliases, dropped list, same-title distinct requisition, other company, unknown location, input shapes, broken JSONL, open check, CLI); full npm test exit 0; prompt parity; git diff --check. On milestone 12 evidence the shipped check prints the same groups as the rehearsal copy, `--open` on the plain-ledger arm's ledger lists exactly NK-24388 and on the capture-only arm's ledger nothing. No agent run on this version.
+- Not done: the profile template's missing drop signal for on-site roles outside the preferred location (separate follow-up).
+
 ## 2026-11-22 — Codex review of milestone 12
 
 - Reviewed frozen protocol, report, per-arm scoring, failure inspections, fixture profile, current routine and rehearsal capture-check implementation. No agent rerun, full raw-log reconstruction or code test run. Costs include estimated killed-session usage; one run per arm and cache/order effects preclude ranking the 1–5% differences reliably.

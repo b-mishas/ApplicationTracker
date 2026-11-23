@@ -76,7 +76,7 @@ If the workbook cannot be updated, record employer check dates/career URLs in da
 
 ## Candidate capture
 
-[RUN_STATE.md](RUN_STATE.md) describes `run-state.mjs`, the one state helper the agent calls: it starts a run, captures finds before selection, marks finds already in jobs.json or on the dropped list, saves decisions and derives summary counts. [CANDIDATE_STATE.md](CANDIDATE_STATE.md) describes its ledger storage. Both write only search-owned files under data/reports/runs/; they never write jobs.json. Imports use the commands above; rerunning an interrupted import is safe. Run folders are kept.
+The agent keeps its own run ledger under data/reports/runs/ (agent/ROUTINE_PROMPT.md). `node app/capture-check.mjs <file> [...]` marks finds already in jobs.json or on the dropped list before they are read; `--open [<run-ledger.jsonl>]` lists finds of all runs (or the named ledger) still pending, rated but not imported, or decided under another profile. It writes nothing and never writes jobs.json. Imports use the commands above; rerunning an interrupted import is safe. Run folders are kept.
 
 ## Agent search coverage
 

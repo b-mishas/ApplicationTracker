@@ -1,38 +1,30 @@
 # Agent handoff
 
-Updated 2026-11-22T01:30Z, Claude. Scope: trim `run-state.mjs` to break even with a plain ledger (roadmap milestone 11) after milestones 8 and 10. The milestone 10 docs and the milestone 11 changes below are committed on main, 4 commits ahead of origin/main. Nothing pushed, remote/CI unverified. `design/` is unrelated untracked work. No packaging or installed-automation change.
+Updated 2026-11-23, Claude. Scope: capture check as the search agent's state handling (roadmap milestone 13) and the fixes for Codex's implementation review. main: milestone 12 docs in 299bc17, milestone 13 and the fixes in the commit after it; not pushed (4 ahead of origin/main); remote/CI unverified. `design/` is unrelated untracked work. No installed-automation change.
 
-## Evidence so far
+## Evidence
 
-- **M8** ([report](rehearsal/runs/2026-11-21-handoff-recovery/evaluation/REPORT.md)): the helper arm cost 15% more, mostly on resume.
-- **M10** ([report](rehearsal/runs/2026-11-22-stress-recovery/evaluation/REPORT.md), an unannounced kill plus a next-day run on 7d2529c): equal outcomes, with the helper 12% more. The extra came from larger tool output in the lead's context, not from extra turns.
-- Both reports are Git-ignored evidence.
-- **Cost composition** across M6/M8/M10: cache writes 41–49%, cache reads 26–34%, output 21–25%. Details are in ORCHESTRATION_HISTORY.
+- [Milestone 12 report](rehearsal/runs/2026-11-22-three-arm-break-even/evaluation/REPORT.md) (Git-ignored) and Codex's two reviews in [ORCHESTRATION_HISTORY.md](agent/orchestration/ORCHESTRATION_HISTORY.md).
 
-## Changed
+## Changed (committed)
 
-- `app/run-state.mjs`:
-  - `capture` on the command line prints one compact line per find plus a note, and reports finds already decided in the current run.
-  - `init` moves open finds of earlier runs into the current run (`carriedIn`), so carried work is decided without `--run`.
-  - `summary` adds `ratedThisRun` (by basis, excluding carried ratings) and `sources` (per kind and status from source-evidence.jsonl).
-- Routine (source = template, 43.6k characters):
-  - no printing of captured files and no RUN_STATE.md read;
-  - filtered reads of saved files;
-  - independent lead tool calls grouped in one turn;
-  - `kind` and `status` in each evidence line;
-  - counts taken from the summary.
-- Docs: RUN_STATE.md, roadmap (milestones 9–12, next action), ORCHESTRATION_HISTORY, HISTORY.
+- `app/capture-check.mjs` (read-only):
+  - `<file>`: `known`/`similar`/`new` per find against jobs.json and the dropped list.
+  - `--open [<ledger>]`: profile hash, then finds of all runs (newest entry per vacancy) that are pending, without state, assessed but not imported, decided under another profile (`reassess`), in an unknown state, or in an unreadable ledger.
+- `app/test-capture-check.mjs`; `package.json` test and `scripts/build-release.mjs` list (wrapper-owned; HANDOFF_WRAPPER notes it).
+- Routine and setup (agent/ and templates/, identical): `--open` at start for all runs; resume only today's unfinished run; `profile` saved in run-completion.json; four allowed ledger states; open check before the summary.
+- Removed run-state.mjs, candidate-ledger.mjs, their tests and contracts (recoverable from 92e1d73).
+- Docs: INTERFACE_FOR_TRACKER, SEARCH_WORKFLOW, AGENTS/CLAUDE example, roadmap (design sections, milestones 12–13, next action), both histories.
 
 ## Verification
 
-10 run-state fixture scenarios pass. Full `npm test` exit 0; prompt parity and `git diff --check` pass. No agent run on this version.
+capture-check tests pass; full `npm test` exit 0; prompt parity; `git diff --check`. On milestone 12 plain-ledger evidence `--open` lists NK-24388 and an invented state. No agent run on this version.
 
 ## Known limits
 
-- Real runs are Claude desktop scheduled tasks or Codex automations, not the CLI, so cache lifetime and pricing there are unmeasured.
-- A carried rating re-rated today still counts as carried.
-- A `summary` called early ends the run.
+- The open check is prose-enforced. After a profile change every older exclusion is listed as `reassess` (shortcut in the script).
+- Real runs are Claude desktop scheduled tasks or Codex automations; cache and pricing unmeasured.
 
 ## Next action
 
-Milestone 12, the break-even check: repeat M10's pair on this base, with the general output rules in both arms and a cost cap. Start it in a new session from a short brief, not the M8 session. Codex has not reviewed the M10 verdict. No active operations.
+Push when the user asks. Then the profile-template location question (hard limit vs preference), and observe 2–3 ordinary scheduled searches. No active operations.
