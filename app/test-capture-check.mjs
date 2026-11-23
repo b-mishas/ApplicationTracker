@@ -196,6 +196,13 @@ try {
   assert.deepEqual(open(other), [`profile ${profileHash(other)}`, ...repeatOpen]);
   otherRun('run-202611280900-dddd', [{company: 'Kestrel', title: 'QA Lead', location: 'Berlin', url: 'https://kestrel.test/jobs/8', state: 'duplicate', reason: 'Same as k1'}]);
   assert.deepEqual(open(other), [`profile ${profileHash(other)}`, repeatOpen[1]]);
+  // Codex P2: rows sharing a provider ID but with different URLs; jobs.json holds only the older URL. The import is found.
+  fs.rmSync(path.join(other, 'reports', 'runs'), {recursive: true});
+  otherRun('run-202611290900-eeee', [
+    {company: 'Kestrel', title: 'Data Lead', location: 'Berlin', url: 'https://kestrel.test/jobs/6', provider: 'Kestrel ATS', providerJobId: 'K-6', state: 'pending'},
+    {company: 'Kestrel', title: 'Data Lead', location: 'Berlin', url: 'https://boards.kestrel.test/apply/6', provider: 'Kestrel ATS', providerJobId: 'K-6', state: 'assessed', fit: 4},
+  ]);
+  assert.deepEqual(open(other), [`profile ${profileHash(other)}`, 'open: none']);
   console.log('capture-check: all scenarios passed');
 } finally {
   fs.rmSync(directory, {recursive: true, force: true});

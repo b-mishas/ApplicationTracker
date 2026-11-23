@@ -4,6 +4,11 @@
 
 --------------------
 
+## 2026-11-23 — Imported finds recognised under any of their URLs (Codex P2)
+
+- `--open` keeps every ID and URL a vacancy has had and checks all of them against jobs.json, so a find imported under an older URL no longer shows as open. Test fails on ac8fa4b; full npm test passes. Same gap reported to JobTracker in its BUGS.md.
+
+
 ## 2026-11-23 — Capture check identity and company-name gaps (from JobTracker's review)
 
 - A ledger line without ID or URL no longer joins an identified entry of the same name (it could hide a pending second requisition), and merges keep known identifiers. Company names match by whole words, so Roche no longer matches Rochester. Tests added; full npm test passes; no agent run.

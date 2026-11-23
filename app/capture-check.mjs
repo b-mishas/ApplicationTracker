@@ -131,19 +131,21 @@ export function open(root, ledgers = allLedgers(root)) {
       // A duplicate line for a vacancy already in the same ledger is a repeat occurrence, not a decision: it keeps the
       // earlier entry's state (and fills in an ID or URL it lacked). A later run's duplicate decision still closes it.
       const repeat = before && before.run === run && String(row?.state ?? '').trim().toLowerCase() === 'duplicate';
-      newest[slot] = repeat ? {...before, d: {...found, ...before.d}, keyless: before.keyless && !keys.length}
-        : {row, d, run, profile: row.assessment?.profileRevision || row.profileRevision || profile, keyless: !keys.length && (before?.keyless ?? true)};
+      // All IDs and URLs the vacancy has had, so jobs.json is matched by any of them, not only the newest URL.
+      const ids = new Set([...(before?.ids || []), ...keys]);
+      newest[slot] = repeat ? {...before, d: {...found, ...before.d}, ids, keyless: before.keyless && !keys.length}
+        : {row, d, run, ids, profile: row.assessment?.profileRevision || row.profileRevision || profile, keyless: !keys.length && (before?.keyless ?? true)};
       for (const key of keys) byKey.set(key, slot);
       const named = byName.get(nameId(found)) || []; if (!named.includes(slot)) byName.set(nameId(found), [...named, slot]);
     }
   }
-  for (const {row, d, run, profile} of newest) {
+  for (const {row, d, run, ids, profile} of newest) {
     const state = String(row?.state ?? '').trim().toLowerCase();
     const stale = current && profile !== current;
     let label = null;
     if (!state) label = 'no state';
     else if (state === 'pending') label = 'pending';
-    else if (state === 'assessed') label = strongMatch(stored, d) ? null : stale ? 'reassess (assessed under another profile)' : 'assessed, not imported';
+    else if (state === 'assessed') label = [...ids].some(key => stored.strong.has(key)) ? null : stale ? 'reassess (assessed under another profile)' : 'assessed, not imported';
     else if (state === 'excluded') label = stale ? 'reassess (excluded under another profile)' : null;
     else if (state !== 'duplicate') label = `unknown state ${JSON.stringify(row.state)}`;
     if (label) lines.push(`open | ${label} | ${run} | ${line(d)}`);

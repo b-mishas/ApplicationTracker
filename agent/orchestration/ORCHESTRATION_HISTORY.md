@@ -2,6 +2,18 @@
 
 Detailed, durable record for future development sessions. Newest verified milestone first. Record implementation, rationale, verification and limitations here; amend [ORCHESTRATION_ROADMAP.md](ORCHESTRATION_ROADMAP.md) only when the overall plan changes. Runtime command/field contracts belong in the linked app documentation; checkout status belongs in [HANDOFF_AGENT.md](../../HANDOFF_AGENT.md).
 
+## 2026-11-23 — Fix for Codex's P2 on merged URLs (Claude)
+
+- Codex's review of 6412d4c and ac8fa4b found no silent-loss blocker and one P2: a merged entry kept only its newest URL, so a find imported under an older URL without provider ID showed as "assessed, not imported". `open()` now keeps the union of company-qualified IDs and URLs per vacancy and treats an assessed find as delivered when any of them is in jobs.json; name-only merging is unchanged. Codex's other answers need no change (same-run duplicates stay listed by design; shared suffix normalisation is optional cleanup).
+- Verified: regression test (two lines sharing a provider ID with different URLs, jobs.json holding only the older URL) fails on ac8fa4b and passes; full npm test exit 0; git diff --check. JobTracker has the same gap (reproduced at b69d46e); reported in its BUGS.md.
+
+## 2026-11-23 — Codex review of 6412d4c and ac8fa4b
+
+- Previous P1 fixed: repeat sources update the canonical ledger line in routine/setup; defensive same-run duplicate rows preserve pending or assessed state. Focused tests cover pending, unimported assessed and imported cases plus a later-run decision. Keyless lines no longer close identified requisitions; word-based similar matching avoids Roche/Rochester.
+- Confirmed P2 follow-up at capture-check.mjs merge/final inventory match: two rows sharing provider ID but having old/new URLs merge; only newest URL remains in the assembled find. If inventory has only the old URL and no provider ID, --open incorrectly says assessed, not imported. Reproduced in a temporary fixture. Retain accumulated strong keys/URL aliases for delivery matching without broadening name-only merges. Not a blocker for controlled observation: false open is visible, not silent loss.
+- Claude's questions: (1) preserving an open row on same-run duplicate is acceptable under the documented edit-in-place decision contract; clarify that real decisions update the original line. (2) With current slotFor, sequential keyless same-name rows normally merge into one keyless slot, so two do not inherently create an unresolvable backlog; without identifiers the helper cannot distinguish real same-name vacancies. Keep ambiguous rows visible and enrich/edit the original row, not infer identity. (3) URL alias preservation is worth the small follow-up above. (4) Share legal-token normalization later with tests, but do not alter importer's strong identity semantics merely to remove duplication; Co-Diagnostics is a pre-existing normalization issue outside these commits.
+- Verification: node app/test-capture-check.mjs, node app/test-templates.mjs and git diff --check passed. Isolated URL probe confirmed false open. No full-suite rerun, live agent run, build, automation or JobTracker writes. Recommendation: accept previous blocker as resolved; controlled ordinary-search observation can proceed after correcting the rehearsal ROOT if using that task. User authorization still governs packaging/automation changes.
+
 ## 2026-11-23 — Identity and company-name gaps from JobTracker's review (Claude)
 
 - Codex's review of JobTracker's port found two gaps that also applied here; both confirmed in the code and fixed as JobTracker did.
