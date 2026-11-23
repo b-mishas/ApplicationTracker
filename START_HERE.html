@@ -125,6 +125,11 @@ document.documentElement.className=/mac/i.test(navigator.userAgentData?.platform
 <div class="prompt-header"><span>Startup help</span><p class="copy-status" role="status"></p><button type="button" data-copy="startup-prompt" aria-label="Copy startup help instruction">Copy</button></div>
 <pre><code id="startup-prompt">Read data/logs/server.log in this folder and help me fix the tracker startup problem.</code></pre>
 </div>
+<p>To report a problem with setup or the daily search, copy this to your assistant. The file it makes holds statuses, counts and error messages only; look it over before sending it.</p>
+<div class="prompt">
+<div class="prompt-header"><span>Problem report</span><p class="copy-status" role="status"></p><button type="button" data-copy="diagnostics-prompt" aria-label="Copy problem report instruction">Copy</button></div>
+<pre><code id="diagnostics-prompt">Run node app/diagnostics.mjs in this folder and tell me where the file is saved.</code></pre>
+</div>
 <p class="note">The tracker stores records locally. Connected AI services process material you give them access to. Platform-specific instructions are in guides/.</p>
 
 <script>

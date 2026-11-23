@@ -4,9 +4,17 @@
 
 --------------------
 
+## 2026-11-23 — Use logs for diagnosing recipients' problems
+
+- Routine (Part B) saves `summary.md` and `run-log.json` (assistant, models, access, checklist status, subagents, errors without URLs or names) in each run folder; setup keeps `data/reports/setup-log.json` per step. New `app/diagnostics.mjs` bundles the setup log and the last runs (statuses, ledger and source counts, import counts, masked errors) into `data/exports/diagnostics-<UTC>.json` for the user to check and send; it sends nothing. START_HERE.html has a copy-ready "Problem report" instruction; the script ships in releases and its test is in npm test. Token cost is not included (the agent cannot measure it). Full npm test passes; no agent run.
+
 ## 2026-11-23 — Imported finds recognised under any of their URLs (Codex P2)
 
 - `--open` keeps every ID and URL a vacancy has had and checks all of them against jobs.json, so a find imported under an older URL no longer shows as open. Test fails on ac8fa4b; full npm test passes. Same gap reported to JobTracker in its BUGS.md.
+
+## 2026-11-23 — Repeat/identity fixes reviewed (Codex)
+
+- Confirmed previous P1 resolved; capture-check/template tests passed. Reproduced visible false-open when a merged vacancy's older URL is its only inventory match; recorded a nonblocking alias-preservation follow-up. See HANDOFF_AGENT and ORCHESTRATION_HISTORY. No implementation changes.
 
 
 ## 2026-11-23 — Capture check identity and company-name gaps (from JobTracker's review)
