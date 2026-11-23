@@ -1,6 +1,6 @@
 # Agent handoff
 
-Updated 2026-11-23, Claude. Scope: capture check as the search agent's state handling (roadmap milestone 13), the fixes for Codex's implementation review, and a routine wording fix (posting delegation threshold). main: milestone 12 docs in 299bc17, milestone 13 in 500417a, threshold fix in the commit after it; not pushed; remote/CI unverified. `design/` is unrelated untracked work. No installed-automation change. A porting guide for the personal JobTracker routine is in that checkout (JOBTRACKER_PORTING.md), not here.
+Updated 2026-11-23, Claude. Scope: capture check as the search agent's state handling (roadmap milestone 13), the fixes for Codex's implementation review, and a routine wording fix (posting delegation threshold). main: milestone 12 docs in 299bc17, milestone 13 in 500417a, threshold fix in d6e1cbe, stale `addedThisRun` summary reference removed in e13ae54; not pushed; remote/CI unverified. `design/` is unrelated untracked work. No installed-automation change. A porting guide for the personal JobTracker routine is in that checkout (`C:/Users/misha/Claude/Code/JobTracker/SEARCH_PORTING.md`, pinned to e13ae54), not here.
 
 ## Evidence
 
