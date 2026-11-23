@@ -4,6 +4,10 @@
 
 --------------------
 
+## 2026-11-23 — Routine posting threshold and orchestration origin
+
+- Routine (and template) no longer says to read up to five ready postings yourself while also saying to delegate from three; one or two are read by the lead. Roadmap and ORCHESTRATION_HISTORY now note that the work began with 1fbdd54 (run evidence files), before 72a1467.
+
 ## 2026-11-22 — Capture check fixes after Codex's review
 
 - Open finds of finished runs stay listed, unknown ledger states are reported, and decisions under another profile are flagged for reassessment via a per-run profile hash. Tests and full npm test pass; no agent run. Details in agent/orchestration/ORCHESTRATION_HISTORY.md.

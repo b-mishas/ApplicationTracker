@@ -278,6 +278,10 @@ Helper/builder syntax, exact source/template parity, Markdown targets, release-f
 - Avoid narrative diaries, full page/transcript dumps, a database or a general orchestration framework. Keep the agent's judgment for relevance/fit and use small helpers for state operations. Token savings are a hypothesis to measure, not an established outcome.
 - Preserve successful coverage separately from candidate processing; never advance dates for partial listings. Treat cursors on changing listings as hints and resume with overlap/deduplication.
 
+## 2026-11-19 — Run evidence files after the rehearsal (1fbdd54)
+
+- Start of this work, before the name "orchestration" (72a1467, 2026-11-20): the routine fixes after the failed rehearsal added `run-completion.json` (then a checklist of items 1–7) and `source-evidence.jsonl` (one line per checked source). The ledger and coverage.json were older. b66c262 in between (posting access, employer fallbacks) is unrelated to state.
+
 ## Next session
 
 Recheck the current checkout and owning code; follow the roadmap's current next action. This record does not authorize committing, pushing, packaging, changing installed automations or launching a live search.

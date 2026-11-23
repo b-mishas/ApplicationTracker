@@ -72,6 +72,8 @@ Use isolated rehearsal inventories and fictional profiles, **never real applicat
 
 ## Why this design
 
+The work began with 1fbdd54 (2026-11-19), which answered the rehearsal below by adding the run evidence files run-completion.json and source-evidence.jsonl; the state helper and this roadmap followed in 72a1467.
+
 The earlier rehearsal lost plausible extracted job vacancies, began discovery before formal run capture, stalled in browser access and produced inconsistent summaries. Files helped continuity, but did not establish autonomous recovery or token savings. Original local evidence: [report](../../rehearsal/runs/terra-rehearsal-20261119T201042Z/evaluation/REPORT.md), [prompt log](../../rehearsal/runs/terra-rehearsal-20261119T201042Z/evaluation/REHEARSAL_PROMPT_LOG.md). These ignored artifacts may be absent elsewhere. Design initially reviewed with gpt-6.1-sol at Medium effort.
 
 ## Current next action
