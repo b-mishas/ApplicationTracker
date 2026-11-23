@@ -1,8 +1,12 @@
 # Agent handoff
 
-Updated 2026-11-23, Claude. Scope: routine prompt cleanup after Claude's audit and Codex's review of it. main at f545cb8, ten commits ahead of origin/main (not pushed); remote/CI unverified. Uncommitted: the changes below, plus ROADMAP.md (new) and the PLAN.md link to it. `design/` is unrelated untracked work. No installed-automation change.
+Updated 2026-11-23, Claude. Scope: routine prompt cleanup after Claude's audit and Codex's review of it. main at ad0e2f5 (the changes below plus ROADMAP.md), eleven commits ahead of origin/main (not pushed); remote/CI unverified. `design/` is unrelated untracked work. No installed-automation change.
 
-## Changed (uncommitted)
+## Uncommitted (Claude, after the first real run)
+
+- Routine and template, line 76: `text` partial now means the description itself stops early (cut tool output must be read further first); rereads get `reread: true` in the ledger. Evidence: JobTracker run run-202611231816-e3ef, 20 of 30 extracts partial from tool truncation, none reread. Findings reported in `C:/Users/misha/Claude/Code/JobTracker/BUGS.md`.
+
+$1
 
 - `agent/ROUTINE_PROMPT.md` = `templates/agent/ROUTINE_PROMPT.md` (Part B; drift test passes):
   - Stops reading app/SEARCH_WORKFLOW.md. Its routine-relevant details now sit in Part B: bundled Node paths (§1), workbook `read`/`update` commands (§1, §5) and the PowerShell TZ caveat (§9).
@@ -28,7 +32,6 @@ Updated 2026-11-23, Claude. Scope: routine prompt cleanup after Claude's audit a
 
 ## Next action
 
-- Commit when the user asks: `[Agent]` for the prompt cleanup, keeping ROADMAP.md separate.
 - Codex's implementation review of 651acad (URL aliases) and f545cb8 (diagnostics) is still pending.
 - Rebuild dist/ (still built from 330274f) and fix the rehearsal task's ROOT before the next rehearsal.
 - JobTracker has its own copy of the same audit; not ported.

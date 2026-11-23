@@ -4,6 +4,10 @@
 
 --------------------
 
+## 2026-11-23 — First real capture-check run reviewed (JobTracker)
+
+- Read-only review of JobTracker run run-202611231816-e3ef: `--open` agreed with Not done; run-log.json and summary.md complete; 4 added, 0 rejected. 20 of 30 posting extracts were labelled `text: partial` because a tool cut its output, and none were reread. Routine (and template) now define `partial` as a description that itself stops early, tell the reader to fetch the rest of cut output first, and require `reread: true` on reread decisions. Closure wording was already consistent (ad0e2f5; importer question is PLAN item 9). Findings, including weak employer and portal access, reported in JobTracker/BUGS.md.
+
 ## 2026-11-23 — Use logs for diagnosing recipients' problems
 
 - Routine (Part B) saves `summary.md` and `run-log.json` (assistant, models, access, checklist status, subagents, errors without URLs or names) in each run folder; setup keeps `data/reports/setup-log.json` per step. New `app/diagnostics.mjs` bundles the setup log and the last runs (statuses, ledger and source counts, import counts, masked errors) into `data/exports/diagnostics-<UTC>.json` for the user to check and send; it sends nothing. START_HERE.html has a copy-ready "Problem report" instruction; the script ships in releases and its test is in npm test. Token cost is not included (the agent cannot measure it). Full npm test passes; no agent run.
