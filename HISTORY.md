@@ -4,6 +4,10 @@
 
 --------------------
 
+## 2026-11-23 — Template drift test
+
+- New app/test-templates.mjs (in npm test) fails when agent/, guides/ or profile/ differ from their templates/ copies, skipping agent/orchestration and Git-ignored private files; it checks itself on a fixture first. Full npm test passes.
+
 ## 2026-11-23 — Posting extracts report how much text was visible
 
 - Routine (and template): posting subagents report `text` full, partial or none and "none stated" requirements; the lead rereads partial or unclear extracts, accepts a full text without requirements and may cite responsibilities as evidence. Replaces "an extract without requirement lines is a failed reading", which reread valid duty-only postings and passed cut-off ones. No test reads prompt text; prompt parity checked.
