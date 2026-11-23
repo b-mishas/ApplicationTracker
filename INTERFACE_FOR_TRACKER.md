@@ -21,15 +21,15 @@ Not shipped: `AGENTS.md`, `CLAUDE.md`, `HANDOFF_AGENT.md`, `HANDOFF_WRAPPER.md`,
 - Current status is authoritative; interview outcome buttons change that status. Legacy interviewOutcome fields are normalized on ordinary saves. Statistics use valid date OR current status: application date or Applied/Interview/Offer; interview date or Interview; offer date or Offer. Dated milestones remain counted after later outcomes. Empty modern dates suppress legacy date fallback, but not current-stage membership. New/Shortlisted/Applied clear interview and offer dates; Interview clears the offer date. Offer/Rejected/Withdrawn/Dismissed preserve the interview date; Rejected/Withdrawn/Dismissed preserve the offer date. Entering Applied/Offer/Rejected/Withdrawn defaults its date to today; Interview leaves an unknown date blank. Same-status edits do not reapply defaults. Discovery batches cannot edit these user-owned fields.
 - Self-check: node app/self-check.mjs from ROOT; no search-configuration prerequisite; legacy --require-configured is a compatibility alias. Exit zero means installation checks passed. Empty-batch validation alone does not establish storage/export health.
 - Local startup: Start reuses a fixed local address; Restart restarts explicitly. Optional startup at login is controlled in tracker Settings and registered per-user on the computer, independently of agent scheduling. Advanced Settings exposes the local port/address; port changes apply on explicit Restart, which checks availability before stopping. Start/Restart files offer port-conflict recovery. These local preferences are not part of settings/tracker.json or the position database.
-- Node: each platform ZIP contains one runtime; the default build targets Windows x64 and Mac Intel. Exact paths are documented in app/SEARCH_WORKFLOW.md; Linux agents need Linux Node in their environment.
-- Workbook helper: employer-workbook.mjs read/replace/update provides deterministic setup and maintenance without Python; read SEARCH_WORKFLOW.md for input fields and fallback.
+- Node: each platform ZIP contains one runtime; the default build targets Windows x64 and Mac Intel. Exact paths are documented in app/SEARCH_WORKFLOW.md and repeated in Part B §1; Linux agents need Linux Node in their environment.
+- Workbook helper: employer-workbook.mjs read/replace/update provides deterministic setup and maintenance without Python; setup reads SEARCH_WORKFLOW.md for input fields and fallback; Part B carries the `read` and `update` commands it uses.
 - Runtime/package and integration verification: see HANDOFF_WRAPPER.md and HISTORY.md in the development repository; they are not distributed. macOS needs a real-machine acceptance check.
 
 ## Folder layout (relative to ROOT)
 | Path | Owner | Agent access |
 |---|---|---|
 | `app/` | tracker | read; runs the importer |
-| `app/SEARCH_WORKFLOW.md` | tracker | read: import command, settings file and any deadline/urgency fields |
+| `app/SEARCH_WORKFLOW.md` | tracker | setup reads it; the daily routine does not, since Part B carries the import, TZ, Node and workbook commands. Change both together |
 | `app/batch.schema.json` | tracker | read: structural fields; country codes come from app/countries.json, with UK accepted as a GB alias |
 | `data/jobs.json` | tracker (importer only) | read |
 | `data/incoming/` | agent writes batches | write new batches |
@@ -47,14 +47,14 @@ The tracker must not depend on `data/reports/coverage.json` or the workbook; bot
 `app/capture-check.mjs` labels the agent's finds as known (same company and a shared provider job ID or posting URL with a jobs.json record of any status or a coverage.json dropped entry), repeat (shares one with a find in the `--seen` run ledger or earlier in the same call), similar (same company and title, allowing extra trailing words in a company name (whole words, at least 4 characters) or a title ending in its city, and overlapping or missing location, against jobs.json, dropped entries or the run) or new, and with `--open` prints the profile hash and lists finds of all run ledgers (or the named ones) whose newest entry still needs work: pending, rated but not imported, decided under another profile, or in an unknown state; a duplicate line repeating a vacancy already in the same ledger does not close it. It reads jobs.json, coverage.json, the profile and run folders and writes nothing; it exits 2 without jobs.json (and, for `--open`, without the profile) so a wrong ROOT is not taken for an empty inventory. The agent keeps its own run ledger and run-completion.json under data/reports/runs/ (agent/ROUTINE_PROMPT.md), independent of inventory and coverage schemas. The earlier run-state helper was retired after roadmap milestone 12 and remains in commit 92e1d73; its run folders stay readable. Imports still use the import command below. Run folders are kept, not deleted by age.
 
 ## Import command
-From `app/`: `node import-discoveries.mjs incoming/<file>.json --root ../data [--validate-only | --dry-run]`. Exit codes 0 / 2 / 3 / 4 / 5 and the final `RESULT` line as today. The agent follows `SEARCH_WORKFLOW.md` if it documents something else.
+From `app/`: `node import-discoveries.mjs incoming/<file>.json --root ../data [--validate-only | --dry-run]`. Exit codes 0 / 2 / 3 / 4 / 5 and the final `RESULT` line as today. Part B carries this command; change it there together.
 
 Report filenames strip the final .json; prefer the report path in RESULT. Setup validation relies on two current behaviours; keep them: `--validate-only` writes nothing, and an absolute batch path outside `data/` is accepted.
 
 ## Deadlines / urgency
-Part B uses deadline/urgency fields only if the installed schema has them and `SEARCH_WORKFLOW.md` describes them; it never overwrites manual urgency. Until then, deadlines go to the summary's Flags.
+The batch has no deadline/urgency fields; Part B reports deadlines in the summary's Flags. Adding such fields needs a Part B change.
 
 ## No Python dependency
 The recipient's computer may have no Python (Windows and macOS ship without a usable one). The agent reads the workbook without installing anything and falls back to `coverage.json` for writes, so nothing in the tracker should require Python either.
 
-Calendar dates use execution-local time. Hosted agents set standard process TZ from their Part A timezone before importing; see SEARCH_WORKFLOW.md. Browser Today uses desktop-local time. Automatic groupColours metadata in jobs.json belongs to the tracker, never the agent.
+Calendar dates use execution-local time. Hosted agents set standard process TZ from their Part A timezone before importing (Part B §9; details in SEARCH_WORKFLOW.md). Browser Today uses desktop-local time. Automatic groupColours metadata in jobs.json belongs to the tracker, never the agent.

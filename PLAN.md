@@ -1,6 +1,6 @@
 # Application tracker — plan
 
-[HISTORY.md](HISTORY.md) records completed milestones. [HANDOFF_AGENT.md](HANDOFF_AGENT.md) and [HANDOFF_WRAPPER.md](HANDOFF_WRAPPER.md) record verification and checkout status.
+[ROADMAP.md](ROADMAP.md) lists the big architecture steps; [HISTORY.md](HISTORY.md) records completed milestones. [HANDOFF_AGENT.md](HANDOFF_AGENT.md) and [HANDOFF_WRAPPER.md](HANDOFF_WRAPPER.md) record verification and checkout status.
 
 ## Before shipping
 
@@ -20,4 +20,5 @@
 6. **Board script (deferred agent work).** Port JobTracker's fetch-boards.mjs only after designing and testing: durable pending discoveries before IDs are marked seen, re-evaluation after filter changes, changed or reopened jobs with known IDs, explicit partial status at pagination limits, bounded resumable first run, kept state on fetch failure, no closure from absence, ambiguous city-only locations kept for review. Then decide app/ or scripts/ and the write permissions. Verify network access in scheduled Claude and Codex runs first.
 7. **In-app button tutorial.** Highlight one control at a time against a translucent overlay. Give each a one-sentence explanation and provide Next, Back, Skip and replay. Support keyboard use and narrow screens.
 8. **Versioned ZIP names (optional).** The footer now shows package.json version; future packages include BUILD_INFO.json with version and build time. Consider adding the version to archive names too.
-9. **Later.** Backup recovery and updates that preserve local data, signed launchers, optional structured deadlines and agent urgency suggestions, and possible UK/GB normalization. Coordinate agent-facing schema changes with Claude.
+9. **Closure seen only on a banner.** The importer accepts Open/Closed only with "Posting reviewed" (import-discoveries.mjs line 67), so a posting that shows only a closure notice stays Unverified and is flagged (Part B §6). Decide whether an explicit closure notice that clearly identifies the vacancy should suffice; if so, separate availability evidence from assessment basis in the importer, add a regression test, then change §6. Do not label a banner as a reviewed description.
+10. **Later.** Backup recovery and updates that preserve local data, signed launchers, optional structured deadlines and agent urgency suggestions, and possible UK/GB normalization. Coordinate agent-facing schema changes with Claude.
