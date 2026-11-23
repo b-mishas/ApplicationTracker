@@ -236,7 +236,7 @@ When finishing, after the import, run `node app/capture-check.mjs --open data/re
 
 Terse, telegraphic Markdown in the Part A language; no copied job-description text. Use exactly the four sections below, always all four, in this order, with the table columns as given, and add no others; write **Flags — None** when there are no flags. Every position newly added this run appears exactly once in the table; no row limit.
 
-**Import** — **Result:** added N | updated N | unchanged N | ambiguous N | rejected N (or **Partial import:** counts + report path / **IMPORT FAILED:** exact error). **Gmail:** OK (date range) / empty (date range) / partial / not read: reason. Added N is the number of `addedThisRun`; the other counts come from the latest importer report.
+**Import** — **Result:** added N | updated N | unchanged N | ambiguous N | rejected N (or **Partial import:** counts + report path / **IMPORT FAILED:** exact error). **Gmail:** OK (date range) / empty (date range) / partial / not read: reason. Added N is the number of positions added this run (see above); the other counts come from the latest importer report.
 
 **New positions** — one table, fit descending, unassessed last; within equal fit: reviewed Open, reviewed Unverified, title-only:
 

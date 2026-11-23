@@ -6,7 +6,7 @@
 
 ## 2026-11-23 — Routine posting threshold and orchestration origin
 
-- Routine (and template) no longer says to read up to five ready postings yourself while also saying to delegate from three; one or two are read by the lead. Roadmap and ORCHESTRATION_HISTORY now note that the work began with 1fbdd54 (run evidence files), before 72a1467.
+- Routine (and template) no longer says to read up to five ready postings yourself while also saying to delegate from three; one or two are read by the lead. The summary no longer counts additions by `addedThisRun`, a field only the retired helper produced. Roadmap and ORCHESTRATION_HISTORY now note that the work began with 1fbdd54 (run evidence files), before 72a1467.
 
 ## 2026-11-22 — Capture check fixes after Codex's review
 
