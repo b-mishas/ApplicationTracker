@@ -35,6 +35,7 @@ Search keywords (used for portal searches and job alerts): {{e.g. data engineer,
 - Preferred regions (weighted higher when otherwise equal): {{e.g. within 50 km of my city}}
 - Relocation: {{e.g. open to relocation within the DACH region / not open}}
 - On-site limits: {{e.g. max 3 office days per week}}; hybrid with office days not stated: {{e.g. keep and note "office days not stated"}}
+- Relocation and on-site limits are: {{hard limits: drop roles that need relocation or more office days than allowed / preferences: keep such roles and note the constraint in gaps}}
 
 ## 5. Strengths (what the agent can count as hands-on evidence)
 - {{skill or achievement, with where/when}}

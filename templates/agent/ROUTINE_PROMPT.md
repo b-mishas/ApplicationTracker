@@ -99,7 +99,7 @@ Before opening or rating any find (alerts, employer pages, portals, link finder)
 
 ### 3. Scope
 
-Apply the profile's countries, remote rules, role families, seniority rules and preferred regions. "Remote" does not imply worldwide eligibility; if eligibility is unclear, flag it. Apply the profile's special rules (§9) exactly as scoped there; they take precedence over the general drop rules.
+Apply the profile's countries, remote rules, role families, seniority rules and preferred regions. Where profile §4 makes relocation or on-site limits hard, drop and count roles that break them; where they are preferences or not stated, keep the role and note the constraint in gaps (§6). "Remote" does not imply worldwide eligibility; if eligibility is unclear, flag it. Apply the profile's special rules (§9) exactly as scoped there; they take precedence over the general drop rules.
 
 Drop and count clear mismatches using the profile's mismatch signals. Drop without opening only when the title and alert text establish the mismatch; otherwise read the description. Do not reject on a keyword alone; judge whether the missing experience is essential and central.
 

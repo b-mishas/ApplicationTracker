@@ -4,6 +4,10 @@
 
 --------------------
 
+## 2026-11-23 — Hard or soft location limits in the profile
+
+- Profile template §4 records whether relocation and on-site limits are hard limits or preferences; setup asks and never assumes; the routine drops and counts roles breaking hard limits and otherwise notes the constraint in gaps (milestone 12, NK-24318). Full npm test passes; no agent run.
+
 ## 2026-11-23 — Template drift test
 
 - New app/test-templates.mjs (in npm test) fails when agent/, guides/ or profile/ differ from their templates/ copies, skipping agent/orchestration and Git-ignored private files; it checks itself on a fixture first. Full npm test passes.
