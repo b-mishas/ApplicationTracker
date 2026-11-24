@@ -32,7 +32,11 @@ export function apiFor(raw) {
   return null;
 }
 
+// Job boards block scripts or need a sign-in (Indeed answered "fetch failed" in the first scheduled rehearsal): read those in the browser.
+export const jobBoard = raw => { try { return /(^|.)(linkedin|indeed|glassdoor|stepstone|xing)./.test(new URL(raw).hostname.toLowerCase()); } catch { return false; } };
+
 export async function readPosting(url) {
+  if (jobBoard(url)) return {url, source: 'board', chars: 0, text: '', error: 'job board: read it in the browser'};
   try {
     const api = apiFor(url);
     const res = await fetch(api ? api.url : url, {headers: {accept: api ? 'application/json' : 'text/html', 'user-agent': 'Mozilla/5.0 (compatible; job-posting-reader/1.0)'}, signal: AbortSignal.timeout(30000)});

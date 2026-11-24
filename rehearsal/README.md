@@ -33,4 +33,6 @@ Historical runs keep their existing folder names and internal layouts. Some use 
 
 Create a new, unique folder under `runs/`, preferably `YYYY-MM-DD-description`, with an isolated `installation/` and an `evaluation/` directory. Start with pristine templates and an empty inventory unless the task explicitly calls for saved-state continuation. Use a separate employer workbook. Keep personal installations and installed automations untouched.
 
+Cap spend before any rehearsal starts, and write the caps in the run report. Use a USD cap where the runner offers one (CLI runs: about USD 5, as in milestones 10 and 12). Scheduled tasks and automations offer none, so cap the scope through the installation's data instead: set coverage.json `gmailCheckedThrough` to about the start time, so the first run reads about one day of alerts, not the seven days a missing checkpoint gives; keep the employer workbook small. Run a scheduled rehearsal once attended and disable the schedule until its first run has been reviewed.
+
 Record the source commit, scope, model, times, available native usage, exclusions and verification limits in the run report. The [run index](runs/README.md) links retained reports; update it when adding a run. Creating a directory does not authorize starting a search, scheduling, packaging or publishing.

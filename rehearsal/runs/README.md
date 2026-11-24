@@ -12,6 +12,7 @@ Run folders are deliberately excluded from Git and release packages. The links b
 | `terra-rehearsal-20261119T201042Z/` | [Evaluation report](terra-rehearsal-20261119T201042Z/evaluation/REPORT.md) and [candidate–Terra prompt log](terra-rehearsal-20261119T201042Z/evaluation/REHEARSAL_PROMPT_LOG.md). |
 | `2026-11-21-small-model-acceptance/` | [Milestone 6 report](2026-11-21-small-model-acceptance/evaluation/REPORT.md): Claude Sonnet 5.5 lead with Haiku 5.5 subagent, helpers (18a85df) vs no helpers (b66c262) on three Greenhouse boards; equal outcomes, helpers 57% more input. |
 | `2026-11-21-handoff-recovery/` | [Milestone 8 report](2026-11-21-handoff-recovery/evaluation/REPORT.md): run-state v3 (49aac06) vs plain routine (b66c262), delegated employer batch with known-vacancy traps on a local fictional board, stopped after rating and resumed fresh, 2 repetitions each; equal outcomes, helper avoided rating known vacancies but cost 15% more. |
+| `2026-11-24-scheduled-claude/` | [Setup and checks](2026-11-24-scheduled-claude/evaluation/README.md): first scheduled Claude (Cowork) run on a fresh package from 8663380, Sam Rehearsal profile, real `job-alerts` label. |
 
 The latest listed run used separate Terra agents for interactive setup and a daily-style continuation. Its scoped exclusions do not establish full setup acceptance. Read its evaluation report for passed, failed and blocked checks.
 
