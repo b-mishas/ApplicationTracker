@@ -13,7 +13,7 @@ const live = fixtureData();
 let n = 0; const results = [];
 const test = async (name, fn) => { const dir = await mkdtemp(path.join(tmpdir(), 'imp-')); await mkdir(path.join(dir, 'incoming')); await writeFile(path.join(dir, 'jobs.json'), JSON.stringify(live));
   await writeFile(path.join(dir,'settings.json'),JSON.stringify(fixtureSettings));process.env.JOBTRACKER_SETTINGS_FILE=path.join(dir,'settings.json');
-  try { await fn(dir); results.push('ok   ' + name); } catch (e) { results.push('FAIL ' + name + ': ' + e.message); process.exitCode = 1; } finally { await rm(dir, {recursive: true, force: true}); } };
+  try { await fn(dir); results.push('ok   ' + name); } catch (e) { results.push('FAIL ' + name + ': ' + e.message); process.exitCode = 1; } finally { await rm(dir, {recursive: true, force: true, maxRetries: 5}); } };
 const read = async dir => JSON.parse(await readFile(path.join(dir, 'jobs.json'), 'utf8'));
 let seq = 0;
 const mk = (over = {}) => ({company: 'Testco Biologics GmbH', title: 'Senior Scientist Antibody Discovery', url: 'https://careers.testco.example/jobs/' + (++seq), linkType: 'posting', group: 'Engineering', countries: ['DE'], city: 'Munich', locationRaw: 'Munich, Germany', workMode: 'Hybrid', workModeRaw: 'Hybrid', fit: 4, reasoning: 'Strong match.', gaps: 'None.', seniority: 'Senior', assessmentBasis: 'Posting reviewed', postedDate: '2026-11-01', observedAt: '2026-11-03T05:00:00Z', availability: 'Open', ...over});

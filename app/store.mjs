@@ -14,31 +14,36 @@ export class BusyError extends Error { constructor(m) { super(m); this.code = 'B
 export class DataError extends Error { constructor(m) { super(m); this.code = 'DATA'; } }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-export async function withLock(root, fn, {timeoutMs = 15000, noDelete = false} = {}) {
+// `openLock` is a test seam for failures after the lock file was created.
+export async function withLock(root, fn, {timeoutMs = 15000, noDelete = false, openLock = open} = {}) {
   const lock = path.join(root, 'jobs.json.lock'), start = Date.now(), token = crypto.randomUUID();
+  // Prefer delete; where deletion is forbidden (mounted folder in a scheduled session) rename instead, which also frees the lock.
+  const release = async () => { try { if (noDelete) throw new Error('delete forbidden (simulated)'); await unlink(lock); } catch { await rename(lock, `${lock}.released-${token}`); } };
   // Released locks are renamed (deleting is not allowed in scheduled Cowork sessions); purge old ones whenever deletion works.
   for (const f of await readdir(root).catch(() => [])) if (f.startsWith('jobs.json.lock.released-')) await unlink(path.join(root, f)).catch(() => {});
   for (;;) {
-    try {
-      const h = await open(lock, 'wx');
-      try { await h.writeFile(JSON.stringify({token, pid: process.pid, at: new Date().toISOString()})); }
-      catch (e) { await unlink(lock).catch(() => {}); throw e; }
-      finally { await h.close(); }
-      break;
-    } catch (e) {
-      if (e.code !== 'EEXIST') throw e;
+    let h;
+    try { h = await openLock(lock, 'wx'); } catch (e) {
+      // Windows answers EPERM while another writer's released lock file is still being deleted: wait as for a held lock.
+      const deleting = e.code === 'EPERM' && process.platform === 'win32';
+      if (e.code !== 'EEXIST' && !deleting) throw e;
       // Age cannot prove that a writer is dead (especially across mounted filesystems).
       // Never steal locks. Recovery requires stopping all writers and explicit removal.
-      if (Date.now() - start > timeoutMs) throw new BusyError('jobs.json is locked. Retry shortly; if the owner crashed, stop all writers before manually removing jobs.json.lock.');
+      if (Date.now() - start > timeoutMs) {
+        if (deleting) throw e; // EPERM for the whole wait is a real permission problem, not a busy lock
+        throw new BusyError('jobs.json is locked. Retry shortly; if the owner crashed, stop all writers before manually removing jobs.json.lock.');
+      }
       await sleep(20 + Math.random() * 60);
+      continue;
     }
+    // The lock file is ours from here: a failure while writing its owner token is not contention. Close, free the lock, fail.
+    try { await h.writeFile(JSON.stringify({token, pid: process.pid, at: new Date().toISOString()})); await h.close(); }
+    catch (e) { await h.close().catch(() => {}); await release().catch(() => {}); throw e; }
+    break;
   }
   try { return await fn(); } finally {
     const owner = await readFile(lock, 'utf8').then(JSON.parse).catch(() => null);
-    if (owner?.token === token) {
-      // Prefer delete; where deletion is forbidden (mounted folder in a scheduled session) rename instead, which also frees the lock.
-      try { if (noDelete) throw new Error('delete forbidden (simulated)'); await unlink(lock); } catch { await rename(lock, `${lock}.released-${token}`); }
-    }
+    if (owner?.token === token) await release();
   }
 }
 
