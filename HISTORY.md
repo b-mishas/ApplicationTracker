@@ -4,6 +4,14 @@
 
 --------------------
 
+## 2026-11-24 — JobTracker fixes ported (APPLICATIONTRACKER_FIXES.md)
+
+- Items 1–2 (keyless ledger lines, whole-word company prefixes) were already in ac8fa4b; verified by its tests.
+- Capture check: a job ID matches only under the same company, an identical posting URL also under a name variant, anything else is a `similar` hint; `--open` groups the same way; locations also match by shared city words (Wien = Vienna). The importer's URL identity keeps `#/` route fragments.
+- `withLock`: Windows EPERM while a released lock is being deleted waits like a held lock; a failure after the lock file is created frees it and fails at once.
+- New agent scripts `app/finish-run.mjs` (finish.json, `refreshed` as attempt/confirmation dates, `dropped` via `app/record-dropped.mjs`, retry list carried by the next run) and `app/read-posting.mjs` (posting text from public ATS endpoints). Routine and template: reading, link-finder, refresh and evidence files with `at`, due.json, careers pages with no jobs opened in the browser, web fetch never a full description, "Last checked" never moves back, gaps list only unmet requirements, portal progress per country or term.
+- Verified: ported tests fail on the old code where applicable and pass; `npm test` exit 0; `git diff --check` clean. No agent run.
+
 ## 2026-11-23 — First real capture-check run reviewed (JobTracker)
 
 - Read-only review of JobTracker run run-202611231816-e3ef: `--open` agreed with Not done; run-log.json and summary.md complete; 4 added, 0 rejected. 20 of 30 posting extracts were labelled `text: partial` because a tool cut its output, and none were reread. Routine (and template) now define `partial` as a description that itself stops early, tell the reader to fetch the rest of cut output first, and require `reread: true` on reread decisions. Closure wording was already consistent (ad0e2f5; importer question is PLAN item 9). Findings, including weak employer and portal access, reported in JobTracker/BUGS.md.

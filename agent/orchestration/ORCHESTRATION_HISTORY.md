@@ -2,6 +2,13 @@
 
 Detailed, durable record for future development sessions. Newest verified milestone first. Record implementation, rationale, verification and limitations here; amend [ORCHESTRATION_ROADMAP.md](ORCHESTRATION_ROADMAP.md) only when the overall plan changes. Runtime command/field contracts belong in the linked app documentation; checkout status belongs in [HANDOFF_AGENT.md](../../HANDOFF_AGENT.md).
 
+## 2026-11-24 — JobTracker's 23–24 Nov fixes ported (Claude)
+
+- Source: APPLICATIONTRACKER_FIXES.md (JobTracker 4bdba49 to 3d8e7dd). Items 1–2 were already in ac8fa4b. Item 3 ported into capture-check (tenant-scoped job IDs, URL under name variants, hint lines, place words) with JobTracker's variant, shared-board, Alpha and Bayer scenarios; they fail on e182954.
+- Items 4–5: the agent no longer writes `dropped` or `refreshed`. `finish-run.mjs` derives the run's books from its folder and writes finish.json; its `retry` list (read back with `--retry-for`) is the objective carry-over, next to the agent's own `unfinished` entries. Adapted: evidence kind `employer` (not `company`), gap searches under `portal`, run from ROOT with `data/` like capture-check. Rationale: JobTracker's 23 Nov run, under equivalent prompt rules, marked unconfirmed refreshes done, credited all additions to Gmail and lost 13 of 77 drops through its own keying.
+- Item 7 rules and item 8 (`read-posting.mjs`, no web-fetch summaries as descriptions) are in the routine. Item 9 (board script) not ported: no board script here (PLAN 6).
+- Limitations: no agent run with these rules; due.json and the evidence `at` field depend on the agent; legacy plain `refreshed` dates convert on the first finish-run.
+
 ## 2026-11-23 — Fix for Codex's P2 on merged URLs (Claude)
 
 - Codex's review of 6412d4c and ac8fa4b found no silent-loss blocker and one P2: a merged entry kept only its newest URL, so a find imported under an older URL without provider ID showed as "assessed, not imported". `open()` now keeps the union of company-qualified IDs and URLs per vacancy and treats an assessed find as delivered when any of them is in jobs.json; name-only merging is unchanged. Codex's other answers need no change (same-run duplicates stay listed by design; shared suffix normalisation is optional cleanup).

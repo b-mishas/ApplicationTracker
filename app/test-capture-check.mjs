@@ -203,6 +203,56 @@ try {
     {company: 'Kestrel', title: 'Data Lead', location: 'Berlin', url: 'https://boards.kestrel.test/apply/6', provider: 'Kestrel ATS', providerJobId: 'K-6', state: 'assessed', fit: 4},
   ]);
   assert.deepEqual(open(other), [`profile ${profileHash(other)}`, 'open: none']);
+
+  // Ported from JobTracker (7d4da4f, 1415854, 3d8e7dd): duplicates it missed on 24 Nov were the same posting under another
+  // company label and the same vacancy with the city spelled differently. A job ID of another employer stays apart.
+  const variantRoot = path.join(directory, 'variants');
+  const setRoot = (dir, jobs, dropped = []) => { fs.mkdirSync(path.join(dir, 'reports'), {recursive: true}); fs.writeFileSync(path.join(dir, 'jobs.json'), JSON.stringify({jobs})); fs.writeFileSync(path.join(dir, 'reports', 'coverage.json'), JSON.stringify({dropped})); };
+  setRoot(variantRoot, [
+    {id: 'v1', status: 'Shortlisted', company: 'Octapharma Austria', title: 'Team Lead R&D Plasma (m/f/d) - Lab Support', locationRaw: 'Vienna, Austria (Wien, AUT)', url: 'https://www.linkedin.com/jobs/view/4492958420/', linkType: 'posting', provider: 'linkedin', providerJobId: '4492958420'},
+    {id: 'v2', status: 'Applied', company: 'Boehringer Ingelheim RCV', title: 'Principal Scientist Protein Engineering', locationRaw: 'Vienna, Austria', url: 'https://jobs.bi.test/job/Vienna-Principal-Scientist/1456694033/', linkType: 'posting', provider: 'BI careers', providerJobId: '1456694033'},
+    {id: 'v3', status: 'Dismissed', company: 'TetraScience', title: 'Scientific Data Architect', locationRaw: 'Darmstadt / Düsseldorf / Frankfurt region, Germany', url: 'https://www.linkedin.com/jobs/view/4463350665/', linkType: 'posting'},
+  ], [{provider: 'workday', providerJobId: 'JR4697', url: 'https://embl.test/EMBL/job/Heidelberg/Mechatronic-Engineer_JR4697', company: 'EMBL', title: 'Mechatronic Engineer', reason: 'engineering'}]);
+  assert.deepEqual(check(variantRoot, [jsonl('label-variants.jsonl', [
+    {company: 'Octapharma', title: 'Team Lead R&D Plasma (m/f/d) - Lab Support', location: 'Wien, AT', url: 'https://careers.octa.test/job/Wien-Team-Lead/1459252033/', provider: 'successfactors', providerJobId: '1459252033'},
+    {company: 'Boehringer Ingelheim', title: 'Principal Scientist Protein Engineering', location: 'Vienna, Austria', url: 'https://jobs.bi.test/job/Vienna-Principal-Scientist/1456694033/', provider: 'successfactors', providerJobId: '1456694033'},
+    {company: 'EMBL-EBI', title: 'Mechatronic Engineer', location: 'Heidelberg', url: 'https://embl.test/EMBL/job/Heidelberg/Mechatronic-Engineer_JR4697', provider: 'workday', providerJobId: 'JR4697'},
+    {company: 'TetraScience', title: 'Scientific Data Architect', location: 'Frankfurt am Main, Germany', url: 'https://apply.workable.test/tetrascience/j/B3416BD787/', provider: 'workable', providerJobId: 'B3416BD787'},
+    {company: 'Kestrel Bio', title: 'Mechatronic Engineer', location: 'Basel', provider: 'workday', providerJobId: 'JR4697'},
+    {company: 'Octapharma', title: 'Team Lead R&D Plasma (m/f/d) - Lab Support', location: 'Lingolsheim, FR'},
+  ])]).map(kind), ['similar', 'known', 'known', 'similar', 'new', 'new']);
+  // One board page with route fragments holds several employers' vacancies; a shared URL under an unrelated employer is a hint.
+  const shared = check(variantRoot, [jsonl('shared-board.jsonl', [
+    {company: 'Quill Labs', title: 'ELN Specialist', location: 'Basel', url: 'https://board.test/careers#/job/1'},
+    {company: 'Fjord Bio', title: 'Data Steward', location: 'Basel', url: 'https://board.test/careers#/job/2'},
+    {company: 'Unrelated GmbH', title: 'Something Else', location: 'Graz', url: 'https://jobs.bi.test/job/Vienna-Principal-Scientist/1456694033/'},
+  ])]);
+  assert.deepEqual(shared.map(kind), ['new', 'new', 'similar']);
+  assert.match(shared[2], /≈ v2 \(Applied\) \(same URL or job ID, other company label\)$/);
+  // Job IDs are scoped to one ATS tenant: Bayer and Bayer CropScience sharing a Workday number are a hint, not known.
+  const bayer = {company: 'Bayer', title: 'Lab Data Lead', location: 'Berlin', url: 'https://bayer.wd3.test/Careers/job/Berlin/Lab-Data-Lead_R0123', provider: 'workday', providerJobId: 'R0123'};
+  const crop = {company: 'Bayer CropScience', title: 'Field Trial Manager', location: 'Monheim', url: 'https://bayercrop.wd5.test/Ext/job/Monheim/Field-Trial-Manager_R0123', provider: 'workday', providerJobId: 'R0123'};
+  setRoot(variantRoot, [], [{...bayer, reason: 'test'}]);
+  assert.deepEqual(check(variantRoot, [jsonl('bayer.jsonl', [crop])]).map(kind), ['similar']);
+  // The ledger groups by the same identity: an exclusion under a company name variant closes the find; the Bayer tenant does not.
+  const ledgerRoot = (name, runs) => {
+    const dir = path.join(directory, name, 'data'); setRoot(dir, []);
+    fs.mkdirSync(path.join(directory, name, 'profile'), {recursive: true}); fs.writeFileSync(path.join(directory, name, 'profile', 'candidate_profile.md'), 'P');
+    for (const [run, row] of Object.entries(runs)) {
+      const folder = path.join(dir, 'reports', 'runs', run); fs.mkdirSync(folder, {recursive: true});
+      fs.writeFileSync(path.join(folder, 'run-completion.json'), JSON.stringify({profile: profileHash(dir)}));
+      fs.writeFileSync(path.join(folder, 'run-ledger.jsonl'), JSON.stringify(row) + '\n');
+    }
+    return dir;
+  };
+  assert.deepEqual(open(ledgerRoot('alpha', {
+    'run-202611250900-aaaa': {company: 'Alpha', title: 'Lab Lead', location: 'Bern', url: 'https://alpha.test/jobs/77', state: 'pending'},
+    'run-202611260900-bbbb': {company: 'Alpha Research', title: 'Lab Lead (m/w/d)', location: 'Bern', url: 'https://alpha.test/jobs/77', state: 'excluded', reason: 'level'},
+  })).slice(1), ['open: none']);
+  assert.deepEqual(open(ledgerRoot('bayer', {
+    'run-202611250900-bay1': {...bayer, state: 'pending'},
+    'run-202611260900-bay2': {...crop, state: 'excluded', reason: 'agronomy'},
+  })).slice(1).map(l => l.split(' | ').slice(0, 4).join(' | ')), ['open | pending | run-202611250900-bay1 | Bayer']);
   console.log('capture-check: all scenarios passed');
 } finally {
   fs.rmSync(directory, {recursive: true, force: true});

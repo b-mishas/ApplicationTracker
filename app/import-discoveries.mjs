@@ -32,7 +32,9 @@ export function urlIdentity(raw) {
   }
   if (host.endsWith('indeed.com')) { const jk = u.searchParams.get('jk') || u.searchParams.get('vjk'); if (jk) return {key: 'pid:indeed:' + jk.toLowerCase(), provider: 'indeed', id: jk.toLowerCase()}; }
   const params = [...u.searchParams].filter(([k]) => !TRACKING.test(k)).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${k}=${v}`).join('&');
-  return {key: `url:${host}${u.pathname.replace(/\/+$/, '')}${params ? '?' + params : ''}`};
+  // A route fragment (#/job/2 on single-page career sites) names the vacancy, so it stays part of the key.
+  const route = /^#!?\//.test(u.hash) ? u.hash.replace(/\/+$/, '') : '';
+  return {key: `url:${host}${u.pathname.replace(/\/+$/, '')}${params ? '?' + params : ''}${route}`};
 }
 const providerKey = (p, id) => p && id ? `pid:${alnum(p)}:${String(id).toLowerCase()}` : null;
 export function strongKeys(job) {

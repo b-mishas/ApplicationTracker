@@ -30,28 +30,52 @@ const sameCompany = (a, b) => {
   const [short, long] = a.words.length <= b.words.length ? [a.words, b.words] : [b.words, a.words];
   return short.length > 0 && short.length < long.length && short.join('').length >= 4 && short.every((w, i) => w === long[i]);
 };
+// Place words for location overlap: city names with local spellings unified, countries and work-mode words dropped,
+// so "Wien, AT" meets "Vienna, Austria" and "Frankfurt am Main" meets "Darmstadt / Frankfurt region".
+const PLACE_ALIAS = {wien: 'vienna', munchen: 'munich', koln: 'cologne', geneve: 'geneva', genf: 'geneva', lisboa: 'lisbon', bruxelles: 'brussels', brussel: 'brussels', antwerpen: 'antwerp', gent: 'ghent'};
+const PLACE_STOP = new Set('germany deutschland austria osterreich switzerland schweiz suisse netherlands nederland belgium belgique spain espana united kingdom aut deu che nld bel esp gbr region remote hybrid site onsite city area and oder the main office home greater canton kanton'.split(' '));
+const placeWords = s => new Set(String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().split(/[^a-z]+/).filter(w => w.length >= 3 && !PLACE_STOP.has(w)).map(w => PLACE_ALIAS[w] || w));
 function addEntry(index, entry, hit) {
-  for (const key of strongKeys({...entry, linkType: entry.linkType || 'posting'}).keys) index.strong.set(key + '@' + normCompany(entry.company), hit);
-  const item = {company: companyOf(entry.company), place: squash([entry.locationRaw, entry.city].join(' ')), hit};
+  for (const key of strongKeys({...entry, linkType: entry.linkType || 'posting'}).keys) {
+    index.strong.set(key + '@' + normCompany(entry.company), hit);
+    index.loose.set(key, [...(index.loose.get(key) || []), {company: companyOf(entry.company), hit}]);
+  }
+  const where = [entry.locationRaw, entry.city].join(' ');
+  const item = {company: companyOf(entry.company), place: squash(where), places: placeWords(where), hit};
   for (const title of titleVariants(entry.title, entry.city || entry.locationRaw)) index.byTitle.set(title, [...(index.byTitle.get(title) || []), item]);
 }
 function matchIndex(entries, label) {
-  const index = {strong: new Map(), byTitle: new Map()};
+  const index = {strong: new Map(), loose: new Map(), byTitle: new Map()};
   for (const entry of entries) addEntry(index, entry, label(entry));
   return index;
 }
 // A find as an index entry (finds carry `location`; records carry locationRaw/city).
 const asEntry = d => ({company: d.company, title: d.title, locationRaw: d.location === 'Unknown' ? '' : d.location, url: d.url, provider: d.provider, providerJobId: d.providerJobId, linkType: d.url ? 'posting' : 'search'});
-const strongMatch = (index, d) => findKeys(d).map(key => index.strong.get(key + '@' + normCompany(d.company))).find(Boolean) || null;
-// Same company and title (variants above); locations must overlap unless either side has none (dropped entries store none).
+// Same posting: a shared posting URL or job ID under the same company, or an identical posting URL under a variant of
+// its name (sources label employers differently: EMBL / EMBL-EBI, Octapharma / Octapharma Biopharmaceuticals GmbH).
+// Job IDs are scoped to one ATS tenant (Workday JR numbers repeat, Bayer / Bayer CropScience), and one board page can
+// hold several employers, so a job ID under a name variant or a URL under another employer is only a hint (hintMatch).
+const variantUrl = (key, x, company) => key.startsWith('url:') && sameCompany(x.company, company);
+const strongMatch = (index, d) => {
+  const company = companyOf(d.company);
+  for (const key of findKeys(d)) {
+    const exact = index.strong.get(key + '@' + company.norm); if (exact) return exact;
+    const loose = (index.loose.get(key) || []).find(x => variantUrl(key, x, company)); if (loose) return loose.hit;
+  }
+  return null;
+};
+const hintMatch = (index, d) => findKeys(d).flatMap(key => (index.loose.get(key) || []).map(x => key.startsWith('url:') || sameCompany(x.company, companyOf(d.company)) ? x.hit : null)).find(Boolean) || null;
+// Same company and title (variants above); locations must overlap (substring or a shared place word) unless either side
+// has none (dropped entries store none).
 const nameMatch = (index, d) => {
-  const location = squash(d.location), company = companyOf(d.company);
+  const location = squash(d.location), places = placeWords(d.location), company = companyOf(d.company);
   const items = titleVariants(d.title, d.location).flatMap(title => index.byTitle.get(title) || []);
-  return items.find(({company: c, place}) => sameCompany(c, company) && (d.location === 'Unknown' || !place || place.includes(location) || location.includes(place)))?.hit || null;
+  const overlap = ({place, places: p}) => d.location === 'Unknown' || !place || place.includes(location) || location.includes(place) || [...places].some(w => p.has(w));
+  return items.find(item => sameCompany(item.company, company) && overlap(item))?.hit || null;
 };
 
 // Accepts JSONL, a JSON array, {candidates: [...]}, or ledger lines whose find sits in `discovery`.
-function rowsOf(file) {
+export function rowsOf(file) {
   const text = fs.readFileSync(file, 'utf8').replace(/^﻿/, '').trim();
   if (!text) return [];
   let whole; try { whole = JSON.parse(text); } catch { whole = undefined; }
@@ -61,7 +85,7 @@ function rowsOf(file) {
     try { return [JSON.parse(line)]; } catch { throw new Error(`${file}: line ${i + 1} is not JSON`); }
   });
 }
-function findOf(row) {
+export function findOf(row) {
   const item = row?.discovery && typeof row.discovery === 'object' ? row.discovery : row || {};
   const pick = (...keys) => { for (const k of keys) if (item[k] != null && String(item[k]).trim()) return String(item[k]).trim(); };
   const d = {company: pick('company'), title: pick('title', 'advertisedTitle'), location: pick('location', 'locationRaw') || 'Unknown'};
@@ -78,12 +102,14 @@ const inventory = root => matchIndex(optional(path.join(root, 'jobs.json')).jobs
 export function check(root, files, seen = []) {
   const stored = inventory(root);
   const dropped = matchIndex(optional(path.join(root, 'reports', 'coverage.json')).dropped || [], e => `dropped: ${e.reason}`);
-  const run = {strong: new Map(), byTitle: new Map()};
+  const run = {strong: new Map(), loose: new Map(), byTitle: new Map()};
   for (const d of seen.flatMap(rowsOf).map(findOf)) if (d.company && d.title) addEntry(run, asEntry(d), `ledger: ${line(d)}`);
   return files.flatMap(rowsOf).map(findOf).map(d => {
     if (!d.company || !d.title) return `invalid | ${JSON.stringify(d)} (needs company and title)`;
     const hit = strongMatch(stored, d) || strongMatch(dropped, d), again = strongMatch(run, d), similar = nameMatch(stored, d) || nameMatch(dropped, d) || nameMatch(run, d);
-    const result = hit ? `known | ${d.company} | ${d.title} = ${hit}` : again ? `repeat | ${line(d)} = ${again}` : similar ? `similar | ${line(d)} ≈ ${similar}` : `new | ${line(d)}`;
+    const hint = hintMatch(stored, d) || hintMatch(dropped, d);
+    const result = hit ? `known | ${d.company} | ${d.title} = ${hit}` : again ? `repeat | ${line(d)} = ${again}` : similar ? `similar | ${line(d)} ≈ ${similar}`
+      : hint ? `similar | ${line(d)} ≈ ${hint} (same URL or job ID, other company label)` : `new | ${line(d)}`;
     addEntry(run, asEntry(d), `this call: ${line(d)}`);
     return result;
   });
@@ -107,11 +133,13 @@ const allLedgers = root => {
 // A find that gains an ID or URL joins the one earlier entry of its name that had neither; entries with different IDs
 // stay separate (same-title second requisitions). A line without ID or URL joins only a single earlier entry that had
 // neither; otherwise it is its own entry, so it can never close an identified find (both stay listed until decided).
-const strongIds = d => findKeys(d).map(key => key + '@' + normCompany(d.company));
+export const strongIds = d => findKeys(d).map(key => key + '@' + normCompany(d.company));
 const nameId = d => nameKey(d.company, d.title) + '|' + squash(d.location === 'Unknown' ? '' : d.location);
+// IDs and URLs group like the capture check: same company, or an identical posting URL under a variant of the name.
 function slotFor(newest, byKey, byName, d) {
-  const keys = strongIds(d), keyless = (byName.get(nameId(d)) || []).filter(s => newest[s].keyless);
-  const strong = keys.map(key => byKey.get(key)).find(i => i !== undefined);
+  const company = companyOf(d.company), keyless = (byName.get(nameId(d)) || []).filter(s => newest[s].keyless);
+  const same = (key, s) => { const other = companyOf(newest[s].d.company); return other.norm === company.norm || variantUrl(key, {company: other}, company); };
+  const strong = findKeys(d).flatMap(key => (byKey.get(key) || []).filter(s => same(key, s)))[0];
   if (strong !== undefined) return strong;
   return keyless.length === 1 ? keyless[0] : newest.length;
 }
@@ -135,7 +163,7 @@ export function open(root, ledgers = allLedgers(root)) {
       const ids = new Set([...(before?.ids || []), ...keys]);
       newest[slot] = repeat ? {...before, d: {...found, ...before.d}, ids, keyless: before.keyless && !keys.length}
         : {row, d, run, ids, profile: row.assessment?.profileRevision || row.profileRevision || profile, keyless: !keys.length && (before?.keyless ?? true)};
-      for (const key of keys) byKey.set(key, slot);
+      for (const key of findKeys(found)) { const slots = byKey.get(key) || []; if (!slots.includes(slot)) byKey.set(key, [...slots, slot]); }
       const named = byName.get(nameId(found)) || []; if (!named.includes(slot)) byName.set(nameId(found), [...named, slot]);
     }
   }
@@ -145,7 +173,7 @@ export function open(root, ledgers = allLedgers(root)) {
     let label = null;
     if (!state) label = 'no state';
     else if (state === 'pending') label = 'pending';
-    else if (state === 'assessed') label = [...ids].some(key => stored.strong.has(key)) ? null : stale ? 'reassess (assessed under another profile)' : 'assessed, not imported';
+    else if (state === 'assessed') label = strongMatch(stored, d) || [...ids].some(key => stored.strong.has(key)) ? null : stale ? 'reassess (assessed under another profile)' : 'assessed, not imported';
     else if (state === 'excluded') label = stale ? 'reassess (excluded under another profile)' : null;
     else if (state !== 'duplicate') label = `unknown state ${JSON.stringify(row.state)}`;
     if (label) lines.push(`open | ${label} | ${run} | ${line(d)}`);

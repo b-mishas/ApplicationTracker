@@ -18,7 +18,7 @@ The [routine](../ROUTINE_PROMPT.md), [workflow](../../app/SEARCH_WORKFLOW.md), [
 | coverage.json | **Decide what to check next time.** Remembers successful source checks, reusable access methods, dropped vacancies and refresh/recheck history across runs. |
 | Inventory and importer reports | **Show what was stored.** jobs.json source files tell which run added or touched a record, regardless of retries; importer reports give counts and records to repair. |
 
-The agent keeps the ledger itself and calls one read-only script, `capture-check.mjs`: per find `known`/`similar`/`new` against the inventory and dropped list, and `--open` for finds of any run still needing work (including decisions under another profile). It judges relevance and evidence. **Only the existing importer writes inventory.** The retired run-state helper (milestones 5–12) is in commit 92e1d73.
+The agent keeps the ledger itself and calls one read-only script, `capture-check.mjs`: per find `known`/`similar`/`new` against the inventory and dropped list, and `--open` for finds of any run still needing work (including decisions under another profile). At the end, `finish-run.mjs` (ported from JobTracker, 2026-11-24) derives the run's books from its files: `finish.json` with the retry list the next run carries, coverage.json `refreshed` and `dropped`. The agent judges relevance and evidence. **Only the existing importer writes inventory.** The retired run-state helper (milestones 5–12) is in commit 92e1d73.
 
 **Terminology:** a job vacancy is a discovered role; the candidate is the human job seeker. Existing code/file identifiers containing `candidate` remain unchanged for compatibility.
 
