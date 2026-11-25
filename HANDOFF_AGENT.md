@@ -2,6 +2,10 @@
 
 Updated 2026-11-25, Claude. Scope: Codex's review of ac8fa4b..2bb2f48 and its follow-up review, plus the routine gaps against JobTracker. Committed on main as one [Agent] commit after 2bb2f48 (see git log); origin/main at 8663380, not pushed. `APPLICATIONTRACKER_FIXES.md` and `design/` untracked and unrelated. Remote/CI unverified.
 
+## Posting-date port — 2026-11-25T12:03:39Z (Codex)
+
+Port of JobTracker `1078034`/`3e38f5a` on main, starting at ee59cd6; remote/CI unverified. User authorized two commits: this commit records the routine/template instructions; the wrapper implementation follows separately. `agent/ROUTINE_PROMPT.md` and its pristine template now require valid YYYY-MM-DD or empty, resolve relative ages against observedAt in Part A's timezone, and retain original wording/time in evidence. Hours use elapsed-time subtraction. Ranges, month-only and ambiguous dates remain empty. Import schema enforces this contract; see INTERFACE_FOR_TRACKER.md, app/SEARCH_WORKFLOW.md and HANDOFF_WRAPPER.md. Template-drift and importer checks passed. No real search or real database migration was run. Previously generated installation prompts must be regenerated before using the stricter importer. Existing next actions below remain applicable; no active agent operation was started. Preserve unrelated PLAN.md, ROADMAP.md, APPLICATIONTRACKER_FIXES.md and design/ changes. Two local commits requested; no push or ZIP build requested.
+
 ## Done
 
 - `app/diagnostics.mjs`: whole paths masked (spaces, quotes, UNC, `/tmp`, `/sessions`, `~/`); tests in `test-diagnostics.mjs`. START_HERE problem-report line trimmed to one sentence (user; never edit START_HERE without explicit approval).
