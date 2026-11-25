@@ -10,7 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {findOf, rowsOf, strongIds} from './capture-check.mjs';
+import {findOf, rowsOf, strongIds, open} from './capture-check.mjs';
 import {recordDropped} from './record-dropped.mjs';
 
 const readJson = file => JSON.parse(fs.readFileSync(file, 'utf8').replace(/^﻿/, ''));
@@ -97,7 +97,10 @@ export function finishRun(root, runId, today = new Date().toISOString().slice(0,
   coverage.refreshed = refreshed;
   writeJson(coverageFile, coverage);
 
-  const pending = ledger.filter(r => !['assessed', 'excluded', 'duplicate'].includes(String(r.state || '').toLowerCase())).map(r => `${r.company} | ${r.title} | ${r.state || 'no state'}`);
+  // Every find of any run that still needs work (pending, assessed but not imported, reassess, …), as `--open` lists it,
+  // so a run is never complete while a vacancy is undelivered (Codex review). The verb follows the label: a saved
+  // assessment is imported, not rated again; a broken ledger entry is repaired; the rest is rated.
+  const pending = open(root).slice(1).filter(l => l.startsWith('open | ')).map(l => l.slice('open | '.length));
   // A company or portal retry must name a real source: one in due.json, or (older runs without due.json) anything but a
   // script. Other lines, such as a script name, go to diagnostics, not retry.
   const isSource = e => !['employer', 'portal'].includes(e.kind) || (due ? (due[e.kind] || []).includes(e.source) : !/\.(m?js|cjs|py)$/i.test(e.source));
@@ -105,7 +108,7 @@ export function finishRun(root, runId, today = new Date().toISOString().slice(0,
   const notChecked = [...evidence.values()].filter(e => e.status !== 'checked');
   const unchecked = notChecked.filter(isSource).map(line), diagnostics = notChecked.filter(e => !isSource(e)).map(line);
   const retry = [...unchecked, ...missing, ...unconfirmed.map(u => `refresh ${u}`), ...unknownIds.map(id => `refresh ${id}: no Shortlisted record matches`),
-    ...ratedWithoutFull.map(r => `reread ${r}`), ...noAttemptRecord.map(r => `reread ${r} | no reading recorded`), ...pending.map(p => `decide ${p}`)];
+    ...ratedWithoutFull.map(r => `reread ${r}`), ...noAttemptRecord.map(r => `reread ${r} | no reading recorded`), ...pending.map(p => `${p.startsWith('assessed, not imported') ? 'import' : /^(no state|unknown state|unreadable ledger)/.test(p) ? 'repair' : 'decide'} ${p}`)];
   const report = {
     runId, finishedAt: new Date().toISOString().replace(/\.\d+Z$/, 'Z'),
     searchCoverage: retry.length ? 'partial' : 'complete',

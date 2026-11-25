@@ -4,6 +4,14 @@
 
 --------------------
 
+## 2026-11-24 — Codex review fixes and routine gaps against JobTracker
+
+- Codex P2: diagnostics masks whole file paths, including spaces, quotes, UNC and temp folders; START_HERE's problem-report line trimmed to one sentence (user). Codex P2: finish-run's `retry` includes every find `--open` lists, so an assessed but unimported vacancy keeps `searchCoverage` partial (regression added; it fails on 2bb2f48). Codex cost finding: a subagent is never started without a model setting; the lead does the work instead.
+- Routine: first-search look-back in Part A (setup asks; 30 days default and fallback), run-log.json written at start, per-mail completion lines so an interrupted first run skips fully extracted mails, 60 mails per mail subagent, no copied mail text, large Gmail listings to a file, employer alert mails never count as employer checks, `postedDate` rule, duplicate hints, coverage.json written via a temporary file, Search coverage line in the summary.
+- Codex follow-up: retry items follow the `--open` label (`import` a saved assessment without rerating, `repair` a broken entry, `decide` the rest); the Gmail interval is saved as `gmailInterval` in run-completion.json before listing and an interrupted first run keeps the earliest `from`, so the oldest mails are never dropped; a mail counts as done only after its job lines are saved and, when it returned fewer jobs than announced, after its reread line; 30-day fallback also in Part B; exact Codex model names (`gpt-6-luna`, `gpt-6.1-terra`) beside Claude's.
+- Closure notices: user kept the current rule (banner alone stays Unverified, flagged).
+- Verified: `npm test` exit 0, template drift test, `git diff --check`. No agent run.
+
 ## 2026-11-24 — JobTracker fixes ported (APPLICATIONTRACKER_FIXES.md)
 
 - Items 1–2 (keyless ledger lines, whole-word company prefixes) were already in ac8fa4b; verified by its tests.

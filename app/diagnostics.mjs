@@ -1,6 +1,7 @@
 // Diagnostics bundle for the package maintainer. Writes one JSON file the user can check and send; it sends nothing.
 //   node app/diagnostics.mjs [--runs N]   last N search runs (default 5) and the setup log -> data/exports/diagnostics-<UTC>.json
-// Privacy: only statuses, counts, models, times and error messages (URLs, email addresses and file paths masked).
+// Privacy: only statuses, counts, models, times and error messages (URLs, email addresses and file paths masked). Error text is
+// free-form and may still name an employer or person: the user reads the file before sending it.
 // Never the profile, CV, jobs.json, Gmail content, the ledger's finds, the summary or employer and job names.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -11,7 +12,8 @@ const lines = file => { try { return fs.readFileSync(file, 'utf8').split(/\r?\n/
 // shortcut: masks URLs, email addresses and paths only; a company name the agent put into an error text stays. The routine forbids it.
 export const mask = value => String(value ?? '').slice(0, 300)
   .replace(/https?:\/\/\S+/gi, '<url>').replace(/\b[\w.+-]+@[\w-]+(\.[\w-]+)+\b/g, '<email>')
-  .replace(/[A-Za-z]:\\[^\s"']+|\/(?:Users|home|mnt)\/[^\s"']+/g, '<path>');
+  // A path runs to the next quote or the end of the text, since folder names contain spaces (C:\Users\Alice Smith\…).
+  .replace(/(?:[A-Za-z]:[\\/]|\\\\|~\/|\/(?:Users|home|mnt|tmp|var|private|sessions|Volumes|root)\/)[^"'`\r\n]*/g, '<path>');
 const pick = (value, allowed) => typeof value === 'string' && allowed.includes(value.trim().toLowerCase()) ? value.trim().toLowerCase() : value == null ? null : 'other';
 const time = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(value) ? value : null;
 const tally = (rows, key) => rows.reduce((counts, row) => { const k = String(row?.[key] ?? 'none').trim().toLowerCase() || 'none'; counts[k] = (counts[k] || 0) + 1; return counts; }, {});

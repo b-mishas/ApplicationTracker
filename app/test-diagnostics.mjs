@@ -43,7 +43,12 @@ try {
   assert.equal(out.runs[0].log, null);
   assert.deepEqual(out.setup.steps[1], {step: 7, status: 'blocked', note: 'Gmail connector missing for <email>'});
   assert.equal(out.package.version, '0.1.0');
-  assert.equal(mask('see /Users/jane/x and mail a@b.co'), 'see <path> and mail <email>');
+  assert.equal(mask('mail a@b.co, see /Users/jane/x'), 'mail <email>, see <path>');
+  // Codex review: paths with spaces, quoted paths, UNC and temp folders leave no part of a name behind.
+  assert.equal(mask(String.raw`open C:\Users\Alice Smith\cv final.pdf`), 'open <path>');
+  assert.equal(mask(`ENOENT: open 'D:/Jobs/Alice Smith/x.json' failed`), `ENOENT: open '<path>' failed`);
+  assert.equal(mask(String.raw`copy \\nas\Alice Smith\x and /tmp/alice smith/y`), 'copy <path>');
+  assert.equal(mask('at /sessions/rcw-1/mnt/Application tracker/data'), 'at <path>');
   // CLI rejects bad arguments before touching any data folder.
   const cli = fileURLToPath(new URL('./diagnostics.mjs', import.meta.url));
   assert.throws(() => execFileSync(process.execPath, [cli, '--runs', 'x'], {stdio: 'pipe'}), /Usage/);

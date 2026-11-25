@@ -1,8 +1,6 @@
 # Wrapper handoff
 
-Updated 2026-11-24T11:40Z (Claude): dist/Application-tracker-windows-x64.zip rebuilt from 8663380 for the scheduled-run rehearsal (release audit ok, privateMarkers 0); Mac archives still from 330274f. Nothing published.
-
-Updated 2026-11-24T10:40Z (Claude): storage lock fix ported from JobTracker (92cf68c, d53568e), uncommitted on e182954. app/store.mjs withLock retries only open(lock, 'wx'); on Windows EPERM there (a released lock still being deleted) waits like a held lock and is rethrown after the whole timeout; a failure while writing the owner token closes the handle, frees the lock (rename where deletion is forbidden) and fails at once (test seam openLock). New app/test-store-lock.mjs in npm test; app/test-import.mjs temp cleanup uses maxRetries 5. npm test exit 0 once on Windows; the original race showed about 1 in 40 runs, so one pass is not proof. Mac untested. Agent-side changes in the same working tree: HANDOFF_AGENT.md.
+Updated 2026-11-24T16:30Z (Claude): storage lock fix from JobTracker committed and pushed as 1c42e6f [Wrapper]: app/store.mjs withLock retries only open(lock, 'wx'); Windows EPERM there (a released lock still being deleted) waits like a held lock and is rethrown after the whole timeout; a failure while writing the owner token frees the lock and fails at once (test seam openLock, app/test-store-lock.mjs in npm test; import-test cleanup retries). npm test passes; the 1-in-40 race not re-measured; Mac untested. dist/Application-tracker-windows-x64.zip rebuilt from 8663380 (audit ok); Mac archives from 330274f; nothing published. Awaiting Codex review with the agent commits listed in HANDOFF_AGENT.md.
 
 Updated 2026-11-20T20:51:35.121Z (Codex): ported JobTracker bcad8b4, b8999dd and 5d16323 into app/app.js, app/style.css and app/column-layout.mjs. Removed expansion column; rows expand with mouse or keyboard. Fit cells are centered in commit 2b32a76. Urgent now counts/filters New and Shortlisted, including on Reset; zero New count is grey. Compact columns keep fixed base widths and selected unfiltered headings do not wrap. Model/layout tests and isolated Chromium checks for row expansion, spans and Urgent Reset passed; other browsers and visual review pending. The three feature commits were requested; no push or distribution build. Preserve unrelated HANDOFF_AGENT.md and design/. Earlier rapid combined preference-save mismatch remains unresolved. Next: user review. Remote/CI unverified; temporary fixture server/browser stopped.
 
@@ -19,3 +17,15 @@ Release (Claude, 2026-11-23): dist/ rebuilt from 330274f; build audit with priva
 Template drift test (Claude, 2026-11-23): app/test-templates.mjs, added to the package.json test script, fails when agent/, guides/ or profile/ differ from templates/ (agent/orchestration and Git-ignored private files skipped). Not shipped in releases.
 
 Orchestration (agent side, 2026-11-22): run-state.mjs and candidate-ledger.mjs were retired for the read-only app/capture-check.mjs; package.json test and scripts/build-release.mjs file list were updated accordingly. Consult HANDOFF_AGENT.md and agent/orchestration/ORCHESTRATION_HISTORY.md for its verification and limitations. Preserve the unrelated HANDOFF_AGENT.md change and untracked design/. Normal backend was last reported at http://127.0.0.1:56068; this task did not restart it.
+
+
+## Codex review — 2026-11-24T16:29:16.433Z
+
+Reviewed 1c42e6f storage lock and diagnostics integration through 2bb2f48. main at 2bb2f48, one ahead of local origin/main; remote/CI unverified. No new confirmed blocker in withLock: retries are limited to acquisition; token-write failure closes/releases and fails; normal release verifies ownership. test-store-lock passed, including deletion-forbidden rename fallback and subsequent acquisition. Actual intermittent Windows race frequency not re-measured; Mac untested.
+
+Diagnostics has a reproduced P2: masking space-containing Windows paths leaves surname/path fragments. Existing diagnostics tests pass but omit this case. See appended HANDOFF_AGENT review for fixes and verification. Next: focused export/masking regression before relying on privacy claims. No source/UI/inventory/settings, packaging, commit/push or automation changes. Prior content preserved; no active operations started.
+
+
+## Codex follow-up review — 2026-11-24T17:11:40.704Z
+
+Diagnostics masking fix reviewed: space-containing Windows paths, quoted paths, UNC and selected Unix roots now covered by regressions; test-diagnostics passes. User-facing wording correctly warns that free-form errors may retain personal/employer names. This resolves the reported partial-path reproduction, not universal anonymization. Other focused suites and diff check passed; no full-suite/OS/release acceptance rerun. Remaining prompt/finish-run findings appended to HANDOFF_AGENT. No wrapper code, data or package changes made in this review.

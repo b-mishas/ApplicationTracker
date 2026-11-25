@@ -13,7 +13,7 @@ fs.writeFileSync(path.join(root, 'jobs.json'), JSON.stringify({schemaVersion: 1,
   {id: 'aaaaaaaa-1111', status: 'Shortlisted', company: 'Nordkamm', title: 'Lead Scientist'},
   {id: 'bbbbbbbb-2222', status: 'Shortlisted', company: 'Veltrum', title: 'Data Steward'},
   {id: 'cccccccc-3333', status: 'Dismissed', company: 'Old', title: 'Gone'},
-  {id: 'dddddddd-4444', status: 'New', company: 'Kestrel', title: 'Principal Scientist', sources: [{label: 'Nature Careers', file: batch}]},
+  {id: 'dddddddd-4444', status: 'New', company: 'Kestrel', title: 'Principal Scientist', url: 'https://jobs.kestrel.test/p/1', linkType: 'posting', sources: [{label: 'Nature Careers', file: batch}]},
   {id: 'eeeeeeee-5555', status: 'New', company: 'Ardent', title: 'Head of LIMS', sources: [{label: 'LinkedIn alert', file: '2026-11-20-old.json'}, {label: 'LinkedIn alert', file: batch}]},
 ]}));
 const coverageFile = path.join(root, 'reports', 'coverage.json');
@@ -84,7 +84,7 @@ assert.deepEqual([...first.retry].sort(), [
   'reread Kestrel | Principal Scientist | assessed',
   'reread Corvid | ELN Owner | excluded',
   'reread Fjord | Lab Lead | excluded | no reading recorded',
-  'decide Moss | Data Lead | pending',
+  'decide pending | run-202611271715-ab12 | Moss | Data Lead | Unknown',
 ].sort());
 assert.equal(inputs(), before, 'input files unchanged');
 // Refresh dates: confirmed only where the check confirmed; a legacy date counts as both; non-Shortlisted removed.
@@ -127,5 +127,16 @@ put('run-completion.json', {runId: 'run-202611281000-trg1', status: 'finished'},
 assert.deepEqual(previousRetry(root, 'run-202611301815-next'), {from: runId, retry: first.retry});
 assert.equal(previousRetry(root, 'run-202611250000-midd').from, oldRun);
 assert.deepEqual(previousRetry(root, 'run-202611010000-firs'), {from: null, retry: []});
+// Codex review: no sources due and an assessed vacancy never imported is not a complete run.
+const lone = fs.mkdtempSync(path.join(os.tmpdir(), 'finish-run-open-')), loneRun = 'run-202611281200-solo';
+fs.mkdirSync(path.join(lone, 'reports', 'runs', loneRun), {recursive: true});
+fs.writeFileSync(path.join(lone, 'jobs.json'), JSON.stringify({jobs: []}));
+fs.writeFileSync(path.join(lone, 'reports', 'coverage.json'), JSON.stringify({}));
+put('due.json', {employer: [], portal: []}, path.join(lone, 'reports', 'runs', loneRun));
+put('run-ledger.jsonl', [{company: 'Pike', title: 'Data Lead', location: 'Bern', state: 'assessed', basis: 'Title only', fit: 4}, {company: 'Ruff', title: 'Analyst', location: 'Basel'}], path.join(lone, 'reports', 'runs', loneRun));
+const solo = finishRun(lone, loneRun, '2026-11-28');
+assert.equal(solo.searchCoverage, 'partial');
+assert.deepEqual(solo.retry, ['import assessed, not imported | run-202611281200-solo | Pike | Data Lead | Bern', 'repair no state | run-202611281200-solo | Ruff | Analyst | Basel']);
+fs.rmSync(lone, {recursive: true, force: true});
 fs.rmSync(root, {recursive: true, force: true});
 console.log('finish-run tests passed');

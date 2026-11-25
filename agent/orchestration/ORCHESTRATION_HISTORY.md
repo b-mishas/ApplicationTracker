@@ -2,6 +2,14 @@
 
 Detailed, durable record for future development sessions. Newest verified milestone first. Record implementation, rationale, verification and limitations here; amend [ORCHESTRATION_ROADMAP.md](ORCHESTRATION_ROADMAP.md) only when the overall plan changes. Runtime command/field contracts belong in the linked app documentation; checkout status belongs in [HANDOFF_AGENT.md](../../HANDOFF_AGENT.md).
 
+## 2026-11-24 — Codex review of ac8fa4b..2bb2f48, fixes (Claude)
+
+- finish-run: `retry` now takes its `decide` items from `open(root)` (all runs) instead of today's undecided lines, so `searchCoverage` complete means nothing is undelivered, not only that sources were checked. Codex's scenario (no due sources, assessed Title-only fit-4 find, empty inventory) is a regression test.
+- Interrupted first runs: mail subagents append `{mailId, jobs}` per finished mail to `mails-<n>.jsonl`; a later run skips only those mails, keeps the original interval and never advances `gmailCheckedThrough` early. A saved job line without its mail line does not count as done (Codex: listed is not extracted).
+- Codex follow-up (17:11Z): finish-run labels retry items `import` (assessed, not imported: batch the saved decision, no rerating), `repair` (no state, unknown state, unreadable ledger) or `decide`; test covers import and repair. `gmailInterval` {from, through} is saved in run-completion.json before mails are listed; without a checkpoint the earliest `from` of an earlier unfinished run is kept, so a next-day resume cannot move the lower bound past unfetched mails. `mails-<n>.jsonl` lines carry `announced` and are written after the job lines; short mails need a `mails-reread.jsonl` line before they are skipped. Not covered by an automated test: these are prompt rules.
+- run-log.json is written at run start and completed at the end; its subagent list still derives from run-completion.json.
+- Not adopted: Codex's claim that conversation copies ignore the model was not added; JobTracker's four-browser-agent allowance stays rejected.
+
 ## 2026-11-24 — JobTracker's 23–24 Nov fixes ported (Claude)
 
 - Source: APPLICATIONTRACKER_FIXES.md (JobTracker 4bdba49 to 3d8e7dd). Items 1–2 were already in ac8fa4b. Item 3 ported into capture-check (tenant-scoped job IDs, URL under name variants, hint lines, place words) with JobTracker's variant, shared-board, Alpha and Bayer scenarios; they fail on e182954.
