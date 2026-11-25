@@ -1,7 +1,9 @@
 // Minimal JSON Schema validator (the subset batch.schema.json uses). No dependencies.
+import {validStageDate} from './status-history.mjs';
 const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
 const typeOk = (t, v) => t === 'null' ? v === null : t === 'array' ? Array.isArray(v) : t === 'object' ? isObj(v) : t === 'integer' ? Number.isInteger(v) : t === 'number' ? typeof v === 'number' && Number.isFinite(v) : typeof v === t;
 const formats = {
+  'date-or-empty': v => validStageDate(v),
   'date-time-utc': v => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/.test(v) && !Number.isNaN(Date.parse(v)),
   'http-url': v => { try { const u = new URL(v); return ['http:', 'https:'].includes(u.protocol) && !!u.hostname; } catch { return false; } }
 };

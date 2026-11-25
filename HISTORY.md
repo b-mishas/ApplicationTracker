@@ -4,6 +4,13 @@
 
 --------------------
 
+## 2026-11-25 — Posting dates and settings notice port
+
+- Ported JobTracker `1078034` and `3e38f5a`: the routine/template require calendar posting dates or empty; importer rejects invalid dates per record; Posted shows Unknown for legacy wording. Relative dates use Part A's timezone rather than fixed Berlin.
+- Added optional preview-first `app/migrate-posted-dates.mjs`: original observation evidence, explicit revision-checked apply, report and backup; no real inventory migration performed. Included in the future release file list, without rebuilding dist.
+- Settings save confirmation overlays the header, dismisses on click or after two seconds and causes no layout shift; Save precedes Cancel. Verification details are in the handoffs.
+
+
 ## 2026-11-24 — Codex review fixes and routine gaps against JobTracker
 
 - Codex P2: diagnostics masks whole file paths, including spaces, quotes, UNC and temp folders; START_HERE's problem-report line trimmed to one sentence (user). Codex P2: finish-run's `retry` includes every find `--open` lists, so an assessed but unimported vacancy keeps `searchCoverage` partial (regression added; it fails on 2bb2f48). Codex cost finding: a subagent is never started without a model setting; the lead does the work instead.

@@ -150,6 +150,9 @@ th .clear-column-filter:focus-visible{outline-offset:-2px}
 #settings-form input,#settings-form textarea,#settings-form select{box-sizing:border-box;width:100%;font:inherit;padding:7px;border:1px solid #cdd4c8;border-radius:6px;background:white}
 #settings-result{white-space:pre-line;color:#a3322e}
 .settings-actions{display:flex;justify-content:flex-end;gap:8px}
+/* A fixed notice overlays the header without taking space from the table. */
+#settings-notice{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:20;max-width:calc(100vw - 32px);padding:10px 16px;border:1px solid #cbd9d1;border-radius:8px;background:#edf4ee;box-shadow:0 4px 16px #243c3226;color:#244a40;text-align:center}
+#settings-notice[hidden]{display:none}
 
 /* Keep provisional assessment markers beside their Fit badge. */
 td.fit{white-space:nowrap;text-align:center}

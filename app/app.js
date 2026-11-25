@@ -8,6 +8,19 @@ const statuses=STATUS_VALUES;
 const statusFilters=statuses.flatMap(status=>status==='Rejected'?[status,REJECTED_AFTER_INTERVIEW]:[status]);
 const fields=[['fit','Fit'],['company','Company'],['group','Group'],['title','Position'],['star','Actions'],['country','Country'],['city','City'],['workMode','Work mode'],['status','Status'],['applicationDate','Applied on'],['lastInterview','Last interview'],['seniority','Seniority'],['firstSeen','First found'],['postedDate','Posted'],['assessmentBasis','Assessment']];
 let settings={exportLanguage:'en'},settingsRevision,startupState,portState;
+let settingsMessageTimer;
+function showSettingsSaved(message){
+ clearTimeout(settingsMessageTimer);
+ const target=$('settings-notice');target.textContent=message;target.hidden=false;
+ // Do not erase an error or another message that arrives during the delay.
+ const dismiss=()=>{
+  clearTimeout(settingsMessageTimer);
+  if(target.textContent===message){target.textContent='';target.hidden=true;}
+  target.onclick=null;target.style.cursor='';target.removeAttribute('title');
+ };
+ target.onclick=dismiss;target.style.cursor='pointer';target.title='Click to dismiss';
+ settingsMessageTimer=setTimeout(dismiss,2000);
+}
 let supportedCountries=new Set();
 let data,revision,sort='star',direction=-1,open=null,filterKey=null,pendingSave=false,lastUndo;
 // Fixed class names keep application-stage styling independent of sorting.
@@ -51,7 +64,7 @@ function cell(j,key){
  if(key==='status')return effectiveStatus(j)==='Offer'?'<span class="offer-status"><span class="offer-dollar" aria-hidden="true">$</span>Offer</span>':esc(effectiveStatus(j));
  if(['firstSeen','postedDate','applicationDate','lastInterview'].includes(key)){
   const value=columnValue(j,key);
-  if(!validStageDate(value,{allowEmpty:false}))return key==='postedDate'?esc(value||'—'):'—';
+  if(!validStageDate(value,{allowEmpty:false}))return key==='postedDate'?'Unknown':'—';
   // ISO components keep calendar dates independent of browser timezone.
   const [year,month,day]=value.split('-');
   return `<time datetime="${esc(value)}">${Number(day)} ${dateMonths[Number(month)-1]} ${year}</time>`;
@@ -713,7 +726,7 @@ $('settings-form').onsubmit=async event=>{
    const result=await response.json();if(!response.ok)throw Error('Export settings saved. Startup preference could not be saved: '+result.error);
    startupState=result;
   }
-  $('settings-dialog').close();$('message').textContent=portState?.pending?'Settings saved. Port '+portState.port+' will apply after Restart. Update your bookmark afterwards.':'Settings saved.';render();
+  $('settings-dialog').close();showSettingsSaved(portState?.pending?'Settings saved. Port '+portState.port+' will apply after Restart. Update your bookmark afterwards.':'Settings saved.');render();
  }catch(error){$('settings-result').textContent=error.message+(portState?.pending?' Port '+portState.port+' is saved for the next Restart.':'');}finally{button.disabled=false;}
 };
 

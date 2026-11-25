@@ -48,6 +48,12 @@ Use Node 22 or newer in the actual execution environment. The Windows x64 packag
 
 From ROOT run node app/self-check.mjs. The legacy --require-configured option is accepted for compatibility and adds no search-configuration requirement. It checks schema, settings, valid inventory, required folders, writes/backups in a temporary data subfolder, Excel export/readback and the employer workbook. Temporary files are removed; actual jobs are not changed. Exit 0 means checks passed, exit 1 means setup needs attention. This is the installation test. An empty-batch --validate-only test checks batch parsing, not inventory access, saving or export.
 
+## Posting dates
+
+Discovery `postedDate` must be a valid calendar date `YYYY-MM-DD` or empty when unknown. Resolve unambiguous relative ages against `observedAt` in Part A's timezone (hours require subtracting elapsed hours first), keeping the original wording and observation time in source evidence. Leave ranges, month-only dates and ambiguous ages empty; never substitute search windows or discovery dates. Invalid date text is rejected per record; valid siblings can still import.
+
+For legacy inventory, `node app/migrate-posted-dates.mjs --root <data-folder>` from ROOT previews conversions without writes. Apply only after reviewing the report, adding `--apply --expected-revision <preview-revision>`; it saves the original wording in a report and backs up the database. Use the same process timezone as the original search. Relative ages without matching observation evidence are cleared, never anchored to today.
+
 ## Discovery commands
 
 From app/:

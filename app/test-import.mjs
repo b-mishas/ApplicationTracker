@@ -61,7 +61,9 @@ const invalid = {
   'bad enum workMode': j => j.workMode = 'Office', 'fit 6': j => j.fit = 6, 'unknown country ZZ': j => j.countries = ['ZZ'], 'user-owned status': j => j.status = 'Applied', 'user-owned interview date': j => j.interviewDate = '2026-11-03', 'user-owned interview outcome': j => j.interviewOutcome = 'Offer', 'user-owned offer date': j => j.offerDate = '2026-11-04', 'user-owned notes': j => j.notes = 'x',
   'user-owned id': j => j.id = 'abc', 'favorite flag': j => j.favorite = true, 'ftp url': j => j.url = 'ftp://x.example/1', 'missing sources': j => j.sources = [], 'unknown field': j => j.bogus = 1,
   'Open without Posting reviewed': j => { j.assessmentBasis = 'Title only'; j.availability = 'Open'; }, 'Open on search link': j => { j.linkType = 'search'; }, 'missing company': j => delete j.company,
-  'bad group type': j => j.group = 42, 'provider without id': j => j.provider = 'linkedin', 'bad postedDate type': j => j.postedDate = 5
+  'bad group type': j => j.group = 42, 'provider without id': j => j.provider = 'linkedin', 'bad postedDate type': j => j.postedDate = 5,
+  'relative posting date': j => j.postedDate = '3 days ago', 'impossible posting date': j => j.postedDate = '2026-02-30',
+  'posting date range': j => j.postedDate = '<= 30 days'
 };
 for (const [name, f] of Object.entries(invalid)) await test('invalid record isolated: ' + name, async dir => {
   const good=mk(), bad = mk(); f(bad);

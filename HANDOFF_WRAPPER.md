@@ -1,5 +1,19 @@
 # Wrapper handoff
 
+## Posting-date and settings port — 2026-11-25T12:04:43Z (Codex)
+
+Ported JobTracker `1078034` and `3e38f5a` on main, starting at ee59cd6; remote/CI unverified. Agent instructions committed as bfbd0a9; this second requested commit records wrapper implementation and shared contract documentation. Preserve unrelated PLAN.md, ROADMAP.md, APPLICATIONTRACKER_FIXES.md and design/ changes.
+
+app/app.js, index.html and style.css now show Settings saved as a fixed overlay: click dismissal, two-second expiry, no table movement; Save precedes Cancel. Name/language and port/startup controls are retained. Posted cells show Unknown for empty/legacy invalid wording.
+
+app/batch.schema.json and jsonschema.mjs require postedDate to be a valid YYYY-MM-DD or empty, rejecting invalid records individually. app/migrate-posted-dates.mjs previews legacy conversions by default; explicit revision-checked apply retains original wording in a report and uses shared locking, backups and atomic replacement. Matching source observations anchor relative dates; ambiguous wording clears. It reuses calendarDate/process timezone rather than hard-coded Berlin. No real inventory migration performed.
+
+Agent routine/template, INTERFACE_FOR_TRACKER.md and app/SEARCH_WORKFLOW.md agree on observedAt, Part A timezone and source evidence. Future release whitelist includes the migration helper; npm test includes regressions. No ZIP was rebuilt. See HISTORY.md and the focused HANDOFF_AGENT.md update.
+
+Full npm test passed, including 60 importer cases, migration evidence/backup/stale revision/idempotence, non-Berlin timezone and template drift. Isolated headless Chromium with synthetic data verified save, fixed positioning/no layout shift, click dismissal, two-second expiry and Unknown date display. Browser/server stopped. Other browsers, actual macOS login and recipient acceptance untested. Existing packages and earlier limitations below remain applicable.
+
+Next: user review; regenerate existing installation prompts before stricter imports. User requested two local commits; no push requested and no active operation.
+
 Updated 2026-11-24T16:30Z (Claude): storage lock fix from JobTracker committed and pushed as 1c42e6f [Wrapper]: app/store.mjs withLock retries only open(lock, 'wx'); Windows EPERM there (a released lock still being deleted) waits like a held lock and is rethrown after the whole timeout; a failure while writing the owner token frees the lock and fails at once (test seam openLock, app/test-store-lock.mjs in npm test; import-test cleanup retries). npm test passes; the 1-in-40 race not re-measured; Mac untested. dist/Application-tracker-windows-x64.zip rebuilt from 8663380 (audit ok); Mac archives from 330274f; nothing published. Awaiting Codex review with the agent commits listed in HANDOFF_AGENT.md.
 
 Updated 2026-11-20T20:51:35.121Z (Codex): ported JobTracker bcad8b4, b8999dd and 5d16323 into app/app.js, app/style.css and app/column-layout.mjs. Removed expansion column; rows expand with mouse or keyboard. Fit cells are centered in commit 2b32a76. Urgent now counts/filters New and Shortlisted, including on Reset; zero New count is grey. Compact columns keep fixed base widths and selected unfiltered headings do not wrap. Model/layout tests and isolated Chromium checks for row expansion, spans and Urgent Reset passed; other browsers and visual review pending. The three feature commits were requested; no push or distribution build. Preserve unrelated HANDOFF_AGENT.md and design/. Earlier rapid combined preference-save mismatch remains unresolved. Next: user review. Remote/CI unverified; temporary fixture server/browser stopped.
