@@ -40,11 +40,11 @@ try{
  const sizedView={...orderedView,layout:{...orderedView.layout,widths:{company:220,title:420}},standardLayout:{...orderedView.standardLayout,widths:{company:180}},updatedAt:4};
  assert.equal((await saveView(sizedView)).status,200);
  assert.deepEqual(await (await fetch(base+'/api/view-state')).json(),sizedView);
- for(const widths of [null,[],{bogus:100},{company:99},{star:113},{country:99},{title:159},{company:1201},{company:100.5},{company:'200'}]){
+ for(const widths of [null,[],{bogus:100},{fit:63},{company:89},{star:113},{country:79},{title:139},{group:69},{city:69},{company:1201},{company:100.5},{company:'200'}]){
   assert.equal((await saveView({...sizedView,layout:{...sizedView.layout,widths}})).status,400);
   assert.equal((await saveView({...sizedView,standardLayout:{...sizedView.standardLayout,widths}})).status,400);
  }
- assert.equal((await saveView({...sizedView,updatedAt:5,layout:{...sizedView.layout,widths:{fit:80,company:100,title:1200}}})).status,200);
+ assert.equal((await saveView({...sizedView,updatedAt:5,layout:{...sizedView.layout,widths:{fit:64,company:90,title:140,country:80,group:70,city:70}}})).status,200);
  assert.equal((await fetch(base+'/column-layout.mjs')).status,200);
  const presetView={...sizedView,updatedAt:6,layoutPreset:'Shortlisted',presetLayouts:{Shortlisted:sizedView.layout,New:{...sizedView.layout,columns:['company','firstSeen']}}};
  assert.equal((await saveView(presetView)).status,200);

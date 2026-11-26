@@ -3,7 +3,7 @@ import {validateEntryChanges, inferredLinkType} from './entry-editor.mjs';
 import {STATUS_VALUES, INTERVIEW_OUTCOMES, MILESTONE_DATES, interviewDetails, effectiveStatus, interviewHistoryText, validStageDate, isRejectedAfterInterview, hasSentApplication, hasReceivedOffer} from './status-history.mjs';
 import {filterAndSort,choicesFor,columnValue,EMPTY,REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL,INTERVIEW_TOTAL,OFFER_TOTAL} from './view-model.mjs';
 import {groupColour,ensureGroupColours} from './group-colours.mjs';
-import {COLUMN_WIDTHS,defaultColumnLayout,PRESET_DEFAULTS_VERSION,upgradePresetLayouts,minimumColumnWidth,MAX_COLUMN_WIDTH,clampColumnWidth} from './column-layout.mjs';
+import {COLUMN_WIDTHS,defaultColumnLayout,PRESET_DEFAULTS_VERSION,upgradePresetLayouts,minimumColumnWidth,MAX_COLUMN_WIDTH,clampColumnWidth,fitColumnWidths} from './column-layout.mjs';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const statuses=STATUS_VALUES;
@@ -295,6 +295,12 @@ function selectedPreset(){
 function refreshStatusPresets(){
  const active=selectedPreset();
  for(const button of document.querySelectorAll('[data-status-preset]'))button.setAttribute('aria-pressed',String(button.dataset.statusPreset===active));
+ for(const metric of document.querySelectorAll('[data-rail-preset]')){
+  const selected=metric.dataset.railPreset===active;
+  metric.classList.toggle('is-selected',selected);
+  if(selected)metric.setAttribute('aria-current','true');else metric.removeAttribute('aria-current');
+ }
+
 }
 function refreshOverview(){
  $('total').textContent=data.jobs.length;
@@ -305,6 +311,11 @@ function refreshOverview(){
  $('urgent').textContent=data.jobs.filter(j=>j.urgent&&statusPresets.Urgent.includes(effectiveStatus(j))).length;
  $('active').textContent=data.jobs.filter(j=>inProgressStatuses.includes(effectiveStatus(j))).length;
  $('new-count').classList.toggle('has-new',Number($('new-count').textContent)>0);
+ $('rail-new-count').textContent=$('new-count').textContent;
+ $('rail-shortlist-count').textContent=$('shortlist').textContent;
+ $('rail-applied-count').textContent=$('active').textContent;
+ $('rail-new-count').classList.toggle('has-new',Number($('new-count').textContent)>0);
+ updateSidebarLabel();
  const offers=data.jobs.filter(hasReceivedOffer).length;
  $('offer-total').textContent=offers;
  $('offers-preset').hidden=offers===0;
@@ -387,20 +398,19 @@ async function restoreViewState(){
 function resizeColumns(){
  const columns=[...$('colgroup').children];
  if(!columns.length)return;
- const table=$('colgroup').closest('table');
- const totalWidth=columns.reduce((sum,column)=>sum+Number(column.dataset.width),0);
- const flexibleWidth=columns.reduce((sum,column)=>sum+(column.hasAttribute('data-fixed')?0:Number(column.dataset.width)),0);
- const extraWidth=Math.max(0,table.parentElement.clientWidth-totalWidth);
- for(const column of columns){
-  const baseWidth=Number(column.dataset.width);
-  column.style.width=(baseWidth+(column.hasAttribute('data-fixed')?0:extraWidth*baseWidth/flexibleWidth))+'px';
- }
- table.style.minWidth=totalWidth+'px';
- table.style.width=(totalWidth+(flexibleWidth?extraWidth:0))+'px';
+ const table=$('colgroup').closest('table'),wrap=table.parentElement;
+ // clientWidth rounds fractional CSS pixels up on some scaled displays.
+ const availableWidth=Math.max(0,Math.floor(wrap.getBoundingClientRect().width-wrap.offsetWidth+wrap.clientWidth));
+ const fitted=fitColumnWidths(columns.map(column=>({key:column.dataset.column,width:Number(column.dataset.width),fixed:column.hasAttribute('data-fixed'),manual:Object.hasOwn(columnWidths,column.dataset.column)})),availableWidth);
+ columns.forEach((column,index)=>column.style.width=fitted.widths[index]+'px');
+ table.style.minWidth=fitted.total+'px';
+ table.style.width=fitted.total+'px';
  for(const handle of $('head').querySelectorAll('[data-resize-column]')){
   const width=Math.round(handle.closest('th').getBoundingClientRect().width);
+  handle.setAttribute('aria-valuemin',Math.min(minimumColumnWidth(handle.dataset.resizeColumn),width));
   handle.setAttribute('aria-valuenow',width);handle.setAttribute('aria-valuetext',width+' pixels');
  }
+ updateSidebarSpace();
  resizeAssessmentFields();
 }
 new ResizeObserver(resizeColumns).observe(document.querySelector('.table-wrap'));
@@ -904,3 +914,138 @@ $('settings-form').onsubmit=async event=>{
 };
 
 $('body').addEventListener('keydown',event=>{if(event.target.matches('tr.job')&&['Enter',' '].includes(event.key)){event.preventDefault();event.target.click();}});
+
+// A real button supports touch and keyboard; hover is an additional shortcut.
+const sidebarShell=$('sidebar-shell'),sidebarRail=$('sidebar-rail'),sidebar=$('status-presets'),sidebarPanel=$('sidebar-panel');
+const compactNavigation=matchMedia('(max-width:1150px)');
+let sidebarPinned=false;
+function updateSidebarLabel(){
+ sidebarRail.setAttribute('aria-label',`${sidebarPinned?'Unpin':'Open and pin'} navigation; ${$('rail-new-count').textContent} new, ${$('rail-shortlist-count').textContent} shortlisted, ${$('rail-applied-count').textContent} in progress`);
+}
+function showSidebar(open){
+ const expanded=!compactNavigation.matches||open||sidebarPinned;
+ sidebarShell.classList.toggle('is-open',expanded);
+ sidebarRail.setAttribute('aria-expanded',String(expanded));
+ sidebar.inert=!expanded;sidebarPanel.inert=!expanded;
+ $('sidebar-size-handle').disabled=!expanded;
+ sidebarRail.title=sidebarPinned?'Unpin navigation':'Open navigation; click to pin';
+ updateSidebarLabel();
+}
+sidebarRail.onclick=()=>{
+ sidebarPinned=!sidebarPinned;
+ sidebarShell.classList.toggle('is-pinned',sidebarPinned);
+ sidebarRail.setAttribute('aria-pressed',String(sidebarPinned));
+ showSidebar(sidebarPinned||sidebarRail.matches(':hover'));
+};
+sidebarRail.addEventListener('pointerenter',event=>{if(event.pointerType==='mouse')showSidebar(true);});
+sidebarShell.addEventListener('pointerleave',()=>{if(!sidebarShell.querySelector(':focus-visible'))showSidebar(false);});
+sidebarShell.addEventListener('focusin',event=>{if(event.target.matches(':focus-visible'))showSidebar(true);});
+sidebarShell.addEventListener('focusout',()=>queueMicrotask(()=>{if(!sidebarShell.contains(document.activeElement)&&!sidebarShell.matches(':hover'))showSidebar(false);}));
+sidebarShell.addEventListener('keydown',event=>{
+ if(event.key!=='Escape'||!compactNavigation.matches)return;
+ sidebarPinned=false;sidebarShell.classList.remove('is-pinned');sidebarRail.setAttribute('aria-pressed','false');
+ sidebarRail.focus();showSidebar(false);event.stopPropagation();
+});
+compactNavigation.addEventListener('change',()=>showSidebar(false));
+showSidebar(false);
+
+// Snap between meaningful label widths instead of leaving an oversized empty panel.
+const sidebarSizeHandle=$('sidebar-size-handle');
+let sidebarDensity='auto',sidebarSizing;
+try{const saved=localStorage.getItem('application-tracker.sidebar-density');if(['compact','full'].includes(saved))sidebarDensity=saved;}catch{}
+function setSidebarDensity(density,persist=true){
+ sidebarDensity=density;sidebarShell.dataset.density=density;
+ updateSidebarSpace();
+ sidebarSizeHandle.setAttribute('aria-label',`Navigation label width: ${density}`);
+ if(persist)try{localStorage.setItem('application-tracker.sidebar-density',density);}catch{}
+}
+// Coalesce table, navigation and viewport notifications into one sizing pass.
+let sidebarSpaceFrame=null,sidebarMeasurementKey='',sidebarIntrinsicWidths=new Map();
+function updateSidebarSpace(){
+ if(sidebarSpaceFrame!==null)return;
+ sidebarSpaceFrame=requestAnimationFrame(()=>{sidebarSpaceFrame=null;layoutSidebarSpace();});
+}
+function layoutSidebarSpace(){
+ // Intrinsic sizes change with counts, visibility, fonts and CSS breakpoints,
+ // not with every pixel of a drag. Keep constrained panel sizes out of the cache.
+ const key=JSON.stringify([sidebar.textContent,$('offers-preset').hidden,
+  innerWidth<=580,innerWidth<=850,compactNavigation.matches,innerWidth<=1600]);
+ if(key!==sidebarMeasurementKey){sidebarMeasurementKey=key;sidebarIntrinsicWidths.clear();}
+ const fullLabels=sidebarDensity==='full'||(sidebarDensity==='auto'&&innerWidth>1600);
+ const mode=fullLabels?'full':'compact';
+ const constrained=innerWidth<=1600&&fullLabels&&(!compactNavigation.matches||sidebarPinned);
+ const modes=constrained?['full','compact']:[mode];
+ if(modes.some(value=>!sidebarIntrinsicWidths.has(value))){
+  sidebarShell.classList.remove('labels-constrained');
+  const density=sidebarShell.dataset.density;
+  for(const value of modes){
+   if(sidebarIntrinsicWidths.has(value))continue;
+   sidebarShell.dataset.density=value;
+   sidebarIntrinsicWidths.set(value,sidebarPanel.getBoundingClientRect().width+10);
+  }
+  sidebarShell.dataset.density=density;
+ }
+ const fullWidth=sidebarIntrinsicWidths.get(mode);
+ let reservedWidth=fullWidth;
+ if(constrained){
+  const compactWidth=sidebarIntrinsicWidths.get('compact');
+  const columns=[...$('colgroup').children].map(column=>({key:column.dataset.column,width:Number(column.dataset.width),manual:Object.hasOwn(columnWidths,column.dataset.column)}));
+  const minimum=fitColumnWidths(columns,0).total;
+  const workspace=sidebarShell.parentElement,wrap=document.querySelector('.table-wrap');
+  const gap=parseFloat(getComputedStyle(workspace).columnGap)||0;
+  const railWidth=compactNavigation.matches?44:0;
+  const tableChrome=wrap.offsetWidth-wrap.clientWidth;
+  const spare=Math.floor(workspace.getBoundingClientRect().width-gap-railWidth-tableChrome-minimum);
+  reservedWidth=Math.min(fullWidth,Math.max(compactWidth,spare));
+ }
+ // Geometry reads are complete. Avoid rewriting identical styles and do not
+ // observe the panel we resize: that would feed our own writes back into sizing.
+ const writeWidth=(name,value)=>{if(sidebarShell.style.getPropertyValue(name)!==value)sidebarShell.style.setProperty(name,value);};
+ writeWidth('--sidebar-panel-width',reservedWidth+'px');
+ sidebarShell.classList.toggle('labels-constrained',reservedWidth<fullWidth-.5);
+ writeWidth('--sidebar-content-width',(reservedWidth-10)+'px');
+}
+const sidebarSpaceObserver=new ResizeObserver(updateSidebarSpace);
+sidebarSpaceObserver.observe(sidebarShell.parentElement);
+document.fonts?.addEventListener('loadingdone',()=>{sidebarMeasurementKey='';updateSidebarSpace();});
+setSidebarDensity(sidebarDensity,false);
+sidebarRail.addEventListener('click',updateSidebarSpace);
+sidebarSizeHandle.addEventListener('pointerdown',event=>{
+ if(event.button!==0)return;
+ sidebarSizing={pointerId:event.pointerId,x:event.clientX,previous:sidebarDensity};
+ sidebarSizeHandle.setPointerCapture(event.pointerId);sidebarShell.classList.add('is-sizing');event.preventDefault();
+});
+sidebarSizeHandle.addEventListener('pointermove',event=>{
+ if(!sidebarSizing||event.pointerId!==sidebarSizing.pointerId)return;
+ const distance=event.clientX-sidebarSizing.x;
+ if(Math.abs(distance)>=24)setSidebarDensity(distance<0?'compact':'full',false);
+});
+function finishSidebarSizing(cancel=false){
+ if(!sidebarSizing)return;
+ const previous=sidebarSizing.previous,pointerId=sidebarSizing.pointerId;
+ sidebarSizing=undefined;sidebarShell.classList.remove('is-sizing');
+ setSidebarDensity(cancel?previous:sidebarDensity);
+ if(sidebarSizeHandle.hasPointerCapture(pointerId))sidebarSizeHandle.releasePointerCapture(pointerId);
+ if(document.activeElement===sidebarSizeHandle)sidebarSizeHandle.blur();
+}
+sidebarSizeHandle.addEventListener('pointerup',()=>finishSidebarSizing());
+sidebarSizeHandle.addEventListener('pointercancel',()=>finishSidebarSizing(true));
+sidebarSizeHandle.addEventListener('lostpointercapture',()=>finishSidebarSizing(true));
+sidebarSizeHandle.addEventListener('dblclick',()=>{
+ // Toggle the displayed mode, including when automatic sizing chose it.
+ const compact=getComputedStyle(sidebar.querySelector('.label-compact')).display!=='none';
+ setSidebarDensity(compact?'full':'compact');
+});
+sidebarSizeHandle.addEventListener('keydown',event=>{
+ const density={ArrowLeft:'compact',ArrowRight:'full',Home:'auto'}[event.key];
+ if(density){event.preventDefault();setSidebarDensity(density);}
+ if(event.key==='Escape'&&sidebarSizing){event.preventDefault();event.stopPropagation();finishSidebarSizing(true);}
+});
+
+// A manual expansion must not prevent the normal full -> compact -> rail sequence.
+let previousNavigationViewport=innerWidth;
+window.addEventListener('resize',()=>{
+ const narrowing=innerWidth<previousNavigationViewport;
+ previousNavigationViewport=innerWidth;
+ if(narrowing&&innerWidth<=1600&&sidebarDensity==='full')setSidebarDensity('auto');
+});

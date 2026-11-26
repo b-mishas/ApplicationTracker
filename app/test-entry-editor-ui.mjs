@@ -61,3 +61,29 @@ for(const key of ['status','applicationDate','applicationStatusText','interviewD
  assert.equal(editing.split(`data-entry-field="${key}"`).length-1,1,key);
 }
 console.log('PASS: linkless saves, primary link classification, draft visibility, stage markup and coalesced textarea resizing.');
+
+// Exercise the actual sidebar scheduler/cache without a live browser or inventory.
+{
+ let frames=[],measurements=0,writes=0;
+ const properties=new Map(),classes=new Set();
+ const shell={dataset:{density:'full'},classList:{remove:key=>classes.delete(key),toggle:(key,on)=>on?classes.add(key):classes.delete(key)},
+  style:{getPropertyValue:key=>properties.get(key)??'',setProperty:(key,value)=>{writes++;properties.set(key,value);}},
+  parentElement:{getBoundingClientRect:()=>({width:1100})}};
+ const nav={textContent:'Applications sent 1'},offers={hidden:false};
+ const ctx=vm.createContext({sidebarShell:shell,sidebar:nav,sidebarDensity:'full',sidebarPinned:false,
+  sidebarPanel:{getBoundingClientRect:()=>{measurements++;return {width:shell.dataset.density==='compact'?130:200};}},
+  innerWidth:1200,compactNavigation:{matches:false},columnWidths:{},fitColumnWidths:()=>({total:900}),
+  $:id=>id==='offers-preset'?offers:{children:[]},
+  document:{querySelector:()=>({offsetWidth:100,clientWidth:100})},getComputedStyle:()=>({columnGap:'0'}),
+  requestAnimationFrame:fn=>{frames.push(fn);return frames.length;}});
+ vm.runInContext(block('let sidebarSpaceFrame=', 'const sidebarSpaceObserver='),ctx);
+ ctx.updateSidebarSpace();ctx.updateSidebarSpace();assert.equal(frames.length,1);
+ frames.shift()();assert.equal(measurements,2);assert.equal(properties.get('--sidebar-panel-width'),'200px');
+ assert.equal(properties.get('--sidebar-content-width'),'190px');assert(classes.has('labels-constrained'));
+ const previousWrites=writes;
+ ctx.updateSidebarSpace();frames.shift()();assert.equal(measurements,2,'Unchanged layout reuses intrinsic widths');
+ assert.equal(writes,previousWrites,'Unchanged layout does not rewrite CSS widths');
+ nav.textContent='Applications sent 1000';ctx.updateSidebarSpace();frames.shift()();
+ assert.equal(measurements,4,'Count changes invalidate both cached label widths');
+}
+console.log('PASS: sidebar updates coalesce, reuse intrinsic measurements and invalidate changed counts.');

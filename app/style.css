@@ -375,3 +375,89 @@ th .column-resize-handle:focus-visible{outline-offset:-2px}
 .sidebar button[data-status-preset=Urgent] .sidebar-count{font-size:calc(12px + 1pt)}
 .sidebar button[data-status-preset=Urgent][aria-pressed=true]{box-shadow:inset 3px 0 #bb3834}
 th .column-label:not(.filtered):is([data-filter=workMode],[data-filter=status],[data-filter=firstSeen],[data-filter=applicationDate],[data-filter=lastInterview],[data-filter=postedDate]){white-space:nowrap}
+
+/* Responsive navigation opens over results; only pinning reserves its width. */
+.sidebar-shell{position:relative;flex:0 0 auto;display:flex;min-height:0}
+.sidebar-panel{position:relative;display:flex;flex:0 0 auto;height:100%;min-height:0;background:#f5f6f2}
+.sidebar-shell .sidebar{height:100%}
+.sidebar-rail,.label-compact{display:none}
+td.title{min-width:0;max-width:none}
+@media(max-width:1600px){
+ .label-full{display:none}
+ .label-compact{display:inline}
+ main{padding-inline:14px}
+ .workspace{gap:12px}
+ .job td{padding-inline:8px}
+ th .column-label{padding-left:8px}
+ th .column-label:not(.filtered):is([data-filter=workMode],[data-filter=status],[data-filter=firstSeen],[data-filter=applicationDate],[data-filter=lastInterview],[data-filter=postedDate]){white-space:normal}
+ .detail td{padding:16px}
+}
+@media(max-width:1150px){
+ .workspace{flex-direction:row;gap:10px}
+ .sidebar-shell{flex-basis:54px;width:54px;z-index:5}
+ .sidebar-shell.is-pinned{flex-basis:calc(44px + var(--sidebar-panel-width,140px));width:calc(44px + var(--sidebar-panel-width,140px))}
+ .sidebar-shell .sidebar-panel{position:absolute;left:44px;top:0;visibility:hidden}
+ .sidebar-shell .sidebar{position:relative;width:max-content;max-width:none;max-height:none;display:block;padding:10px 8px;background:#f5f6f2;border:1px solid var(--control-border);border-radius:0 7px 7px 0;box-shadow:6px 3px 15px #243c321a}
+ .sidebar-shell.is-open .sidebar-panel{visibility:visible}
+ .sidebar-shell .sidebar .sidebar-statistics{margin-top:24px}
+ .sidebar-shell .sidebar button{white-space:nowrap;gap:8px}
+ .sidebar-rail{display:flex;flex-direction:column;align-items:center;gap:6px;width:44px;height:100%;min-height:120px;padding:10px 2px;border:1px solid var(--control-border);border-radius:7px;background:#edf2eb;color:#53685e}
+ .sidebar-rail[aria-pressed=true]{background:#ddebdc;color:#155c49;border-radius:7px 0 0 7px}
+ .rail-menu{font-size:20px;line-height:24px}
+ .rail-label{font-size:10px}
+ .rail-count{font-size:14px;font-variant-numeric:tabular-nums;color:#829087;max-width:100%;overflow-wrap:anywhere}
+ .rail-count.has-new{color:#155c49}
+ .rail-pin{margin-top:auto}
+ .rail-pin svg{display:block;width:18px;height:18px;fill:currentColor}
+ .sidebar-rail[aria-pressed=true] .rail-pin{font-weight:700;color:var(--green)}
+}
+
+/* Size navigation to its labels/counts; the edge switches full/compact label modes. */
+.sidebar-shell .sidebar{position:relative}
+.sidebar-shell .sidebar button[data-status-preset]{gap:8px}
+.sidebar-shell[data-density=compact] .label-full{display:none}
+.sidebar-shell[data-density=compact] .label-compact{display:inline}
+.sidebar-shell[data-density=full] .label-full{display:inline}
+.sidebar-shell[data-density=full] .label-compact{display:none}
+.sidebar-shell .sidebar-size-handle{position:relative;flex:0 0 10px;align-self:center;height:55px;z-index:2;display:flex;align-items:center;justify-content:center;width:10px;min-width:10px;padding:0;border:0;border-radius:0;background:transparent;color:#829087;cursor:ew-resize;touch-action:none}
+.sidebar-shell .sidebar-size-handle:hover,.sidebar-shell .sidebar-size-handle:focus-visible{background:#17746422;color:var(--green)}
+.sidebar-shell .sidebar-size-handle span{pointer-events:none;font-size:15px;line-height:15px}
+.sidebar-shell.is-sizing{user-select:none}
+@media(max-width:1150px){.sidebar-shell .sidebar{position:relative}}
+
+/* Keep pinned/full labels within the space reserved beside the table. */
+@media(max-width:1600px){
+ .sidebar-shell.labels-constrained .sidebar-panel{width:calc(var(--sidebar-panel-width) - 10px)}
+ .sidebar-shell.labels-constrained .sidebar{width:calc(var(--sidebar-panel-width) - 10px);max-width:calc(var(--sidebar-panel-width) - 10px);flex-basis:calc(var(--sidebar-panel-width) - 10px)}
+ .sidebar-shell.labels-constrained .sidebar button[data-status-preset]{white-space:normal}
+ .sidebar-shell.labels-constrained .navigation-label{min-width:0;overflow-wrap:anywhere}
+ .sidebar-shell.labels-constrained .sidebar-count{flex-shrink:0}
+}
+
+/* Keep the draggable navigation edge close to the results. */
+.workspace{column-gap:0}
+
+/* The same visible strip separates the table from either navigation state. */
+@media(max-width:1150px){
+ .sidebar-shell .sidebar-size-handle{position:absolute;left:44px;top:50%;transform:translateY(-50%)}
+ .sidebar-shell.is-open .sidebar-size-handle{left:calc(44px + var(--sidebar-content-width,140px))}
+}
+
+/* Keep vertical scrollbar appearance from changing the table width mid-resize. */
+.table-wrap{scrollbar-gutter:stable}
+
+@media(max-width:1150px){
+ .sidebar-rail{gap:14px;min-height:260px}
+ .rail-menu{margin-bottom:10px}
+ .rail-metric{display:flex;flex-direction:column;align-items:center;gap:4px;max-width:100%}
+ .rail-metric+.rail-metric .rail-count{color:inherit}
+}
+
+@media(max-width:1150px){
+ .rail-metric{width:100%;padding-inline:2px;border-radius:5px}
+ .rail-metric.is-selected .rail-label,.rail-metric.is-selected .rail-count{font-weight:700}
+}
+
+@media(max-width:1150px){
+ .sidebar-shell:not(.is-open) .sidebar-size-handle{visibility:hidden;pointer-events:none}
+}

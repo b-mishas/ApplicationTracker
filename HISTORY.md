@@ -4,6 +4,13 @@
 
 --------------------
 
+## 2026-11-26 — Responsive table and collapsible navigation
+
+- Automatic columns shrink to readable minimums before scrolling, with exact whole-pixel allocation, conservative fractional-width measurement and a stable scrollbar gutter. Saved widths remain intact; manual resizing and persisted validation share the compressed minimums.
+- Labels shorten at <=1600 px; navigation collapses at <=1150 px into a 44 px New/List/Applied count rail plus a 10 px spacer. Only the outlined rail opens on hover. Pinning reserves space; full labels wrap rather than cover entries. The centered 10 × 55 px edge control supports drag, double-click and keyboard sizing; it is hidden/disabled while collapsed. No gap remains before results.
+- Rail counts refresh after edits; Applied includes Applied/Interview/Offer. Only the selected rail summary is bold, without a background/edge highlight. New is not independently bold. Whole-preset hover hints retain full titles; menu-to-New spacing is 24 px. Sidebar width updates batch per frame, cache intrinsic measurements, invalidate for counts/fonts/breakpoints and avoid redundant writes. No additional view heading or phone layout was added.
+- Column, sidebar/editor-helper, view-model, syntax and isolated API checks passed, including lower saved-width boundaries. Chromium verified sizing, drag/double-click, pinning, rail counts/selection, live status updates and visibility/spacing. Firefox fractional-width tests passed at 100%/125% scale; physical laptop jitter, touch devices and recipient acceptance remain pending. No real data/settings or release archives changed.
+
 ## 2026-11-26 — Full entry correction editor
 
 - Adapted JobTracker 0206b78/6efdc18: Edit keeps the three detail columns and makes row/detail fields one synchronized draft. Save/Cancel, source URL/Primary controls, assessment resizing, compact additional fields, keyboard actions and full-entry Undo use existing revision/backup storage. Normal Status autosave remains; full-edit status changes are staged.

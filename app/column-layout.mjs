@@ -1,7 +1,7 @@
 // Shared display limits keep browser sizing and persisted-state validation consistent.
 export const COLUMN_WIDTHS={fit:80,company:130.5,title:365,star:114,group:110,country:124,city:105,workMode:103.25,status:107,applicationDate:114,lastInterview:114,seniority:170,firstSeen:110,postedDate:110,assessmentBasis:143};
 export const MIN_COLUMN_WIDTH=80,MAX_COLUMN_WIDTH=1200;
-const minimumWidths={company:100,title:160,star:114,country:100,applicationDate:110};
+const minimumWidths={fit:64,company:90,title:140,group:70,city:70,star:114,country:80,applicationDate:110};
 export const minimumColumnWidth=key=>minimumWidths[key]??MIN_COLUMN_WIDTH;
 export const clampColumnWidth=(key,width)=>Math.max(minimumColumnWidth(key),Math.min(MAX_COLUMN_WIDTH,Math.round(width)));
 export function validColumnWidths(widths){
@@ -49,4 +49,30 @@ export function upgradePresetLayouts(layouts,version=0){
   if(layout?.sort==='star'&&layout.direction===-1){upgraded[preset]={...layout,sort:'applicationDate',direction:-1};changed=true;}
  }
  return changed?upgraded:layouts;
+}
+
+// Automatic columns give back spare space before scrolling. Saved widths stay untouched.
+// Status/header controls prefer extra room automatically; older manual widths remain valid.
+const responsiveMinimums={workMode:88,status:95};
+export function fitColumnWidths(columns,availableWidth){
+ const widths=columns.map(column=>column.width);
+ const preferred=widths.reduce((sum,width)=>sum+width,0);
+ const flexible=columns.map((column,index)=>column.fixed?-1:index).filter(index=>index>=0);
+ if(availableWidth>=preferred){
+  const flexibleTotal=flexible.reduce((sum,index)=>sum+widths[index],0);
+  for(const index of flexible)widths[index]+=(availableWidth-preferred)*widths[index]/flexibleTotal;
+ }else{
+  const capacities=columns.map((column,index)=>column.manual?0:Math.max(0,widths[index]-(responsiveMinimums[column.key]??minimumColumnWidth(column.key))));
+  const capacity=capacities.reduce((sum,value)=>sum+value,0);
+  const reduction=Math.min(preferred-availableWidth,capacity);
+  if(capacity)for(let index=0;index<widths.length;index++)widths[index]-=reduction*capacities[index]/capacity;
+ }
+ // Whole CSS pixels prevent independent browser rounding from making the table
+ // a fraction wider than its container (especially across display scaling levels).
+ const target=Math.round(widths.reduce((sum,width)=>sum+width,0));
+ const rounded=widths.map(Math.floor);
+ let remaining=target-rounded.reduce((sum,width)=>sum+width,0);
+ const fractions=widths.map((width,index)=>({index,fraction:width-rounded[index]})).sort((a,b)=>b.fraction-a.fraction);
+ for(const {index} of fractions){if(remaining--<=0)break;rounded[index]++;}
+ return {widths:rounded,total:rounded.reduce((sum,width)=>sum+width,0)};
 }
