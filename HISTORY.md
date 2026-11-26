@@ -4,6 +4,17 @@
 
 --------------------
 
+## 2026-11-26 — Full entry correction editor
+
+- Adapted JobTracker 0206b78/6efdc18: Edit keeps the three detail columns and makes row/detail fields one synchronized draft. Save/Cancel, source URL/Primary controls, assessment resizing, compact additional fields, keyboard actions and full-entry Undo use existing revision/backup storage. Normal Status autosave remains; full-edit status changes are staged.
+- Kept free-text groups, catalogue country validation, local dates, shared export/status logic and the flat app/ layout. Form rendering and shared validation are separate modules; IDs, import bookkeeping, status history and original source provenance are preserved. Batch/inventory contracts and import precedence stay unchanged.
+- Full npm test and isolated Chromium passed: custom groups/countries, staged dates/status, Cancel, primary URL, atomic save, Undo, stale-draft retention, stable row height, desktop three-column and narrow stacked layout. Desktop screenshot reviewed; other browsers/actual devices untested. No live records or dist changes.
+
+## 2026-11-25 — Unified floating page notifications
+
+- Adapted JobTracker bd821de: one fixed notice for page-level confirmations, warnings and errors, with click dismissal and no layout shift. Success expires after two seconds; warnings/errors persist, including the pending Restart reminder. Stale timers cannot hide newer notices; field-specific and Undo feedback stay local.
+- Focused notification regression tests and isolated Chromium flows passed (Settings success, unsaved-export warning, simulated export failure, pending-port reminder, dismissal/expiry and stable table position). No real records changed; other browsers untested.
+
 ## 2026-11-25 — Posting dates and settings notice port
 
 - Ported JobTracker `1078034` and `3e38f5a`: the routine/template require calendar posting dates or empty; importer rejects invalid dates per record; Posted shows Unknown for legacy wording. Relative dates use Part A's timezone rather than fixed Berlin.

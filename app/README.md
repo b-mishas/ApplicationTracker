@@ -17,3 +17,11 @@ Drag a column heading label to reorder columns; the expand column stays first. A
 Drag a heading’s right edge to resize its column. Double-click the edge to restore automatic sizing. For keyboard use, focus the edge handle: Left/Right changes width by 10 px (Shift: 50 px), Home restores automatic sizing, and Escape cancels an ongoing drag. Widths save with the view layout, remain attached to moved/hidden columns and preserve unsaved expanded-row edits. Untouched columns share spare space; manually sized columns keep their width.
 
 Preset defaults: All positions uses the standard nine columns. New adds First found; Shortlisted and Urgent add Posted at the end. Applied keeps Actions and adds Applied on at the end; Applications sent replaces Actions with Applied on. Interview invites and Offers received also add Last interview after Applied on. Last interview reads the existing interview date, falling back to the latest legacy Interview history entry; a cleared date stays empty. It supports date filtering and sorting. Older shared layouts are retained for custom filter combinations; named presets initially use these defaults.
+
+## Correct an entry
+
+Expand a position and choose **Edit**. Row fields and the three detail columns form one draft: correct vacancy details, assessment, countries, dates and source links, then **Save** or **Cancel**. Group accepts your own text. Additional fields are collapsed; IDs, import timestamps and historical status records remain read-only. Source evidence filenames are hidden and preserved. **Primary** chooses the title's link; unfamiliar changed URLs require a Link type choice.
+
+Normal-view Status actions still save immediately. In full Edit mode, status and date changes wait for Save with the rest of the draft. Undo restores that whole saved edit. Enter saves from text controls, Shift+Enter adds a newline, and Escape cancels; buttons/selects retain their normal Enter behavior. A stale save keeps the draft visible with an error.
+
+These corrections use the existing inventory format. Later discovery refreshes can update assessment and vacancy fields under the existing merge rules; this feature does not lock manual corrections against future imports. Restart the server and reload the page after installing this update.

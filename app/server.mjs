@@ -1,3 +1,4 @@
+import {applyEntryChanges} from './entry-editor.mjs';
 // A dependency-free local server. Only listens on this computer.
 import http from 'node:http';
 import {validColumnWidths,PRESET_COLUMNS} from './column-layout.mjs';
@@ -121,7 +122,7 @@ const server=http.createServer(async(req,res)=>{
   if(url.pathname==='/api/jobs' && req.method==='GET') {const raw=await readFile(path.join(dataRoot,'jobs.json'),'utf8');return reply(200,{data:JSON.parse(raw),revision:revision(raw)});}
   if(url.pathname==='/api/jobs' && req.method==='PATCH') {
    if(req.headers.origin!==origin || !req.headers['content-type']?.startsWith('application/json')) return reply(403,{error:'Save from the tracker page.'});
-   let body='';for await(const chunk of req){body+=chunk;if(body.length>100000)return reply(413,{error:'Notes too large.'});}
+   let body='';for await(const chunk of req){body+=chunk;if(body.length>1000000)return reply(413,{error:'Entry changes too large.'});}
    const input=JSON.parse(body);
    try{if(input.statusDate!==undefined&&!validStageDate(input.statusDate,{allowEmpty:false}))throw new StatusHistoryError('Enter a valid stage date.');validateMilestones(input);}catch(error){return reply(400,{error:error.message});}
    const stageDate=input.statusDate||calendarDate(new Date().toISOString());
@@ -133,7 +134,8 @@ const server=http.createServer(async(req,res)=>{
     if(input.applicationDate!==''&&!validApplicationDate(input.applicationDate))return reply(400,{error:'Enter a valid application date.'});
    }
    if(input.applicationStatusText!==undefined&&(typeof input.applicationStatusText!=='string'||input.applicationStatusText.length>2000))return reply(400,{error:'Application status text is too long.'});
-   if((quickAction===undefined&&!STATUSES.includes(input.status))||(input.notes!==undefined&&(typeof input.notes!=='string'||input.notes.length>50000)))return reply(400,{error:'Invalid status or notes.'});
+   if(input.changes!==undefined&&(quickAction!==undefined||Object.keys(input).some(key=>!['id','revision','changes'].includes(key))))return reply(400,{error:'Send entry changes separately from quick actions.'});
+   if((quickAction===undefined&&input.changes===undefined&&!STATUSES.includes(input.status))||(input.notes!==undefined&&(typeof input.notes!=='string'||input.notes.length>50000)))return reply(400,{error:'Invalid status or notes.'});
    if(typeof input.revision!=='string'||!input.revision)return reply(409,{error:'Reload before saving.'});
    try {
     const edit=lastJobEdit;
@@ -150,7 +152,9 @@ const server=http.createServer(async(req,res)=>{
      }
      const job=data.jobs[index];
      const before=structuredClone(job);
-     if(quickAction){
+     if(input.changes!==undefined){
+      applyEntryChanges(job,input.changes,stageDate,{isCountryCode});
+     }else if(quickAction){
       if(quickAction==='urgent')job.urgent=input.urgent;
       if(quickAction==='dismiss'&&!['New','Shortlisted','Dismissed'].includes(job.status))throw new ConflictError('Only new or shortlisted positions can be dismissed.');
       if(quickAction==='dismiss'&&job.status!=='Dismissed'){job.dismissedFromStatus=job.status;job.status='Dismissed';}
@@ -183,7 +187,7 @@ const server=http.createServer(async(req,res)=>{
     throw e;
    }
   }
-  const files={'/':'index.html','/index.html':'index.html','/app.js':'app.js','/column-layout.mjs':'column-layout.mjs','/view-model.mjs':'view-model.mjs','/group-colours.mjs':'group-colours.mjs','/status-history.mjs':'status-history.mjs','/style.css':'style.css'};
+  const files={'/entry-editor.mjs':'entry-editor.mjs','/entry-form.mjs':'entry-form.mjs','/':'index.html','/index.html':'index.html','/app.js':'app.js','/column-layout.mjs':'column-layout.mjs','/view-model.mjs':'view-model.mjs','/group-colours.mjs':'group-colours.mjs','/status-history.mjs':'status-history.mjs','/style.css':'style.css'};
   if(req.method==='GET'&&/^\/flags\/[a-z]{2}\.svg$/.test(url.pathname)){
    try{return reply(200,await readFile(path.join(root,'../node_modules/flag-icons/flags/4x3',path.basename(url.pathname))),'image/svg+xml');}catch{return reply(404,{error:'Unknown flag'});}
   }

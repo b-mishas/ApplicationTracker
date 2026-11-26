@@ -1,3 +1,5 @@
+import {renderEntryForm, renderRowControl, formSnapshot, readEntryChanges, sourceRow, fitTextHeights} from './entry-form.mjs';
+import {validateEntryChanges, inferredLinkType} from './entry-editor.mjs';
 import {STATUS_VALUES, INTERVIEW_OUTCOMES, MILESTONE_DATES, interviewDetails, effectiveStatus, interviewHistoryText, validStageDate, isRejectedAfterInterview, hasSentApplication, hasReceivedOffer} from './status-history.mjs';
 import {filterAndSort,choicesFor,columnValue,EMPTY,REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL,INTERVIEW_TOTAL,OFFER_TOTAL} from './view-model.mjs';
 import {groupColour,ensureGroupColours} from './group-colours.mjs';
@@ -8,21 +10,24 @@ const statuses=STATUS_VALUES;
 const statusFilters=statuses.flatMap(status=>status==='Rejected'?[status,REJECTED_AFTER_INTERVIEW]:[status]);
 const fields=[['fit','Fit'],['company','Company'],['group','Group'],['title','Position'],['star','Actions'],['country','Country'],['city','City'],['workMode','Work mode'],['status','Status'],['applicationDate','Applied on'],['lastInterview','Last interview'],['seniority','Seniority'],['firstSeen','First found'],['postedDate','Posted'],['assessmentBasis','Assessment']];
 let settings={exportLanguage:'en'},settingsRevision,startupState,portState;
-let settingsMessageTimer;
-function showSettingsSaved(message){
- clearTimeout(settingsMessageTimer);
- const target=$('settings-notice');target.textContent=message;target.hidden=false;
- // Do not erase an error or another message that arrives during the delay.
- const dismiss=()=>{
-  clearTimeout(settingsMessageTimer);
-  if(target.textContent===message){target.textContent='';target.hidden=true;}
-  target.onclick=null;target.style.cursor='';target.removeAttribute('title');
- };
- target.onclick=dismiss;target.style.cursor='pointer';target.title='Click to dismiss';
- settingsMessageTimer=setTimeout(dismiss,2000);
+let noticeTimer,noticeSequence=0;
+function clearMessage(){
+ clearTimeout(noticeTimer);noticeSequence++;
+ const target=$('page-notice');target.hidden=true;target.textContent='';target.onclick=null;
+}
+function showMessage(message,type='error'){
+ clearMessage();if(!message)return;
+ const target=$('page-notice'),sequence=noticeSequence;
+ target.dataset.type=type;target.setAttribute('role',type==='success'?'status':'alert');
+ target.textContent=message;target.hidden=false;target.title='Click to dismiss';
+ const dismiss=()=>{if(sequence===noticeSequence)clearMessage();};
+ target.onclick=dismiss;
+ // Warnings and errors remain readable until dismissed; old timers cannot clear newer notices.
+ if(type==='success')noticeTimer=setTimeout(dismiss,2000);
 }
 let supportedCountries=new Set();
 let data,revision,sort='star',direction=-1,open=null,filterKey=null,pendingSave=false,lastUndo;
+let editingId=null,editorBaseline='';
 // Fixed class names keep application-stage styling independent of sorting.
 const stageClasses=new Map([['Applied','stage-applied'],['Interview','stage-interview'],['Offer','stage-offer'],['Rejected','stage-rejected']]);
 const rowStage=status=>stageClasses.get(status)||'';
@@ -86,25 +91,26 @@ function applicationText(job){
 }
 const hiddenUnless=visible=>visible?'':' hidden';
 const canApply=job=>['New','Shortlisted'].includes(effectiveStatus(job));
-function stageControls(job){
+function stageControls(job,editing=false){
+ const attribute=key=>editing?' data-entry-field="'+key+'"':'';
  const saved=interviewDetails(job),visible=stageFields(job,saved);
  return '<div class="stage-row">'
-  +'<label>Status <select class="edit-status" title="Status saves automatically">'+statuses.map(status=>'<option'+(status===effectiveStatus(job)?' selected':'')+'>'+status+'</option>').join('')+'</select></label>'
+  +'<label>Status <select class="edit-status" title="'+(editing?'Changes save with Save':'Status saves automatically')+'"'+attribute('status')+'>'+statuses.map(status=>'<option'+(status===effectiveStatus(job)?' selected':'')+'>'+status+'</option>').join('')+'</select></label>'
   +'<button type="button" class="apply-status" title="Mark this position as Applied"'+hiddenUnless(canApply(job))+'>Applied</button>'
-  +dateInput('Application date','applicationDate',job.applicationDate||'',visible.application)+'</div>'
-  +'<label data-application-status'+hiddenUnless(visible.application)+'>Application status text <input type="text" class="edit-application-status" value="'+esc(applicationText(job))+'" placeholder="Optional status text for export"></label>'
+  +dateInput('Application date','applicationDate',job.applicationDate||'',visible.application,editing)+'</div>'
+  +'<label data-application-status'+hiddenUnless(visible.application)+'>Application status text <input type="text" class="edit-application-status"'+attribute('applicationStatusText')+' value="'+esc(applicationText(job))+'" placeholder="Optional status text for export"></label>'
   +'<div class="applied-shortcuts"'+hiddenUnless(effectiveStatus(job)==='Applied')+'><button type="button" data-next-status="Rejected">Rejected</button><button type="button" data-next-status="Interview">Interview</button></div>'
   +'<div class="stage-row" data-interview-row'+hiddenUnless(visible.interview)+'>'
-  +milestoneInput('Interview date','interviewDate',saved.interviewDate)
+  +milestoneInput('Interview date','interviewDate',saved.interviewDate,true,editing)
   +'<div class="interview-outcomes" role="group" aria-label="Interview outcome"><span>Interview outcome</span><div>'+INTERVIEW_OUTCOMES.map(outcome=>'<button type="button" data-next-status="'+outcome+'" aria-pressed="'+(effectiveStatus(job)===outcome)+'">'+(outcome==='Offer'?'<span class="offer-dollar" aria-hidden="true">$</span>':'')+outcome+'</button>').join('')+'</div></div></div>'
-  +milestoneInput('Offer date','offerDate',saved.offerDate,visible.offerDate)
-  +milestoneInput(effectiveStatus(job)==='Withdrawn'?'Withdrawal date':'Rejection date','interviewOutcomeDate',saved.interviewOutcomeDate,visible.interviewOutcomeDate);
+  +milestoneInput('Offer date','offerDate',saved.offerDate,visible.offerDate,editing)
+  +milestoneInput(effectiveStatus(job)==='Withdrawn'?'Withdrawal date':'Rejection date','interviewOutcomeDate',saved.interviewOutcomeDate,visible.interviewOutcomeDate,editing);
 }
-function dateInput(label,key,value,visible=true){
+function dateInput(label,key,value,visible=true,editing=false){
  const application=key==='applicationDate',id='step-'+key;
- return '<div class="date-field'+(key==='offerDate'?' date-field-half':'')+'"'+(application?' data-application-date':'')+hiddenUnless(visible)+'><label for="'+id+'">'+label+'</label><span class="date-control"><input id="'+id+'" type="date" '+(application?'class="edit-application-date"':'data-milestone="'+key+'"')+' value="'+esc(value)+'"><button type="button" class="clear-date" aria-label="Clear '+label.toLowerCase()+'" title="Clear '+label.toLowerCase()+'"'+(value?'':' disabled')+'><span aria-hidden="true">×</span></button></span></div>';
+ return '<div class="date-field'+(key==='offerDate'?' date-field-half':'')+'"'+(application?' data-application-date':'')+hiddenUnless(visible)+'><label for="'+id+'">'+label+'</label><span class="date-control"><input id="'+id+'" type="date" '+(application?'class="edit-application-date"':'data-milestone="'+key+'"')+(editing?' data-entry-field="'+key+'"':'')+' value="'+esc(value)+'"><button type="button" class="clear-date" aria-label="Clear '+label.toLowerCase()+'" title="Clear '+label.toLowerCase()+'"'+(value?'':' disabled')+'><span aria-hidden="true">×</span></button></span></div>';
 }
-function milestoneInput(label,key,value,visible=true){return dateInput(label,key,value,visible);}
+function milestoneInput(label,key,value,visible=true,editing=false){return dateInput(label,key,value,visible,editing);}
 function milestoneDraft(section,job,{includeHidden=false}={}){
  const saved=interviewDetails(job);
  return Object.fromEntries([...section.querySelectorAll('[data-milestone]')]
@@ -136,17 +142,142 @@ function syncStageControls(section,job,draft){
 function detailUndoControls(){
  return '<div class="undo-control">'+$('undo-result').outerHTML.replace(' id="undo-result"','')+$('undo-edit').outerHTML.replace(' id="undo-edit"','')+'</div>';
 }
-function detail(j){return `<tr class="detail ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}"><td colspan="${visible.size}"><div class="detail-toolbar">${detailUndoControls()}</div><div class="detail-grid"><section><h3>Why it fits</h3><p>${esc(j.reasoning||'No assessment yet.')}</p><h3>Gaps</h3><p>${esc(j.gaps||'No caveats recorded.')}</p></section><section><h3>Evidence & location</h3><p>Assessment: <b>${esc(j.assessmentBasis)}</b>\nSeniority: ${esc(j.seniority||'Unknown')}\nLocation as recorded: ${esc(j.locationRaw)}\nFirst found: ${esc(j.firstSeen)}\nPosted: ${esc(j.postedDate||'Unknown')}\nAvailability: ${esc(j.availability||'Unverified')}</p><h3>Sources</h3>${j.sources.map(s=>`<p>${esc(s.label)}${safeUrl(s.url)?` · <a target="_blank" rel="noopener noreferrer" href="${safeUrl(s.url)}">${j.linkType==='search'?'Open search':'Open listing'} ↗</a>`:''}<br><span class="muted">${esc(s.file)}</span></p>`).join('')}</section><section class="application-steps"><h3>Application steps</h3>${stageControls(j)}<label>Notes<textarea class="edit-notes" placeholder="Questions, follow-ups, application notes…">${esc(j.notes)}</textarea></label><button class="save" data-id="${esc(j.id)}" disabled>Save changes</button> <button type="button" class="cancel" disabled title="Discard unsaved edits; saved status changes are kept">Cancel</button><span class="save-state" role="status"></span></section></div></td></tr>`;}
+// Keep the same application controls in full-edit mode, but stage their values.
+// Keep the original cell content in flow to preserve its exact wrapping and
+// height; the edit control overlays it without resizing the table row.
+function editableCell(job,key){
+ const control=renderRowControl(job,key);
+ return control===null?cell(job,key):'<span class="entry-row-original" aria-hidden="true">'+cell(job,key)+'</span>'+control;
+}
+function stageEntryStatus(select){
+ const job=data.jobs.find(item=>item.id===editingId),section=select.closest('section');
+ const draft=Object.fromEntries([...section.querySelectorAll('[data-milestone]')].map(field=>[field.dataset.milestone,field.value]));
+ syncStageControls(section,{...job,...draft,applicationDate:section.querySelector('.edit-application-date').value,status:select.value,interviewOutcome:undefined},draft);
+ hideRowDuplicateFields();
+ syncRowFields();
+ refreshEditorButtons();
+}
+// Additional fields need not repeat editable row columns. The main panel,
+// including all Application steps controls, retains its existing controls.
+function hideRowDuplicateFields(){
+ const form=document.querySelector('.entry-form');if(!form)return;
+ for(const control of document.querySelectorAll('[data-entry-row-field]')){
+  const field=form.querySelector('[data-entry-field="'+control.dataset.entryRowField+'"]');
+  const container=field?.closest('.date-field,.entry-field,label');
+  if(container?.closest('.entry-additional'))container.hidden=true;
+ }
+}
+function syncRowFields(){
+ const form=document.querySelector('.entry-form');if(!form)return;
+ for(const control of document.querySelectorAll('[data-entry-row-field]')){
+  const field=form.querySelector('[data-entry-field="'+control.dataset.entryRowField+'"]');
+  if(field)control.value=field.value;
+ }
+}
+function copyRowField(control){
+ const field=document.querySelector('.entry-form [data-entry-field="'+control.dataset.entryRowField+'"]');
+ if(field)field.value=control.value;
+ return field;
+}
+function detail(j){
+ if(editingId===j.id)return `<tr class="detail ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}"><td colspan="${visible.size}"><div class="detail-toolbar"><button type="button" class="entry-save save">Save</button><button type="button" class="entry-cancel">Cancel</button><span class="entry-save-state" role="status" aria-live="polite"></span></div>${renderEntryForm(j,stageControls(j,true),'<label>Notes<textarea class="edit-notes" data-entry-field="notes" placeholder="Questions, follow-ups, application notes…">'+esc(j.notes)+'</textarea></label>')}</td></tr>`;
+ return `<tr class="detail ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}"><td colspan="${visible.size}"><div class="detail-toolbar">${detailUndoControls()}<button type="button" class="entry-edit">Edit</button></div><div class="detail-grid"><section><h3>Why it fits</h3><p>${esc(j.reasoning||'No assessment yet.')}</p><h3>Gaps</h3><p>${esc(j.gaps||'No caveats recorded.')}</p></section><section><h3>Evidence & location</h3><p>Assessment: <b>${esc(j.assessmentBasis)}</b>\nSeniority: ${esc(j.seniority||'Unknown')}\nLocation: ${esc(j.locationRaw)}\nFirst found: ${esc(j.firstSeen)}\nPosted: ${esc(j.postedDate||'Unknown')}\nAvailability: ${esc(j.availability||'Unverified')}</p><h3>Sources</h3>${j.sources.map(s=>`<p>${esc(s.label)}${safeUrl(s.url)?` · <a target="_blank" rel="noopener noreferrer" href="${safeUrl(s.url)}">${j.linkType==='search'?'Open search':'Open listing'} ↗</a>`:''}</p>`).join('')}</section><section class="application-steps"><h3>Application steps</h3>${stageControls(j)}<label>Notes<textarea class="edit-notes" placeholder="Questions, follow-ups, application notes…">${esc(j.notes)}</textarea></label><button class="save" data-id="${esc(j.id)}" disabled>Save changes</button> <button type="button" class="cancel" disabled title="Discard unsaved edits; saved status changes are kept">Cancel</button><span class="save-state" role="status"></span></section></div></td></tr>`;}
 function dirty(){
+ const form=document.querySelector('.entry-form');
+ if(form)return formSnapshot(form)!==editorBaseline;
  const area=document.querySelector('.edit-notes');if(!area)return false;
  const job=data.jobs.find(item=>item.id===open),section=area.closest('section');
  if(area.value!==job.notes||section.querySelector('.edit-status').value!==effectiveStatus(job)||Object.keys(milestoneDraft(section,job)).length)return true;
  return stageFields(job).application&&(section.querySelector('.edit-application-date').value!==(job.applicationDate||'')||section.querySelector('.edit-application-status').value!==applicationText(job));
 }
 function refreshEditorButtons(){
+ const edit=document.querySelector('.entry-edit');if(edit)edit.disabled=pendingSave;
+ const form=document.querySelector('.entry-form');
+ if(form){
+  document.querySelector('.entry-save').disabled=pendingSave||!dirty();
+  document.querySelector('.entry-cancel').disabled=pendingSave;
+  for(const button of form.querySelectorAll('.clear-date')){const input=button.previousElementSibling;button.disabled=pendingSave||(!input.value&&!input.validity.badInput);}
+  return;
+ }
  const section=document.querySelector('.detail .save')?.closest('section');if(!section)return;
  const disabled=pendingSave||!dirty();section.querySelector('.save').disabled=disabled;section.querySelector('.cancel').disabled=disabled;
  for(const button of section.querySelectorAll('.clear-date')){const input=button.previousElementSibling;button.disabled=pendingSave||(!input.value&&!input.validity.badInput);}
+}
+function updatePrimarySource(selected){
+ const form=document.querySelector('.entry-form');if(!form)return;
+ const choices=[...form.querySelectorAll('[data-source-primary]')];
+ const primary=selected??choices.find(choice=>choice.checked)??choices.find(choice=>choice.closest('[data-source-index]').querySelector('[data-source-field="url"]').value);
+ for(const choice of choices)choice.checked=choice===primary;
+ const urlControl=form.querySelector('[data-entry-field="url"]');
+ const next=primary?.closest('[data-source-index]').querySelector('[data-source-field="url"]').value??'';
+ if(next!==urlControl.value){
+  const job=data.jobs.find(job=>job.id===editingId),type=form.querySelector('[data-entry-field="linkType"]');
+  // Never guess that an arbitrary search page is a posting identity.
+  const inferred=inferredLinkType(next);
+  if(next===job.url)type.value=job.linkType;
+  else if(next){
+   if(![...type.options].some(option=>option.value===''))type.add(new Option('Choose link type',''));
+   type.value=inferred??'';
+  }
+  urlControl.value=next;
+ }
+
+}
+function cancelEntry(){
+ if(pendingSave)return;
+ editingId=null;render();document.querySelector('.entry-edit')?.focus({preventScroll:true});
+}
+let assessmentResizeFrame=null;
+function scheduleAssessmentResize(){
+ if(assessmentResizeFrame!==null)return;
+ assessmentResizeFrame=requestAnimationFrame(()=>{assessmentResizeFrame=null;resizeAssessmentFields();});
+}
+function resizeAssessmentFields(){
+ const form=document.querySelector('.entry-form');if(!form)return;
+ const section=form.querySelector('.detail-grid>section');
+ const fields=[...section.querySelectorAll('textarea')];if(!fields.length)return;
+ const px=value=>parseFloat(value)||0;
+ const styles=fields.map(field=>getComputedStyle(field));
+ const minimum=styles.map(style=>px(style.lineHeight)+px(style.paddingTop)+px(style.paddingBottom)+px(style.borderTopWidth)+px(style.borderBottomWidth));
+ fields.forEach(field=>field.style.height='0px');
+ const desired=fields.map((field,index)=>Math.max(minimum[index],field.scrollHeight+px(styles[index].borderTopWidth)+px(styles[index].borderBottomWidth)));
+ let overhead=0;
+ for(const child of section.children){
+  const style=getComputedStyle(child);
+  overhead+=px(style.marginTop)+px(style.marginBottom);
+  if(child.matches('h3'))overhead+=child.getBoundingClientRect().height;
+ }
+ for(const style of styles)overhead+=px(style.marginTop)+px(style.marginBottom);
+ const cell=form.closest('td'),cellStyle=getComputedStyle(cell),row=cell.closest('tr').previousElementSibling;
+ const advanced=form.querySelector('.entry-advanced');
+ const budget=document.querySelector('.table-wrap').clientHeight-$('head').getBoundingClientRect().height-row.getBoundingClientRect().height-px(cellStyle.paddingTop)-px(cellStyle.paddingBottom)-overhead-advanced.querySelector('summary').getBoundingClientRect().height-px(getComputedStyle(advanced).marginTop);
+ const heights=fitTextHeights(desired,minimum,budget);
+ fields.forEach((field,index)=>{field.style.height=heights[index]+'px';field.style.overflowY=desired[index]>heights[index]+1?'auto':'hidden';});
+}
+async function saveEntry(){
+ if(pendingSave)return;
+ const form=document.querySelector('.entry-form'),job=data.jobs.find(job=>job.id===editingId);
+ if(!form||!job)return;
+ const message=document.querySelector('.entry-save-state');
+ let changes;
+ try{
+  for(const control of document.querySelectorAll('[data-entry-row-field]'))if(!control.reportValidity())return;
+  updatePrimarySource();
+  if(!form.reportValidity())return;
+  changes=readEntryChanges(form,job);
+  validateEntryChanges(job,changes,{isCountryCode:code=>supportedCountries.has(code==='UK'?'GB':code)&&!['UN','XX'].includes(code)});
+ }catch(error){message.textContent=error.message;return;}
+ if(!Object.keys(changes).length){editingId=null;render();return;}
+ const row=[...document.querySelectorAll('tr.job')].find(row=>row.dataset.id===editingId);
+ setPendingSave(true);refreshEditorButtons();form.inert=true;if(row)row.inert=true;message.textContent='Saving…';
+ try{
+  await saveJobEdit({id:job.id,changes});
+  editingId=null;render();
+  // Filters can remove a corrected row; keep confirmation visible either way.
+  const indicator=document.querySelector('.save-state');
+  if(indicator)indicator.textContent='Saved to file ✓';else showMessage('Saved to file ✓','success');
+ }catch(error){message.textContent=error.message;}
+ finally{form.inert=false;if(row)row.inert=false;setPendingSave(false);refreshEditorButtons();}
 }
 function hasUrgentFilter(){return filters.star?.length===1&&filters.star[0]==='Urgent';}
 function selectedPreset(){
@@ -180,10 +311,10 @@ function refreshOverview(){
 }
 function refreshUndoButton(){
  // The menu Undo is global; the expanded copy belongs only to its edited row.
- const toolbar=document.querySelector('.detail-toolbar');
+ const toolbar=document.querySelector('.detail-toolbar .undo-control');
  if(toolbar)toolbar.hidden=lastUndo?.id!==open&&(!$('undo-result').textContent||undoResultJobId!==open);
  for(const button of document.querySelectorAll('[data-undo-edit]')){
-  button.disabled=pendingSave||!lastUndo;
+  button.disabled=pendingSave||Boolean(editingId)||!lastUndo||(Boolean(button.closest('.detail'))&&lastUndo.id!==open);
   button.hidden=!lastUndo&&!$('undo-result').textContent;
   button.onclick=undoEdit;
  }
@@ -270,6 +401,7 @@ function resizeColumns(){
   const width=Math.round(handle.closest('th').getBoundingClientRect().width);
   handle.setAttribute('aria-valuenow',width);handle.setAttribute('aria-valuetext',width+' pixels');
  }
+ resizeAssessmentFields();
 }
 new ResizeObserver(resizeColumns).observe(document.querySelector('.table-wrap'));
 function render(){
@@ -293,11 +425,13 @@ function render(){
  return `<th data-column="${key}" aria-sort="${sort===key?(direction===1?'ascending':'descending'):'none'}"><div class="column-heading"><button class="column-label ${active?'filtered':''}" data-filter="${key}" title="Drag to move; Alt+Left/Right moves with the keyboard" aria-label="Filter ${label}" aria-haspopup="dialog" aria-controls="column-filter" aria-expanded="${filterKey===key}">${label}</button>${clearButton}<button class="sort-arrow" data-sort="${key}" aria-label="Sort by ${label}" title="Sort by ${label}">${sort===key?(direction===1?'↑':'↓'):'↕'}</button></div><button type="button" class="column-resize-handle" data-resize-column="${key}" role="separator" aria-orientation="vertical" aria-label="Resize ${label} column" aria-valuemin="${minimumColumnWidth(key)}" aria-valuemax="${MAX_COLUMN_WIDTH}" title="Drag to resize; double-click or Home restores automatic width. Left/Right adjusts width."></button></th>`;
  }).join('');
  const rows=filtered();
- if(open&&!rows.some(job=>job.id===open))open=null;
+ if(open&&!rows.some(job=>job.id===open)){open=null;editingId=null;}
  $('count').textContent=`${rows.length} of ${data.jobs.length} positions`;
- $('body').innerHTML=rows.length?rows.map((j,index)=>`<tr class="job ${index%2?'stripe':'plain'} ${open===j.id?'expanded':'collapsed'} ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}" data-id="${esc(j.id)}" tabindex="0" aria-expanded="${open===j.id}">${cols.map(([key])=>`<td data-column="${key}" class="${key}">${cell(j,key)}</td>`).join('')}</tr>${open===j.id?detail(j):''}`).join(''):`<tr><td colspan="${cols.length}" class="empty">${data.jobs.length?'No positions match these filters. Try Reset.':'No positions yet. Set up the search agent to add discoveries.'}</td></tr>`;
+ $('body').innerHTML=rows.length?rows.map((j,index)=>`<tr class="job ${index%2?'stripe':'plain'} ${open===j.id?'expanded':'collapsed'} ${editingId===j.id?'entry-editing':''} ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}" data-id="${esc(j.id)}" tabindex="0" aria-expanded="${open===j.id}">${cols.map(([key])=>`<td data-column="${key}" class="${key}">${editingId===j.id?editableCell(j,key):cell(j,key)}</td>`).join('')}</tr>${open===j.id?detail(j):''}`).join(''):`<tr><td colspan="${cols.length}" class="empty">${data.jobs.length?'No positions match these filters. Try Reset.':'No positions yet. Set up the search agent to add discoveries.'}</td></tr>`;
  resizeColumns();
  if(filterKey)positionFilter();
+ hideRowDuplicateFields();
+ const form=document.querySelector('.entry-form');if(form)editorBaseline=formSnapshot(form);
  refreshOverview();refreshEditorButtons();refreshUndoButton();
 }
 function mayRender(){if(dirty()&&!confirm('Discard unsaved changes to this position?'))return false;render();return true;}
@@ -441,15 +575,30 @@ $('body').onclick=async e=>{
  const action=e.target.closest('.quick-urgent,.shortlist-star,.quick-dismiss');
  if(action){
   if(action.disabled||pendingSave)return;
-  if(dirty()){$('message').textContent='Save your edits before using quick actions.';return;}
+  if(editingId){showMessage('Save or cancel your edits before using quick actions.','warning');return;}
+  if(dirty()){showMessage('Save your edits before using quick actions.','warning');return;}
   const job=data.jobs.find(j=>j.id===action.dataset.id);
   const payload=action.matches('.quick-urgent')?{quickAction:'urgent',urgent:!job.urgent}:action.matches('.quick-dismiss')?{quickAction:job.status==='Dismissed'?'restore':'dismiss'}:{status:job.status==='Shortlisted'?'New':'Shortlisted'};
-  setPendingSave(true);action.disabled=true;$('message').textContent='';
+  setPendingSave(true);action.disabled=true;clearMessage();
   try{
    await saveJobEdit({id:job.id,...payload});
    render();
-  }catch(error){$('message').textContent=error.message;action.disabled=false;}finally{setPendingSave(false);refreshEditorButtons();}
+  }catch(error){showMessage(error.message);action.disabled=false;}finally{setPendingSave(false);refreshEditorButtons();}
   return;
+ }
+ if(e.target.closest('.entry-edit')){
+  if(pendingSave)return;
+  if(dirty()){showMessage('Save or cancel your application edits before editing the entire entry.','warning');return;}
+  editingId=open;render();
+  document.querySelector('[data-entry-field]:not([type=hidden])')?.focus({preventScroll:true});return;
+ }
+ if(e.target.closest('.entry-cancel')){cancelEntry();return;}
+ if(e.target.closest('.entry-save')){await saveEntry();return;}
+ if(e.target.closest('[data-add-source]')){
+  if(!pendingSave){document.querySelector('[data-entry-sources]').insertAdjacentHTML('beforeend',sourceRow());updatePrimarySource();refreshEditorButtons();document.querySelector('[data-entry-sources]').lastElementChild.querySelector('input').focus();}return;
+ }
+ if(e.target.closest('[data-remove-source]')){
+  if(!pendingSave){e.target.closest('[data-source-index]').remove();updatePrimarySource();refreshEditorButtons();}return;
  }
  const clearDate=e.target.closest('.clear-date');
  if(clearDate){
@@ -465,11 +614,12 @@ $('body').onclick=async e=>{
   if(apply.disabled||pendingSave)return;
   const select=apply.closest('section').querySelector('.edit-status');
   select.value=apply.dataset.nextStatus||'Applied';
-  await saveStatus(select);
+  if(editingId)stageEntryStatus(select);else await saveStatus(select);
   return;
  }
  // Rebuild the editor from saved data, discarding edits without writing to disk.
  if(e.target.closest('.cancel')){if(!pendingSave)render();return;}
+ if(row&&editingId===row.dataset.id&&e.target.closest('.entry-row-field'))return;
  if(row){if(!canChangeView())return;open=open===row.dataset.id?null:row.dataset.id;render();return;}
  const save=e.target.closest('.save');if(!save||save.disabled||pendingSave)return;
  const section=save.closest('section'),message=section.querySelector('.save-state'),status=section.querySelector('select').value,notes=section.querySelector('textarea').value,applicationDate=section.querySelector('.edit-application-date').value,applicationStatusText=section.querySelector('.edit-application-status').value;
@@ -510,9 +660,9 @@ $('reset').onclick=()=>{
  syncViewLayout();applyLayout(defaultColumnLayout(preset));render();
 };
 $('columns').onchange=e=>{if(!canChangeView()){e.target.checked=!e.target.checked;return;}e.target.checked?visible.add(e.target.value):visible.delete(e.target.value);render();};
-$('export').onclick=async e=>{e.preventDefault();if(pendingSave){$('message').textContent='Wait for the current save to finish.';return;}try{const r=await fetch('/api/jobs');if(!r.ok)throw Error('Export failed');const {data:latest}=await r.json();const url=URL.createObjectURL(new Blob([JSON.stringify(latest,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`jobs-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(err){$('message').textContent=err.message;}};
+$('export').onclick=async e=>{e.preventDefault();if(pendingSave){showMessage('Wait for the current save to finish.','warning');return;}try{const r=await fetch('/api/jobs');if(!r.ok)throw Error('Export failed');const {data:latest}=await r.json();const url=URL.createObjectURL(new Blob([JSON.stringify(latest,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`jobs-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(err){showMessage(err.message);}};
 window.addEventListener('beforeunload',e=>{if(pendingSave||dirty()){e.preventDefault();e.returnValue='';}});
-async function init(){try{const r=await fetch('/api/jobs');if(!r.ok)throw Error('Could not load positions');({data,revision}=await r.json());const config=await fetch('/api/settings');if(!config.ok)throw Error('Could not load settings');const cfg=await config.json();settings=cfg.settings;settingsRevision=cfg.revision;const flags=await fetch('/api/countries');if(!flags.ok)throw Error('Could not load country codes');supportedCountries=new Set(await flags.json());await restoreViewState();$('columns').innerHTML=columnOrder.map(key=>fields.find(field=>field[0]===key)).map(([key,label])=>`<label><input type="checkbox" value="${key}" ${visible.has(key)?'checked':''}> ${label}</label>`).join('');$('imported').textContent=`${data.jobs.length} unique positions`;render();}catch(e){$('message').textContent=e.message+' — open the Start file for your system.';}}
+async function init(){try{const r=await fetch('/api/jobs');if(!r.ok)throw Error('Could not load positions');({data,revision}=await r.json());const config=await fetch('/api/settings');if(!config.ok)throw Error('Could not load settings');const cfg=await config.json();settings=cfg.settings;settingsRevision=cfg.revision;const flags=await fetch('/api/countries');if(!flags.ok)throw Error('Could not load country codes');supportedCountries=new Set(await flags.json());await restoreViewState();$('columns').innerHTML=columnOrder.map(key=>fields.find(field=>field[0]===key)).map(([key,label])=>`<label><input type="checkbox" value="${key}" ${visible.has(key)?'checked':''}> ${label}</label>`).join('');$('imported').textContent=`${data.jobs.length} unique positions`;render();}catch(e){showMessage(e.message+' — open the Start file for your system.');}}
 async function loadBuildVersion(){
  try{
   const response=await fetch('/api/version');if(!response.ok)return;
@@ -523,7 +673,7 @@ async function loadBuildVersion(){
 }
 loadBuildVersion();
 init();
-function canChangeView(){if(pendingSave){$('message').textContent='Wait for the current save to finish.';return false;}return !dirty()||confirm('Discard unsaved changes?');}
+function canChangeView(){if(pendingSave){showMessage('Wait for the current save to finish.','warning');return false;}if(dirty()&&!confirm('Discard unsaved changes?'))return false;editingId=null;return true;}
 function closeFilter(){filterKey=null;$('column-filter').hidden=true;document.querySelectorAll('[data-filter]').forEach(b=>b.setAttribute('aria-expanded','false'));}
 function positionFilter(){
  const anchor=document.querySelector(`[data-filter="${filterKey}"]`);if(!anchor){closeFilter();return;}
@@ -595,9 +745,22 @@ document.addEventListener('click',event=>{
  const menu=document.querySelector('.columns');
  if(!menu.contains(event.target))menu.open=false;
 });
-document.addEventListener('keydown',event=>{if(event.key==='Escape'){const key=filterKey;closeFilter();document.querySelector('.columns').open=false;document.querySelector(`[data-filter="${key}"]`)?.focus();}});
+document.addEventListener('keydown',event=>{
+ const columns=document.querySelector('.columns');
+ const inEditor=editingId&&event.target.closest('.entry-form,.detail-toolbar,.entry-editing');
+ if(inEditor&&!event.isComposing&&!filterKey&&!columns.open){
+  if(event.key==='Escape'){event.preventDefault();cancelEntry();return;}
+  // Shift+Enter retains multiline editing; focused buttons/selects keep
+  // their native keyboard actions rather than accidentally saving a draft.
+  if(event.key==='Enter'&&!event.shiftKey&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!event.target.closest('button,select')){
+   event.preventDefault();if(!event.repeat&&!pendingSave&&dirty())saveEntry();return;
+  }
+ }
+ if(event.key==='Escape'){const key=filterKey;closeFilter();columns.open=false;document.querySelector(`[data-filter="${key}"]`)?.focus();}
+});
 window.addEventListener('resize',closeFilter);
 document.querySelector('.table-wrap').addEventListener('scroll',closeFilter);
+$('body').addEventListener('submit',event=>{if(event.target.matches('.entry-form')){event.preventDefault();saveEntry();}});
 // Save only the stage (and an automatic first application date). Keep the
 // editor in place so unsaved notes/date/text and edits made while saving survive.
 async function saveStatus(select){
@@ -614,7 +777,7 @@ async function saveStatus(select){
  const controls=[...section.querySelectorAll('button,select'),...document.querySelectorAll('.sidebar button,.toolbar input:not([type=date]),.toolbar button,.toolbar select,#head button,#settings-open')];
  const focused=document.activeElement;
  const disabled=controls.map(control=>({control,wasDisabled:control.disabled}));
- setPendingSave(true);disabled.forEach(({control})=>control.disabled=true);indicator.textContent='Saving status…';$('message').textContent='';
+ setPendingSave(true);disabled.forEach(({control})=>control.disabled=true);indicator.textContent='Saving status…';clearMessage();
  try{
   const saved=await saveJobEdit(payload);
   syncStageControls(section,saved,milestoneDraft(section,job,{includeHidden:true}));
@@ -627,11 +790,14 @@ async function saveStatus(select){
   // Keep the open editor visible even if its new stage is outside the current
   // filter. Filters apply again on collapse/navigation, after drafts are handled.
   indicator.textContent=dirty()?'Status saved ✓; other edits are unsaved.':'Status saved ✓';
-  $('message').textContent='';
+  clearMessage();
  }catch(error){select.value=previous;indicator.textContent='Status not saved: '+error.message;}
  finally{setPendingSave(false);disabled.forEach(({control,wasDisabled})=>control.disabled=wasDisabled);refreshEditorButtons();if(focused===select&&document.activeElement===document.body)select.focus();}
 }
 $('body').addEventListener('change',event=>{
+ if(event.target.matches('[data-source-primary]')){updatePrimarySource(event.target);refreshEditorButtons();return;}
+ if(event.target.matches('[data-entry-row-field]')){const field=copyRowField(event.target);if(field?.matches('.edit-status'))stageEntryStatus(field);else refreshEditorButtons();return;}
+ if(event.target.closest('.entry-form')){if(event.target.matches('.edit-status'))stageEntryStatus(event.target);else{syncRowFields();refreshEditorButtons();}return;}
  if(event.target.matches('.edit-status'))saveStatus(event.target);
  else if(event.target.closest('.detail')){
   if(event.target.matches('input[type=date]')&&!event.target.validity.badInput&&validStageDate(event.target.value)){
@@ -641,9 +807,14 @@ $('body').addEventListener('change',event=>{
   refreshEditorButtons();
  }
 });
-$('body').addEventListener('input',event=>{if(event.target.closest('.detail'))refreshEditorButtons();});
+$('body').addEventListener('input',event=>{
+ if(event.target.matches('[data-source-field="url"]'))updatePrimarySource();
+ if(event.target.matches('.entry-form [data-entry-field=reasoning],.entry-form [data-entry-field=gaps]'))scheduleAssessmentResize();
+ if(event.target.matches('[data-entry-row-field]')){copyRowField(event.target);refreshEditorButtons();}
+ else if(event.target.closest('.detail')){if(event.target.closest('.entry-form'))syncRowFields();refreshEditorButtons();}
+});
 async function undoEdit(){
- if(!lastUndo||pendingSave)return;
+ if(!lastUndo||pendingSave||editingId)return;
  if(dirty()){showUndoResult('Save or cancel','Save or cancel your unsaved edits before undoing the last save.');return;}
  const undoneId=lastUndo.id;
  setPendingSave(true);
@@ -657,9 +828,9 @@ async function undoEdit(){
  finally{$('body').inert=false;setPendingSave(false);refreshEditorButtons();}
 }
 function canExportApplications(){
- if(pendingSave){$('message').textContent='Wait for the current save to finish.';return false;}
- if(dirty()){$('message').textContent='Save your changes before exporting applications.';return false;}
- $('message').textContent='';return true;
+ if(pendingSave){showMessage('Wait for the current save to finish.','warning');return false;}
+ if(dirty()){showMessage('Save your changes before exporting applications.','warning');return false;}
+ clearMessage();return true;
 }
 $('export-applications-pdf').onclick=event=>{if(!canExportApplications())event.preventDefault();};
 $('export-applications').onclick=async event=>{
@@ -668,7 +839,7 @@ $('export-applications').onclick=async event=>{
  button.dataset.busy='1';button.textContent='Exporting…';
  try{const response=await fetch('/api/export/applications.xlsx');if(!response.ok){const error=await response.json();throw Error(error.error);}
  const href=URL.createObjectURL(await response.blob()),a=document.createElement('a');a.href=href;a.download=`applications_${localToday()}.xlsx`;a.click();setTimeout(()=>URL.revokeObjectURL(href),1000);
- }catch(error){$('message').textContent=error.message;}finally{delete button.dataset.busy;button.textContent='Excel';}
+ }catch(error){showMessage(error.message);}finally{delete button.dataset.busy;button.textContent='Excel';}
 };
 
 // Suggested application and status dates use the computer's local calendar day.
@@ -686,7 +857,9 @@ $('status-presets').onclick=selectStatusPreset;
 
 
 $('settings-open').onclick=async()=>{
+ const fullEditing=Boolean(editingId);
  if(!canChangeView())return;
+ if(fullEditing)render();
  $('settings-name').value=settings.exportName??'';
  $('settings-language').value=settings.exportLanguage;
  $('settings-result').textContent='';startupState=undefined;portState=undefined;
@@ -726,7 +899,7 @@ $('settings-form').onsubmit=async event=>{
    const result=await response.json();if(!response.ok)throw Error('Export settings saved. Startup preference could not be saved: '+result.error);
    startupState=result;
   }
-  $('settings-dialog').close();showSettingsSaved(portState?.pending?'Settings saved. Port '+portState.port+' will apply after Restart. Update your bookmark afterwards.':'Settings saved.');render();
+  $('settings-dialog').close();showMessage(portState?.pending?'Settings saved. Port '+portState.port+' will apply after Restart. Update your bookmark afterwards.':'Settings saved.',portState?.pending?'warning':'success');render();
  }catch(error){$('settings-result').textContent=error.message+(portState?.pending?' Port '+portState.port+' is saved for the next Restart.':'');}finally{button.disabled=false;}
 };
 
