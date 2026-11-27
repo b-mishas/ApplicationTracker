@@ -4,6 +4,11 @@
 
 --------------------
 
+## 2026-11-27 — Protect and hide internal editor fields
+
+- Ported JobTracker e15d33ce646edda43ffc6b970131bfad02269a85: importer aliases otherIds/postingUrls are protected and hidden; redundant country metadata is hidden while countries stays editable. Work mode basis is read-only metadata. Unknown custom fields remain editable.
+- Added Sources heading spacing and reduced Applied-row font weight to 600. Field-policy regression, existing editor helper/integration suites, syntax and whitespace checks passed. Isolated in-app Chromium verified Additional fields, metadata visibility, screenshot layout and saving notes. No live inventory or distribution changes; other browsers/devices untested.
+
 ## 2026-11-27 — Porting guide refined after first reverse port
 
 - Added compare-before-patching guidance, recovery from partially applied patches, a field-contract checklist and early browser-tooling verification to WRAPPER_PORTING.md. Project rules reference the guide.

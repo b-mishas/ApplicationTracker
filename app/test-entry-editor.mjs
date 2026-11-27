@@ -94,7 +94,8 @@ try{
  assert(renderEntryForm(original).includes('data-entry-field="customField"'));assert(!renderEntryForm(original).includes('data-entry-field="id"'));
  assert(renderEntryForm(legacy).includes('value="legacy date"'));
  const editorMarkup=renderEntryForm(original);
- assert(/<input [^>]*data-entry-field="workModeBasis"/.test(editorMarkup));
+ assert(!editorMarkup.includes('data-entry-field="workModeBasis"'));
+ assert(editorMarkup.includes('<dt>Work mode basis</dt><dd>Posting reviewed</dd>'));
  assert.equal((editorMarkup.match(/data-entry-field="urgent"/g)||[]).length,1);
  assert(editorMarkup.includes('<div class="entry-urgent-line"><label'));
  assert(!editorMarkup.slice(0,editorMarkup.indexOf('<details')).includes('data-entry-field="locationRaw"'));

@@ -159,7 +159,7 @@ th .clear-column-filter:focus-visible{outline-offset:-2px}
 td.fit{white-space:nowrap;text-align:center}
 
 /* Applied/Interview use text emphasis while keeping normal row striping. */
-tr.job.stage-applied{color:#8a5d16;font-weight:650}
+tr.job.stage-applied{color:#8a5d16;font-weight:600}
 tr.job.stage-interview{color:#176342;font-weight:650}
 tr.job.stage-applied td.title a,tr.job.stage-interview td.title a{color:inherit;font-weight:inherit}
 tr.job.stage-applied .muted,tr.job.stage-interview .muted{color:inherit}
@@ -306,6 +306,7 @@ tr.job.urgent>td:first-child,tr.detail.urgent>td{box-shadow:inset var(--row-edge
 .entry-form .detail-grid>section>h3+.entry-field textarea{margin-top:0}
 .entry-form .detail-grid>section:first-child textarea{min-height:0;resize:none}
 .entry-form .entry-evidence>p{margin:0 0 8px}
+.entry-form .entry-evidence>.entry-sources-heading{margin-top:20px}
 .entry-evidence>.entry-field{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);align-items:center;gap:6px}
 .entry-form .entry-evidence>.entry-field input,.entry-form .entry-evidence>.entry-field select{width:100%;padding:5px;margin:0}
 .entry-form .entry-source{position:relative;margin-bottom:8px}

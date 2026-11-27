@@ -19,7 +19,7 @@ export const entryFields = [
  ['notes','Notes','textarea','Application',50000],
  ['provider','Provider','text','Advanced',60], ['providerJobId','Provider job ID','text','Advanced',200]
 ];
-export const readOnlyFields = new Set(['id','updatedAt','createdAt','lastSeen','observedAt','country','interviewOutcome','dismissedFromStatus','applicationSourceRow','applicationCity','lastObservedAt','assessedAt','workModeAt','availabilityAt','statusHistory']);
+export const readOnlyFields = new Set(['id','updatedAt','createdAt','lastSeen','observedAt','otherIds','postingUrls','country','interviewOutcome','dismissedFromStatus','applicationSourceRow','applicationCity','lastObservedAt','assessedAt','workModeBasis','workModeAt','availabilityAt','statusHistory']);
 const unsafeKeys = new Set(['__proto__','prototype','constructor']);
 const known = new Map(entryFields.map(field=>[field[0],field]));
 export function fieldLabel(key){
@@ -29,7 +29,7 @@ export function fieldLabel(key){
 }
 export function fieldsFor(job){
  const extra=Object.keys(job).filter(key=>!known.has(key)&&key!=='sources'&&!readOnlyFields.has(key)&&!unsafeKeys.has(key));
- return [...entryFields,...extra.map(key=>[key,fieldLabel(key),typeof job[key]==='boolean'?'boolean':typeof job[key]==='string'?(key==='workModeBasis'?'text':'textarea'):'json','Advanced'])];
+ return [...entryFields,...extra.map(key=>[key,fieldLabel(key),typeof job[key]==='boolean'?'boolean':typeof job[key]==='string'?'textarea':'json','Advanced'])];
 }
 export function displayValue(job,key){
  if(key==='status')return effectiveStatus(job);

@@ -1,19 +1,19 @@
 # Wrapper handoff
 
-Updated 2026-11-27T05:15:54Z — Codex.
+Updated 2026-11-27T06:12:00Z — Codex.
 
 ## Scope and checkout
 
-Ported verified deadlines and current Interviews from JobTracker c381bde2f7cd479e7ac6b72e464e5299da324f95 and b59ce2bb58ec0322b92c35b76594d1c69394f115. Actual checkout is main, HEAD/upstream origin/main c00e12def26753309b9a29a82bee3b859e6789f4 (local ref); remote/CI unverified. This corrects the previous handoff's stale feature-branch statement. Feature port remains uncommitted. User authorized a separate documentation commit: WRAPPER_PORTING.md plus AGENTS.md/CLAUDE.md references and scoped history. The guide now covers compare-before-patching, field contracts and early browser-tooling verification. Links and whitespace passed. No push/build requested.
+Ported editor field cleanup from JobTracker e15d33ce646edda43ffc6b970131bfad02269a85. Checkout main, starting HEAD 2ab0c7d; upstream origin/main configured, remote/CI unverified. User authorized this implementation and a scoped commit; no push or packaging. Reciprocal guide/rules are committed in 2ab0c7d.
 
-## Implementation and files
+## Completed editor cleanup
 
-app/app.js, index.html and style.css show valid deadlines in bold dark red and add conditional Interviews beneath Applied. Entry editor/form support optional calendar-date correction; Availability is hidden but retained as protected evidence. Batch schema/importer accept applicationDeadline and merge newer nonblank observations with applicationDeadlineAt; older/unknown dates preserve known values. No inventory migration. column-layout.mjs registers the independent Interviews layout (Applied on/Last interview, newest application first). Responsive sidebar caching includes visibility changes. Manual urgency, execution-local dates, general-purpose fields and portable paths remain.
+app/entry-editor.mjs protects otherIds, postingUrls and workModeBasis at shared validation level. entry-form.mjs hides aliases and redundant country metadata, retaining Work mode basis as read-only metadata and countries as editable. Unknown custom fields remain editable. Sources gains 20px heading spacing; Applied-row weight is 600. New test-editor-field-policy.mjs covers visibility, rejected protected edits, draft extraction, alias preservation and country synchronization; registered in package.json. Existing integration assertion now expects read-only evidence basis. INTERFACE_FOR_TRACKER and HISTORY document the behavior.
 
-Tests updated: importer, entry UI helper, column layout, API check; new test-interviews-preset.mjs registered in package.json. Interface/workflow, routine/template, PLAN and HISTORY updated; agent scope is in HANDOFF_AGENT.md. Preserve separate feature-port, PLAN.md, ROADMAP.md and design/ work.
+Field-policy, existing editor UI-helper and transaction integration tests passed. Changed module syntax and whitespace checks passed. Initial sandbox preview was unreachable; elevated disposable fixture server worked. In-app Chromium at 1280×720 verified expanded Additional fields, hidden aliases/country, read-only basis, screenshot layout and successful notes Save. Other browsers, touch devices and physical acceptance untested. Test/preview processes stopped; no real inventory/settings modified.
 
-## Verification and next
+## Separate unfinished work
 
-Importer 62/62, editor integration/UI helper, Interviews preset, column-layout, view-model, API persistence and template checks passed. Initial sandbox EACCES for localhost was resolved with escalated fixture-only runs. Changed runtime JavaScript syntax and diff whitespace passed. Playwright module failed to load; browser visual acceptance for these features remains pending. No real data/settings or installed prompt changes; temporary test processes exited. No active operations.
+Deadline/Interviews port remains uncommitted across UI, editor, importer/schema, layout, tests, interface/workflow and routine/template. Its source SHAs and previous passing checks remain in HISTORY; installed prompts and ZIPs unchanged. This commit stages only editor-cleanup hunks in shared files; pending deadline/Interviews changes stay in the working tree.
 
-Responsive c00e12d includes shrinking whole-pixel columns and collapsible/adjustable navigation; prior Chromium and Firefox fractional-scale checks passed. Physical laptop jitter, touch devices/font changes and recipient acceptance remain pending; earlier preference-save stress limitation unresolved. Next: browser/user review of both new features and physical responsive acceptance. ZIPs remain stale; see PLAN.md before any separately authorized packaging.
+Preserve unrelated PLAN, ROADMAP, ROADMAP_SETUP, setup-state/reset, employer-workbook, agent/orchestration and design work. No active operation started by this task remains. Next: review editor cleanup and separately finish/commit the earlier feature port when requested. Prior responsive physical acceptance and preference-save stress limitation remain unresolved; see PLAN and HISTORY. Releases remain stale.
