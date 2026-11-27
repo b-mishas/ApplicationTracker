@@ -1,27 +1,106 @@
 # State-driven setup — implementation roadmap
 
-Status: implementation in progress, 2026-11-27. Contracts, state/recovery helpers and revised setup/routine instructions are implemented; platform and recipient acceptance remain open. This is maintainer guidance, not an installed setup prompt or scheduled-run instruction. Installed helper contract: [app/SETUP_WORKFLOW.md](app/SETUP_WORKFLOW.md).
+Status: implementation in progress, 2026-11-27. Contracts, state/recovery helpers, revised setup/routine instructions and the second review fixes (section 5) are implemented and fixture-tested; live setup, platform and recipient acceptance remain open. This is maintainer guidance, not an installed setup prompt or scheduled-run instruction. Installed helper contract: [app/SETUP_WORKFLOW.md](app/SETUP_WORKFLOW.md).
 
 ## Contents
 
-1. [Objective and boundaries](#1-objective-and-boundaries)
-2. [Original baseline and problems addressed](#2-original-baseline-and-problems-addressed)
-3. [State and ownership](#3-state-and-ownership)
-4. [Execution model and dependencies](#4-execution-model-and-dependencies)
-5. [Implementation milestones](#5-implementation-milestones)
+1. [Implementation milestones](#1-implementation-milestones)
    - ✅ [M1 — Specify state and readiness contracts](#-m1--specify-state-and-readiness-contracts)
    - [M2 — Add durable state and conservative resume](#m2--add-durable-state-and-conservative-resume)
    - [M3 — Rework the interview and calibration](#m3--rework-the-interview-and-calibration)
    - [M4 — Move feasibility early and make installation repeatable](#m4--move-feasibility-early-and-make-installation-repeatable)
    - [M5 — Preserve discovery handover and verify readiness](#m5--preserve-discovery-handover-and-verify-readiness)
    - [M6 — Integrate and rehearse](#m6--integrate-and-rehearse)
+2. [Objective and boundaries](#2-objective-and-boundaries)
+3. [Original baseline and problems addressed](#3-original-baseline-and-problems-addressed)
+4. [State and ownership](#4-state-and-ownership)
+5. [Execution model and dependencies](#5-execution-model-and-dependencies)
 6. [Completion contract](#6-completion-contract)
 7. [Verification scenarios](#7-verification-scenarios)
 8. [Next action](#8-next-action)
 
-**Progress key:** ✅ marks a completed milestone, not merely code or instructions written. M1 is complete; M2–M5 have implementation work in place but still need review fixes and acceptance. M6 includes completed integration and focused checks, while live setup/resume, scheduled-platform and recipient rehearsals remain open. The unmarked design/reference sections are not unfinished implementation milestones.
+**Progress key:** a checked implementation item means the helper or instruction change is present; record whether its evidence is a fixture test, instruction review or live verification. An unchecked item still needs implementation or acceptance evidence. ✅ marks a milestone whose implementation and acceptance tasks have all passed. Keep remaining acceptance work as explicit unchecked tasks, not only prose. M1 is complete. M2–M5 have implementation in place; their acceptance depends on the attended rehearsals in M6. The unmarked design/reference sections are not unfinished implementation milestones.
 
-## 1. Objective and boundaries
+## 1. Implementation milestones
+
+Unchecked items remain open acceptance work even where helpers or instructions have been implemented. Record implementation and verification evidence separately; do not infer platform acceptance from code presence or fixture tests.
+
+### ✅ M1 — Specify state and readiness contracts
+
+- [x] Map each current setup step to required inputs, artifacts, approvals, failure handling and prerequisites.
+- [x] Finalize the minimal schema, allowed states, stale-approval handling and diagnostic boundary.
+- [x] Define required versus optional source capabilities. Gmail remains required for the current Gmail-based routine; direct LinkedIn access can be an explicitly accepted limitation with employer-page fallback. A Gmail-free mode requires a separate routine design decision.
+- [x] Define the three outcomes in section 6 and document legacy installations without state.
+
+Acceptance: walkthroughs of fresh setup, partial setup and reconfiguration reach an unambiguous next action; contradictory states cannot count as ready. Schema validation proves structure only, never user approval or factual truth.
+
+### M2 — Add durable state and conservative resume
+
+- [x] Implement state persistence and validation with existing Node facilities. Prefer a small validator/persistence helper only where it prevents concrete errors; no framework or per-tool bookkeeping.
+- [x] Detect missing, malformed and unknown-version state; reconcile actual artifacts before trusting status flags.
+- [x] Implement targeted invalidation and preserve approved unaffected topics.
+- [x] Discover an existing scheduled task before creation. If creation succeeded but recording its ID failed, reconcile by installed prompt/folder and task details; ambiguous matches require clarification, not another task. (Instructions only; platform task discovery is unrehearsed.)
+- [x] Preserve existing employer rows and configuration. Use wholesale replacement only for an explicitly reviewed replacement; it is not a resume default.
+
+Acceptance tasks (run as part of the M6 attended rehearsals):
+
+- [ ] Verify fresh-session recovery after each save boundary retains saved answers and approved content, including artifact/state mismatches and stale approvals.
+- [ ] Verify task discovery and recovery on each supported platform, including interruption after task creation; no duplicate task is created.
+
+### M3 — Rework the interview and calibration
+
+- [x] Extract CV-supported facts first; ask only missing or ambiguous questions, at most six per message and fewer when complex.
+- [x] Distinguish confirmed experience, interests, uncertainty, hard constraints and preferences. Scope every always/never rule.
+- [x] Resolve conflicts such as keeping below-level roles versus always dropping junior roles, and incomplete source rotations.
+- [x] Collect strong, borderline and unsuitable calibration examples, including the 2/3 boundary. Record the assistant rating before revealing the user's verdict when feasible; label comparisons with already-seen verdicts honestly.
+- [x] Resolve attention-threshold disagreements explicitly. Do not optimize for numerical agreement alone or force endless rule changes for individual exceptions.
+- [x] Save agreed examples and explain remaining disagreement; require a reason that generalizes before changing a profile rule.
+- [x] Add final assembled-profile approval after source and calibration decisions, plus a placeholder/contradiction review.
+
+Acceptance tasks (run as part of the M6 attended rehearsals):
+
+- [ ] Verify an attended fictional-candidate interview preserves supported facts without invented qualifications and explicitly resolves fit 2/3 disagreements, including one-point differences.
+- [ ] Verify a geography change revisits dependent decisions without asking again for the CV or unaffected approved answers.
+
+### M4 — Move feasibility early and make installation repeatable
+
+- [x] Check ROOT, runtime, self-check, workbook access and available scheduling/source tools early. Record what was actually tested and in which environment.
+- [x] Distinguish validation-only success, installation health and successful scheduled import.
+- [x] Ask for timezone and other settings before checks depending on them. Explain first-run workload without claiming a fixed setup duration or unverified cost superiority of models.
+- [x] Verify current platform capabilities through owning documentation/tools when implementing; distinguish unavailable actions from user-required manual steps.
+- [x] Fill Part A, reject unresolved placeholders, compare Part B exactly and compare installed raw text with the saved file. If installed text cannot be read back, report verification pending.
+- [x] Reuse/update the identified task; ensure it targets the actual installation. Confirm schedule and permissions without unnecessarily repeating existing approvals. (Instructions only; unrehearsed on either platform.)
+
+Acceptance tasks (run as part of the M6 attended/platform rehearsals):
+
+- [ ] Verify essential-capability failures are exposed before a long interview, and distinguish unavailable platform actions from manual steps.
+- [ ] Verify explicitly accepted LinkedIn fallback permits readiness without claiming direct LinkedIn access or complete coverage.
+- [ ] Verify installation/reinstallation on each supported platform targets the actual ROOT, preserves the approved prompt and schedule, and creates no second task for unchanged configuration.
+
+### M5 — Preserve discovery handover and verify readiness
+
+- [x] Retain the existing capture-before-selection rule for discoveries during setup. Link the run in setup state; do not copy its vacancies into that state.
+- [x] Keep decisions provisional until applicable profile approval; preserve profile-hash behavior when calibration changes it.
+- [x] Distinguish historical calibration material from current actionable vacancies, preserving evidence without inadvertently treating a past application as a new discovery.
+- [x] Align setup's run records with current routine requirements, including reading evidence needed to reuse assessments, and mark them `setupDiscovery` so the routine takes them over instead of continuing them.
+- [ ] Test the first routine's takeover of pending and assessed setup work in an attended rehearsal.
+- [x] Check finish.json/retry, capture-check --open, ledger, source evidence, inventory and importer reports together. Require honest unresolved-work reporting.
+- [x] Separate transient source failure from installation failure; do not claim complete coverage for an accepted limitation or pending backlog.
+
+Acceptance: no setup discovery is silently lost; saved assessments are reused when valid; changed-profile decisions are reviewed; an empty successful import verifies empty-batch processing only; scheduled storage evidence and isolated positive-record acceptance remain separate; an incomplete search stays explicitly incomplete.
+
+### M6 — Integrate and rehearse
+
+- [x] Update SETUP_PROMPT.md, CUSTOMIZE.md, affected profile/guides and pristine counterparts together. Keep the roadmap out of installed prompts.
+- [x] Update interface/workflow documentation for any actual new paths/helpers; adjust release inclusion/exclusion rules if needed. Do not rebuild ZIPs without an explicit packaging request.
+- [x] Preserve setup-log compatibility and verify diagnostics exclude setup-state contents.
+- [x] Run focused structural/recovery tests, template drift checks and document/link checks. Avoid testing prompt strings as a substitute for behavior.
+- [ ] Conduct isolated fictional-user setup/resume rehearsals with retained evidence; agree model choice and spend cap before paid runs. Verify scheduled behavior on both supported assistant environments before claiming both supported paths work.
+- [ ] Run an unaided nontechnical-recipient trial and record friction, repeated questions and unfinished steps.
+
+Acceptance: scenario matrix below passes or has explicit unresolved limitations; no full acceptance claim from fixture tests alone. No runtime personal data in tracked files or release inputs.
+
+## 2. Objective and boundaries
 
 Turn a generic package into a personalized, usable job-search service through an understandable interview and verifiable installation. Setup must survive a pause or a new conversation, preserve approved work, and select its next action from saved facts and prerequisites.
 
@@ -29,7 +108,7 @@ Keep the existing profile, workbook, Part A and routine contracts. Add lightweig
 
 Related guidance: [main roadmap](ROADMAP.md), [search orchestration](agent/orchestration/ORCHESTRATION_ROADMAP.md), [interface](INTERFACE_FOR_TRACKER.md), [customization rules](agent/CUSTOMIZE.md). Preserve the search roadmap's capture, recovery and evidence invariants. Record implementation evidence in HISTORY.md and relevant orchestration details in agent/orchestration/ORCHESTRATION_HISTORY.md; keep HANDOFF_AGENT.md current. Update this roadmap for design or sequencing changes, not a session diary.
 
-## 2. Original baseline and problems addressed
+## 3. Original baseline and problems addressed
 
 Before this implementation, setup persisted a diagnostic setup-log.json, personal artifacts and discoveries in a run ledger, but directed an eleven-step linear walkthrough rather than selecting unfinished work from state. The following findings motivated the changes; they are not claims that every issue remains present in the revised instructions.
 
@@ -43,7 +122,7 @@ Before this implementation, setup persisted a diagnostic setup-log.json, persona
 
 Review quality against personalization accuracy, interview effort, calibration validity, artifact consistency, technical feasibility, routine compatibility, recovery, privacy, readiness evidence and maintenance cost.
 
-## 3. State and ownership
+## 4. State and ownership
 
 ### Authoritative artifacts
 
@@ -72,7 +151,7 @@ The exact implemented fields are defined in app/SETUP_WORKFLOW.md. The design re
 
 Derive readiness from this evidence instead of independently maintaining a conflicting overall "done" flag. Keep operational state separate from safe diagnostic output. Saving an artifact precedes marking it approved; if interrupted between writes, reconcile on restart. Write state via a parsed temporary sibling file and atomic replacement. Preserve malformed or unsupported-version state for diagnosis; never silently reset it and overwrite personal artifacts.
 
-## 4. Execution model and dependencies
+## 5. Execution model and dependencies
 
 On every entry, identify ROOT and inspect existing artifacts and any state. Classify fresh setup, continuation or reconfiguration. Missing state in an existing installation is not permission to treat it as blank: reconstruct draft readiness conservatively and ask only where approval or intent is unknown.
 
@@ -90,10 +169,12 @@ Independent work may continue around a blocked optional source. A required unans
 
 | Change | Work that becomes stale |
 |---|---|
-| Strengths, gaps or fit definitions | Relevant calibration and profile approval; routine profile-hash reassessment rules still apply |
-| Roles, seniority, geography or authorization | Relevant calibration, employer/source suitability and final profile approval |
-| Source choices or employer priorities | Source configuration and coverage expectations |
-| ROOT, Gmail label, timezone, summary language or look-back | Filled Part A, installed prompt comparison and affected operational verification |
+| Strengths, gaps, mismatch signals or fit definitions | Relevant calibration and profile approval; routine profile-hash reassessment rules still apply; no checkpoint replay |
+| §9 special rules or exclusions | Calibration and employer/source suitability; no checkpoint replay |
+| Roles, seniority, geography or authorization | Relevant calibration, employer/source suitability, final profile approval and replay of all source checkpoints |
+| Source choices | Source configuration, coverage expectations and replay of all source checkpoints |
+| Employer rows only | Employer approval and replay of just the added/edited employers; Gmail and portal checkpoints retained |
+| ROOT, Gmail label, timezone, summary language or look-back | Filled Part A, installed prompt comparison and affected operational verification; Gmail label and look-back also replay all checkpoints |
 | Fixed Part B version | Filled prompt, installed comparison and affected acceptance checks |
 | Schedule only | Schedule confirmation and verification; retain profile/calibration |
 | Descriptive Name field only | Background/assembled approval and any changed Part A/task comparison; retain scope, calibration and employer/source suitability |
@@ -104,7 +185,7 @@ Save at meaningful boundaries (answer batch, approval, artifact change, capabili
 
 - **Protect active configuration:** before changing live artifacts, identify/pause all tasks targeting ROOT with authorization and wait for active executions to finish. Persist editing phase before edits; the new routine guard blocks new runs during editing or stale approval. Legacy installed tasks still require manual/platform coordination. Atomic writes of individual files do not protect the configuration as a whole.
 - **Semantic approval fingerprints:** profile topics use section-level content; employer approval excludes row numbering, Last checked and Careers page. Routine bookkeeping does not invalidate approval or scheduled evidence. Calibration additionally depends on the reviewed personal facts/rules. Keep the search routine's existing profile-hash contract.
-- **Scope-dependent search recovery:** changes to eligibility, roles or sources may leave uncaptured vacancies behind old checkpoints. The initial implementation conservatively replays all sources after such a change: clear Gmail/portal progress and employer successful dates in both workbook and coverage, preserving inventory/evidence. A private write-ahead reset receipt supports interruption/retry. Review the look-back and workload; finer source-specific resets are deferred until dependencies can be established reliably.
+- **Scope-dependent search recovery:** changes to eligibility, roles or sources may leave uncaptured vacancies behind old checkpoints. Any eligibility, source or search-setting change replays all sources: clear Gmail/portal progress and employer successful dates in both workbook and coverage, preserving inventory/evidence. A change confined to employer rows replays only the added/edited employers. Strengths, gaps, mismatch signals and §9 never trigger replay: capture-before-selection keeps every find and profile-hash reassessment re-rates them. A private write-ahead reset receipt supports interruption/retry. Review the look-back and workload; finer source-specific resets beyond employer rows are deferred until dependencies can be established reliably.
 - **Evidence scope:** an empty successful import skips inventory replacement/backups. Require a temporary storage/backup probe in the actual scheduled context, plus isolated positive-record insertion/rendering acceptance; never add fictional personal inventory. Label each piece of evidence by what and where it actually tested.
 - **Employer preservation:** revision-checked setup upsert changes only supplied approved fields/additions and retains other rows/content. Removal/renaming requires a reviewed replacement. The routine's restricted update operation stays restricted.
 - **Calibration representation:** historical/calibration-only examples and reading evidence stay outside the actionable ledger; current actionable vacancies use its existing states. Do not invent a ledger state or let historical examples become pending work/dropped entries.
@@ -118,75 +199,16 @@ All three dependent approvals have an explicit basis: calibration uses calibrati
 
 Reset recovery is a central activation/search prerequisite even when scope equals lastActiveScope. An unfinished or malformed receipt must block both paths. If configuration was intentionally reverted during an interruption, allow an explicit stopped-search recovery that archives the receipt and replays both stores against the restored scope; never silently dismiss the journal.
 
-Historical scheduled-operation proof and evolving search progress have separate evidence lifetimes. Keep verification.runId; tag new search manifests with installation ID and scope fingerprint. Derive progress from matching runs since reset, latest finish/retry, source outcomes across runs, coverage unfinished work and open vacancies. Later successful checks may resolve initial backlog; newer unfinished sources must make progress partial again. Do not infer current scope from a newer filename or complete label. Unclassified legacy evidence remains uncertain until reviewed.
+Historical scheduled-operation proof and evolving search progress have separate evidence lifetimes. Operational verification depends on the installed prompt, installation and task identity, not on profile wording. Keep verification.runId; tag new search manifests with installation ID and scope fingerprint. Derive progress from matching runs since reset, latest finish/retry, source outcomes across runs, coverage unfinished work and open vacancies. Later successful checks may resolve initial backlog; newer unfinished sources must make progress partial again. Do not infer current scope from a newer filename or complete label. Unclassified legacy evidence remains uncertain until reviewed.
 
-## 5. Implementation milestones
+### Second review fixes (2026-11-27)
 
-Unchecked items remain open acceptance work even where helpers or instructions have been implemented. Record implementation and verification evidence separately; do not infer platform acceptance from code presence or fixture tests.
-
-### ✅ M1 — Specify state and readiness contracts
-
-- [x] Map each current setup step to required inputs, artifacts, approvals, failure handling and prerequisites.
-- [x] Finalize the minimal schema, allowed states, stale-approval handling and diagnostic boundary.
-- [x] Define required versus optional source capabilities. Gmail remains required for the current Gmail-based routine; direct LinkedIn access can be an explicitly accepted limitation with employer-page fallback. A Gmail-free mode requires a separate routine design decision.
-- [x] Define the three outcomes in section 6 and document legacy installations without state.
-
-Acceptance: walkthroughs of fresh setup, partial setup and reconfiguration reach an unambiguous next action; contradictory states cannot count as ready. Schema validation proves structure only, never user approval or factual truth.
-
-### M2 — Add durable state and conservative resume
-
-- [ ] Implement state persistence and validation with existing Node facilities. Prefer a small validator/persistence helper only where it prevents concrete errors; no framework or per-tool bookkeeping.
-- [ ] Detect missing, malformed and unknown-version state; reconcile actual artifacts before trusting status flags.
-- [ ] Implement targeted invalidation and preserve approved unaffected topics.
-- [ ] Discover an existing scheduled task before creation. If creation succeeded but recording its ID failed, reconcile by installed prompt/folder and task details; ambiguous matches require clarification, not another task.
-- [ ] Preserve existing employer rows and configuration. Use wholesale replacement only for an explicitly reviewed replacement; it is not a resume default.
-
-Acceptance: fresh-session recovery after each save boundary loses no saved answer, duplicates no task and overwrites no approved content. Artifact/state mismatch leads to review. A stale approval never silently becomes current.
-
-### M3 — Rework the interview and calibration
-
-- [ ] Extract CV-supported facts first; ask only missing or ambiguous questions, at most six per message and fewer when complex.
-- [ ] Distinguish confirmed experience, interests, uncertainty, hard constraints and preferences. Scope every always/never rule.
-- [ ] Resolve conflicts such as keeping below-level roles versus always dropping junior roles, and incomplete source rotations.
-- [ ] Collect strong, borderline and unsuitable calibration examples, including the 2/3 boundary. Record the assistant rating before revealing the user's verdict when feasible; label comparisons with already-seen verdicts honestly.
-- [ ] Resolve attention-threshold disagreements explicitly. Do not optimize for numerical agreement alone or force endless rule changes for individual exceptions.
-- [ ] Save agreed examples and explain remaining disagreement; require a reason that generalizes before changing a profile rule.
-- [ ] Add final assembled-profile approval after source and calibration decisions, plus a placeholder/contradiction review.
-
-Acceptance: a fictional candidate's facts are preserved without invented qualifications; boundary disagreements cannot pass just because they differ by one point; changing geography revisits relevant decisions without recollecting the CV.
-
-### M4 — Move feasibility early and make installation repeatable
-
-- [ ] Check ROOT, runtime, self-check, workbook access and available scheduling/source tools early. Record what was actually tested and in which environment.
-- [ ] Distinguish validation-only success, installation health and successful scheduled import.
-- [ ] Ask for timezone and other settings before checks depending on them. Explain first-run workload without claiming a fixed setup duration or unverified cost superiority of models.
-- [ ] Verify current platform capabilities through owning documentation/tools when implementing; distinguish unavailable actions from user-required manual steps.
-- [ ] Fill Part A, reject unresolved placeholders, compare Part B exactly and compare installed raw text with the saved file. If installed text cannot be read back, report verification pending.
-- [ ] Reuse/update the identified task; ensure it targets the actual installation. Confirm schedule and permissions without unnecessarily repeating existing approvals.
-
-Acceptance: unsupported essential capability is exposed before lengthy personalization; approved LinkedIn fallback does not become an unconditional completion blocker; reinstalling unchanged configuration creates no second task.
-
-### M5 — Preserve discovery handover and verify readiness
-
-- [ ] Retain the existing capture-before-selection rule for discoveries during setup. Link the run in setup state; do not copy its vacancies into that state.
-- [ ] Keep decisions provisional until applicable profile approval; preserve profile-hash behavior when calibration changes it.
-- [ ] Distinguish historical calibration material from current actionable vacancies, preserving evidence without inadvertently treating a past application as a new discovery.
-- [ ] Align setup's run records with current routine requirements, including reading evidence needed to reuse assessments. Test the first routine's takeover of pending and assessed work.
-- [ ] Check finish.json/retry, capture-check --open, ledger, source evidence, inventory and importer reports together. Require honest unresolved-work reporting.
-- [ ] Separate transient source failure from installation failure; do not claim complete coverage for an accepted limitation or pending backlog.
-
-Acceptance: no setup discovery is silently lost; saved assessments are reused when valid; changed-profile decisions are reviewed; an empty successful import verifies empty-batch processing only; scheduled storage evidence and isolated positive-record acceptance remain separate; an incomplete search stays explicitly incomplete.
-
-### M6 — Integrate and rehearse
-
-- [ ] Update SETUP_PROMPT.md, CUSTOMIZE.md, affected profile/guides and pristine counterparts together. Keep the roadmap out of installed prompts.
-- [ ] Update interface/workflow documentation for any actual new paths/helpers; adjust release inclusion/exclusion rules if needed. Do not rebuild ZIPs without an explicit packaging request.
-- [ ] Preserve setup-log compatibility and verify diagnostics exclude setup-state contents.
-- [ ] Run focused structural/recovery tests, template drift checks and document/link checks. Avoid testing prompt strings as a substitute for behavior.
-- [ ] Conduct isolated fictional-user setup/resume rehearsals with retained evidence; agree model choice and spend cap before paid runs. Verify scheduled behavior on both supported assistant environments before claiming both supported paths work.
-- [ ] Run an unaided nontechnical-recipient trial and record friction, repeated questions and unfinished steps.
-
-Acceptance: scenario matrix below passes or has explicit unresolved limitations; no full acceptance claim from fixture tests alone. No runtime personal data in tracked files or release inputs.
+- Only the latest run must be finished with finish, due and source evidence. Older interrupted or taken-over runs contribute their dated outcomes and due lists where present; coverage `unfinished` and open finds carry their unresolved work, consistent with the orchestration invariants.
+- Setup discovery runs carry `setupDiscovery: true` and the setupId and are listed in `discoveryRuns`. The routine takes them over (and, when guarded, any folder without guard identity) instead of continuing them, so a setup-day verification run gets the current installation/scope identity.
+- A stopped-search confirmation must be newer than the last saved state; activation clears it.
+- Suitability uses background inputs, roles, seniority, geography and §9; calibration additionally uses §5–7. Search scope excludes strengths/gaps/mismatch signals, §9, timezone and language.
+- Inspect orders blockers by prerequisite and uses capabilities, limitations and discoveryRuns: verified Gmail gates activation, a standing §10 limitation needs recorded consent, and profile blockers name line numbers while ignoring quoted template guidance.
+- The guard skips the search-progress scan; employer fingerprints sort locale-independently; optional state objects are shape-checked; previous-state backups are capped at 50.
 
 ## 6. Completion contract
 
@@ -230,9 +252,14 @@ Overall setup can be ready with accepted limitations and a recoverable initial b
 | Partial verification then later completed search | Progress advances from matching source evidence while original operational proof is retained |
 | Complete verification then later unfinished source work | Progress becomes partial; other-scope/untagged evidence cannot falsely complete it |
 | Diagnostics and package audit | No personal setup-state data exposed |
+| Strengths or mismatch edit after activation | Calibration review only; suitability, scope and checkpoints unchanged |
+| Employer added or edited, nothing else | Only those employers replayed; Gmail and portal checkpoints kept |
+| Reconfiguration reusing an old stopped-search confirmation | Editing save rejected until a fresh confirmation |
+| Run interrupted on an earlier day, later runs complete | Progress follows dated outcomes; no permanent block from the old folder |
+| Verification on setup day with an unfinished setup discovery run | Routine starts a new tagged run and takes the setup finds over |
 
 Measure user question/approval counts, repeated answers, elapsed interaction time, known token/cost usage and manual recovery interventions. Establish a baseline before claiming efficiency gains. Prefer the simplest implementation that passes recovery and correctness scenarios; expand only for demonstrated gaps.
 
 ## 8. Next action
 
-The M1 contract is in app/SETUP_WORKFLOW.md and app/setup-state.mjs; M2–M5 helpers/instructions are implemented with focused fixture verification recorded in HISTORY.md. Next conduct isolated attended setup/resume rehearsals, then actual scheduled verification on each supported assistant and the nontechnical-recipient trial. Fixture results do not close those acceptance gates. Agree model/spend cap before paid rehearsals. No live scheduling, commit, push or distribution rebuild is authorized by this document.
+The M1 contract is in app/SETUP_WORKFLOW.md and app/setup-state.mjs; M2–M5 helpers/instructions, including the second review fixes, are implemented with focused fixture verification recorded in HISTORY.md. Next conduct isolated attended setup/resume rehearsals, then actual scheduled verification on each supported assistant and the nontechnical-recipient trial. Fixture results do not close those acceptance gates. Agree model/spend cap before paid rehearsals. No live scheduling, commit, push or distribution rebuild is authorized by this document.

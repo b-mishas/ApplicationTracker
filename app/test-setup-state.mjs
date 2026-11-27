@@ -38,6 +38,7 @@ try{
  const approve=async(state)=>{
   let result=await inspectSetup(root,state);
   for(const [key,fingerprint] of Object.entries(result.snapshot.fingerprints))state.topics[key]={status:'approved',approval:{by:'user',at:utc(),evidence:'Fictional test confirmation',fingerprint}};
+  state.capabilities.gmail={status:'verified',context:'interactive',observedAt:utc(),ref:'data/reports/gmail-check.txt'};
   state.topics.calibration.basis=result.calibrationBasis;
   for(const key of ['sources','employers'])state.topics[key].basis=result.suitabilityBasis;
   state.scopeReview={fingerprint:result.snapshot.scope,evidence:'Fictional scope review'};
@@ -56,7 +57,7 @@ try{
   missingBasis.topics[id].basis=missingReview.suitabilityBasis;
  }
  assert.equal((await inspectSetup(root,missingBasis)).personalizationReady,true);
- missingBasis.topics.employers.basis='outdated';assert((await inspectSetup(root,missingBasis)).topicBlockers.employers.some(reason=>reason.includes('predates')));
+ missingBasis.topics.employers.basis='0'.repeat(64);assert((await inspectSetup(root,missingBasis)).topicBlockers.employers.some(reason=>reason.includes('predates')));
  pass('Missing/stale employer and source dependency approvals explain the exact corrective field');
  const originalProfile=await fs.readFile(path.join(root,'profile/candidate_profile.md'),'utf8');
  await put('profile/candidate_profile.md',originalProfile.replace('Name: Fictional Person','Name: Corrected Person'));
@@ -151,7 +152,7 @@ try{
  await put(`data/reports/runs/${runId}/finish.json`,{runId,searchCoverage:'partial',retry:['Fictional portal pending']});
  await put('data/reports/probe.json',{ok:true,results:[{name:'Storage and backup',ok:true}]});
  await put('data/reports/import.json',{exitCode:0,status:'imported',batch:`2026-11-27-${runId}.json`,written:false,backup:null});
- next.verification={configuration:result.configuration,context:'scheduled',runId,gmail:'verified',importReport:'data/reports/import.json',storageProbe:'data/reports/probe.json'};
+ next.verification={operation:result.operation,context:'scheduled',runId,gmail:'verified',importReport:'data/reports/import.json',storageProbe:'data/reports/probe.json'};
  assert.equal((await inspectSetup(root,next)).scheduledOperationVerified,true);
  assert.equal((await inspectSetup(root,next)).initialSearch,'partial');
  await put('data/reports/coverage.json',{...resetCoverage,unfinished:[]});
@@ -219,5 +220,126 @@ try{
  assert.equal(await fs.readFile(path.join(root,'profile/candidate_profile.md'),'utf8'),personalBefore);
  await put('data/reports/setup-state.json',{...current.state,schemaVersion:99});await assert.rejects(()=>initializeSetup(root),/Unsupported/);
  pass('Diagnostics exclude private state; malformed/unknown versions fail closed and preserve originals');
+ await reviewFixes();
  console.log(`setup recovery: ${checks} behavioral scenarios passed`);
 }finally{await fs.rm(root,{recursive:true,force:true,maxRetries:10,retryDelay:100});}
+
+// Regression scenarios for the 2026-11-27 review: fresh fixture, so earlier state cannot mask a failure.
+async function reviewFixes(){
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'setup-review-'));
+ const put=async(rel,value)=>{const file=path.join(dir,rel);await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,typeof value==='string'?value:JSON.stringify(value));};
+ const text=rel=>fs.readFile(path.join(dir,rel),'utf8');
+ try{
+  await put('data/jobs.json',{schemaVersion:1,jobs:[]});
+  const header='# Candidate profile\n\n> Replace every `{{…}}` and every line starting with "Example:".\n\n';
+  await put('profile/candidate_profile.md',header+Array.from({length:10},(_,i)=>`## ${i+1}. Topic\n${i===0?'- Name: Fictional Person\n- Work authorization: Austria':'Fictional content '+(i+1)}\n`).join('\n'));
+  const routine='Header\n=== COPY FROM HERE ===\n\n## Part A\nCandidate: Fictional\n## Part B\nFixed core\n';
+  await put('agent/ROUTINE_PROMPT.md',routine);await put('agent/ROUTINE_PROMPT.filled.md',routine.split('=== COPY FROM HERE ===\n')[1]);
+  const workbook=path.join(dir,'profile/companies.xlsx');
+  await fs.copyFile(new URL('../templates/profile/companies.xlsx',import.meta.url),workbook);
+  await employerWorkbook({file:workbook,action:'replace',records:[{Company:'Örtlich GmbH',Priority:'A'},{Company:'Zeta Employer',Priority:'B'}]});
+  let current=await initializeSetup(dir);
+  const fresh=await inspectSetup(dir,current.state);
+  assert.equal(fresh.blockers[0].code,'capability');assert.match(fresh.next,/Gmail/);
+  assert.equal(fresh.snapshot.profileValid,true,'quoted template guidance is not an unresolved placeholder');
+  const approve=async(state,{gmail=true}={})=>{
+   let result=await inspectSetup(dir,state);
+   for(const [key,fingerprint] of Object.entries(result.snapshot.fingerprints))state.topics[key]={status:'approved',approval:{by:'user',at:utc(),evidence:'Fictional confirmation',fingerprint}};
+   if(gmail)state.capabilities.gmail={status:'verified',context:'interactive',observedAt:utc(),ref:'data/reports/gmail-check.txt'};
+   state.topics.calibration.basis=result.calibrationBasis;for(const key of ['sources','employers'])state.topics[key].basis=result.suitabilityBasis;
+   state.scopeReview={fingerprint:result.snapshot.scope,evidence:'Fictional scope review'};
+   result=await inspectSetup(dir,state);state.finalApproval={by:'user',at:utc(),fingerprint:result.configuration};
+   return state;
+  };
+  let next=await approve(structuredClone(current.state),{gmail:false});
+  const noGmail=await inspectSetup(dir,next);assert.equal(noGmail.personalizationReady,true);assert.equal(noGmail.activationReady,false);
+  next.phase='active';await assert.rejects(()=>saveSetup(dir,next,current.revision),/Gmail/);
+  next=await approve(structuredClone(current.state));next.phase='active';current=await saveSetup(dir,next,current.revision);
+  assert.equal(current.state.quiescence,undefined);assert(current.state.lastActiveScopeParts.employers['Örtlich GmbH']);
+  pass('Gmail feasibility leads the next action and gates activation without hiding personalization readiness');
+  const profile=await text('profile/candidate_profile.md');
+  await put('profile/candidate_profile.md',profile.replace('Fictional content 5','Fictional content 5 with a new strength'));
+  const strengths=await inspectSetup(dir,current.state);
+  assert.equal(strengths.topics.calibration,'needs_review');assert.equal(strengths.topics.sources,'approved');assert.equal(strengths.topics.employers,'approved');
+  assert.equal(strengths.snapshot.scope,current.state.lastActiveScope);
+  await put('profile/candidate_profile.md',profile.replace('Fictional content 9','Fictional content 9 never defence employers'));
+  const exclusions=await inspectSetup(dir,current.state);assert.equal(exclusions.topics.employers,'needs_review');assert.equal(exclusions.snapshot.scope,current.state.lastActiveScope);
+  await put('profile/candidate_profile.md',profile.replace('Fictional content 3','- Example: Company X = 4'));
+  assert.match((await inspectSetup(dir,current.state)).blockers.find(b=>b.code==='profile').message,/line 13\b/);
+  await put('profile/candidate_profile.md',profile);
+  pass('Strengths edits stay out of suitability and scope; exclusions reach suitability; Example lines are located');
+  const firstStop={confirmedStopped:true,at:utc(),evidence:'Fictional pause'};
+  next={...structuredClone(current.state),phase:'editing',quiescence:firstStop};current=await saveSetup(dir,next,current.revision);
+  next=await approve(structuredClone(current.state));next.phase='active';current=await saveSetup(dir,next,current.revision);
+  next={...structuredClone(current.state),phase:'editing',quiescence:firstStop};
+  await assert.rejects(()=>saveSetup(dir,next,current.revision),/newer than the last saved/);
+  next.quiescence={...firstStop,at:utc()};current=await saveSetup(dir,next,current.revision);
+  pass('A previous editing session\'s stopped-search confirmation cannot be reused');
+  await put('profile/candidate_profile.md',profile.replace('Fictional content 10','Fictional content 10\nLinkedIn direct reading: disabled; employer fallback only'));
+  next=await approve(structuredClone(current.state));
+  assert((await inspectSetup(dir,next)).blockers.some(b=>b.code==='limitation'));
+  next.limitations=[{consequence:'Employer fallback for LinkedIn alerts',profileRef:'§10',acceptedBy:'user',acceptedAt:utc()}];
+  assert(!(await inspectSetup(dir,next)).blockers.some(b=>b.code==='limitation'));
+  next.limitations[0].profileRef='§12';assert((await inspectSetup(dir,next)).blockers.some(b=>b.code==='limitation'));
+  next.limitations[0].profileRef='§10';
+  const discovery='run-202611270700-setp';
+  next.discoveryRuns=[discovery];
+  await put(`data/reports/runs/${discovery}/run-completion.json`,{runId:discovery,startedAt:utc(),status:'started'});
+  await put(`data/reports/runs/${discovery}/run-ledger.jsonl`,'');
+  assert((await inspectSetup(dir,next)).blockers.some(b=>b.code==='discovery'));
+  await put(`data/reports/runs/${discovery}/run-completion.json`,{runId:discovery,startedAt:utc(),status:'started',setupId:next.setupId,setupDiscovery:true});
+  assert(!(await inspectSetup(dir,next)).blockers.some(b=>b.code==='discovery'));
+  pass('Accepted limitations and setup discovery runs are checked against the profile and run folders');
+  // Employer-only change: replay those employers, keep Gmail and portal checkpoints.
+  await put('profile/candidate_profile.md',profile);
+  const coverage={gmailCheckedThrough:'2026-11-26T08:00:00Z',employers:{'Örtlich GmbH':{lastChecked:'2026-11-26',method:'m1'},'Zeta Employer':{lastChecked:'2026-11-26',method:'m2'}},sources:{Portal:{lastSuccessfulCheckedThrough:'2026-11-26T08:00:00Z',progress:{AT:{complete:true}}}},dropped:[],unfinished:[]};
+  await put('data/reports/coverage.json',coverage);
+  await employerWorkbook({file:workbook,action:'update',records:[{Company:'Örtlich GmbH','Last checked':'2026-11-26'},{Company:'Zeta Employer','Last checked':'2026-11-26'}]});
+  const read=await employerWorkbook({file:workbook});
+  await employerWorkbook({file:workbook,action:'upsert',expectedRevision:read.revision,records:[{Company:'Zeta Employer',Focus:'New fictional focus'},{Company:'New Employer',Priority:'C'}]});
+  const receipt=await resetSetupScope(dir,{confirmedStopped:true});
+  assert.equal(receipt.mode,'employers');assert.deepEqual(receipt.employers.sort(),['New Employer','Zeta Employer']);
+  const after=JSON.parse(await text('data/reports/coverage.json'));
+  assert.equal(after.gmailCheckedThrough,coverage.gmailCheckedThrough);assert.deepEqual(after.sources,coverage.sources);
+  assert.equal(after.employers['Örtlich GmbH'].lastChecked,'2026-11-26');assert.equal(after.employers['Zeta Employer'].lastChecked,'');
+  const rows=Object.fromEntries((await employerWorkbook({file:workbook})).employers.map(e=>[e.Company,e['Last checked']]));
+  assert.equal(rows['Örtlich GmbH'],'2026-11-26');assert.equal(rows['Zeta Employer'],'');
+  pass('Employer-only changes replay just the changed employers and keep Gmail/portal checkpoints');
+  next=await approve(structuredClone((await readSetup(dir)).state));
+  next.limitations=[{consequence:'Employer fallback for LinkedIn alerts',profileRef:'§10',acceptedBy:'user',acceptedAt:utc()}];next.discoveryRuns=[discovery];
+  next.task={id:'fictional-task',platform:'claude',root:dir,schedule:'Weekdays 08:00 Europe/Vienna',promptEvidence:'data/reports/installed-prompt.txt'};
+  await put(next.task.promptEvidence,await text('agent/ROUTINE_PROMPT.filled.md'));
+  next=await approve(next);next.phase='active';current=await saveSetup(dir,next,(await readSetup(dir)).revision);
+  const ready=await inspectSetup(dir,current.state),scope=ready.snapshot.scope,t0=Date.now();
+  const at=s=>new Date(t0+s*1000).toISOString();
+  // An older run interrupted before due.json/finish.json, never finished, followed by a complete run.
+  const oldRun='run-202611270801-intr',newRun='run-202611270802-done';
+  await put(`data/reports/runs/${oldRun}/run-completion.json`,{runId:oldRun,startedAt:at(1),status:'started',setupId:next.setupId,setupScope:scope});
+  await put(`data/reports/runs/${oldRun}/run-ledger.jsonl`,'');
+  await put(`data/reports/runs/${newRun}/run-completion.json`,{runId:newRun,startedAt:at(2),status:'finished',setupId:next.setupId,setupScope:scope});
+  await put(`data/reports/runs/${newRun}/due.json`,{employer:[],portal:[]});
+  await put(`data/reports/runs/${newRun}/run-ledger.jsonl`,'');
+  await put(`data/reports/runs/${newRun}/source-evidence.jsonl`,'');
+  await put(`data/reports/runs/${newRun}/finish.json`,{runId:newRun,searchCoverage:'complete',retry:[]});
+  let progress=await inspectSetup(dir,current.state);
+  assert.equal(progress.initialSearch,'complete',progress.searchProgress.blockers.join('; '));
+  await put(`data/reports/runs/${oldRun}/due.json`,{employer:['Zeta Employer'],portal:[]});
+  assert.equal((await inspectSetup(dir,current.state)).initialSearch,'partial','an older due source without any outcome stays open');
+  await put(`data/reports/runs/${newRun}/source-evidence.jsonl`,JSON.stringify({kind:'employer',source:'Zeta Employer',status:'checked',at:at(3)})+'\n');
+  assert.equal((await inspectSetup(dir,current.state)).initialSearch,'complete');
+  assert.equal((await setupGuard(dir)).setupScope,scope);
+  pass('Older interrupted runs block progress only through unresolved due sources; setup discovery runs are not unclassified');
+  // Verification depends on installed operation, not profile wording.
+  const probe='data/reports/probe.json',report='data/reports/import.json';
+  await put(probe,{ok:true,results:[{name:'Storage and backup',ok:true}]});
+  await put(report,{exitCode:0,status:'imported',batch:`2026-11-27-${newRun}.json`});
+  const verifiedState={...structuredClone(current.state),verification:{operation:ready.operation,context:'scheduled',runId:newRun,gmail:'verified',importReport:report,storageProbe:probe}};
+  assert.equal((await inspectSetup(dir,verifiedState)).scheduledOperationVerified,true);
+  await put('profile/candidate_profile.md',(await text('profile/candidate_profile.md')).replace('Name: Fictional Person','Name: Corrected Person'));
+  const renamed=await inspectSetup(dir,verifiedState);
+  assert.equal(renamed.operation,ready.operation);assert.equal(renamed.personalizationReady,false);assert.equal(renamed.topics.background,'needs_review');
+  await put('agent/ROUTINE_PROMPT.filled.md',(await text('agent/ROUTINE_PROMPT.filled.md')).replace('Candidate: Fictional','Candidate: Corrected'));
+  assert.notEqual((await inspectSetup(dir,verifiedState)).operation,ready.operation);
+  pass('A profile Name edit keeps operation evidence current; a changed installed prompt does not');
+ }finally{await fs.rm(dir,{recursive:true,force:true,maxRetries:10,retryDelay:100});}
+}

@@ -4,10 +4,40 @@
 
 --------------------
 
+## 2026-11-27 — Claude setup fixes prepared for scoped commit
+
+- User requested one [Agent] commit containing Claude's second-review setup fixes and all pending documentation/rule edits, with Claude first and Codex second in co-author trailers. Includes roadmap milestone ordering/checkbox clarification, matching AGENTS/CLAUDE planning rules and existing PLAN corrections. Unrelated design/ is excluded; deadline/Interviews implementation is already committed separately in 5985c55.
+- Reverified setup recovery 18/18 and pristine-template parity; whitespace/local-document links checked. Claude's previously reported full-suite pass is retained in its implementation entry, not repeated here. No live setup, schedule or recipient trial, personal data edit, push or packaging.
+- Codex's follow-up suggestions remain for a separate Astra review: due-source outcome freshness, search-affecting exclusion scope, quoted-content placeholder detection and orphan classification/handover. This checkpoint does not implement or claim acceptance of those suggestions.
+
+
+## 2026-11-27 — Setup milestones first and shorter planning rule
+
+- Moved implementation milestones to section 1 of ROADMAP_SETUP.md; renumbered the supporting sections and updated contents links/status reference. Section bodies and completion states are unchanged.
+- Replaced the detailed progress rule in AGENTS.md and CLAUDE.md with the same concise, general planning principle: current status, visible remaining work, supporting evidence and completion against all requirements.
+- Documentation-only verification: section-body preservation, contents anchors, matching rules and whitespace. No runtime changes or tests, staging, commit or packaging.
+
+
+## 2026-11-27 — Explicit setup acceptance tasks and progress rules
+
+- Converted M2–M4 acceptance paragraphs in ROADMAP_SETUP.md into explicit unchecked tasks, cross-referenced to M6 rehearsals. Retained checked implementation items and withheld overall completion markers; clarified the evidence types in the progress key.
+- Added matching AGENTS.md/CLAUDE.md rules: update roadmap progress, distinguish implementation from acceptance evidence, and show every incomplete milestone's remaining work as unchecked tasks rather than prose alone.
+- Documentation-only change. Verified checkbox structure, matching rules and whitespace; no runtime tests, implementation edits, live trials, Git staging/commits or packaging.
+
+
 ## 2026-11-27 — Deadline/Interviews port verified for commit
 
 - Reviewed the pending port against editor cleanup 4bfdf67 and setup baseline 6fd8573. Removed a duplicate Interviews button after the closing HTML tag and a repeated trailing count block from the earlier port; added unique-ID/navigation-placement assertions. No unmerged entries or conflict markers found.
 - Full working-tree and exact staged-snapshot npm test passed (exit 0). The first snapshot exceeded Windows startup-command path limits; a shorter temporary path passed unchanged code. In-app Chromium at 1280×720 verified current-interview filtering versus historical totals, independent columns/layout after reload, deadline formatting, calendar Save/reload and zero-count hiding. No live records/settings, installed prompts or ZIPs changed. Source commits: c381bde2f7cd479e7ac6b72e464e5299da324f95 and b59ce2bb58ec0322b92c35b76594d1c69394f115. Separate setup review fixes remain unstaged.
+
+## 2026-11-27 — Second setup review fixes (Claude)
+
+- Committed Codex's setup implementation separately (6fd8573, Codex first co-author), leaving the Deadline/Interviews port uncommitted. Then fixed the review findings in setup-state.mjs, setup-reset.mjs, the routine/setup prompts and pristine copies, and SETUP_WORKFLOW/INTERFACE.
+- Search progress requires finish/due/source evidence only from the latest run; older interrupted or taken-over runs count through dated outcomes, due lists, coverage `unfinished` and open finds. Setup discovery runs carry `setupDiscovery: true`, are listed in `discoveryRuns` and are taken over, never continued, by the routine.
+- A stopped-search confirmation must be newer than the last saved state and is cleared on activation. Suitability uses background inputs, roles, seniority, geography and §9; strengths/gaps/mismatch signals affect calibration only and, with timezone and language, no longer change search scope. An employer-only change resets only the added or edited employers.
+- Operational verification uses `operation` (installed prompt, installation, task), so profile wording edits keep it. Blockers are ordered by prerequisite; verified Gmail capability gates activation; §10 limitations need recorded consent; profile blockers name line numbers and ignore quoted template guidance. Guard skips the progress scan; locale-independent employer sort; optional state shapes validated; previous-state backups capped at 50.
+- Verification: test-setup-state 18/18 (7 new regression scenarios) and full `npm test` passed. Fixture-only: no live setup, scheduled-platform or recipient rehearsal; existing saved scope hashes change and need conservative review.
+
 
 ## 2026-11-27 — Setup readiness review fixes
 

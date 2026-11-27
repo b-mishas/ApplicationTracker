@@ -34,6 +34,8 @@ Include UTC update time, assistant, scope/objective, branch/HEAD/upstream, chang
 
 Keep `PLAN.md` shared for future work/design decisions and `HISTORY.md` shared for verified accomplishments. Do not mark planned work as accomplished. HISTORY.md is newest first: insert new entries directly below the 20-hyphen separator line under its introduction, above older entries. Separate handoffs do not authorize concurrent editing of the same checkout; only one assistant should edit a checkout at a time.
 
+Keep plans current: show what is done, what remains, and the supporting evidence. Distinguish implementation from verification or acceptance; mark an objective complete when all its requirements are met.
+
 Updating these files does not authorize committing, pushing, stashing, switching branches or stopping another assistant's process. Do not commit or push unless the user asks. If a required handoff cannot be written, explain why and provide the snapshot in chat.
 
 Commit subjects start with a prefix chosen by function, the same split as the handoffs, not by directory: `[Agent]` for the search agent, meaning prompts, guides, profile templates, orchestration docs and the scripts the agent runs (for example `app/capture-check.mjs`), with their tests; `[Wrapper]` for the tracker UI, importer, storage, settings, Excel helpers, exports, launchers and packaging. A commit spanning both takes the prefix of its main purpose; split it when both parts stand alone. Older commits use `[Prompt]` for `[Agent]`. The text after the prefix starts with a capital letter (Sentence case), for example `[Agent] Add link finder`.

@@ -69,16 +69,17 @@ Each run saves its summary and a short `run-log.json` (models, access, checklist
 
 Turn the linear setup interview into a resumable process driven by saved prerequisites and approvals. Keep the profile and employer workbook authoritative; add a small private setup-state file for topic readiness, unanswered questions, capability evidence and installed-task references. Preserve approved work across sessions and invalidate only the checks affected by a change.
 
-Separate personalization readiness, verified scheduled operation and initial-search completion. Check feasibility early, strengthen calibration at the fit 2/3 boundary, resolve optional-access limitations consistently, and verify setup discoveries pass safely to the routine. Reconfiguration must pause schedules and wait for active searches; ordinary workbook updates do not invalidate approval. Scope changes require checkpoint replay, and empty imports need separate storage evidence. Detailed implementation and acceptance plan: [ROADMAP_SETUP.md](ROADMAP_SETUP.md). State/recovery helpers and revised prompts are implemented; live scheduled and recipient acceptance remain open.
+Separate personalization readiness, verified scheduled operation and initial-search completion. Check feasibility early, strengthen calibration at the fit 2/3 boundary, resolve optional-access limitations consistently, and verify setup discoveries pass safely to the routine. Reconfiguration must pause schedules and wait for active searches; ordinary workbook updates do not invalidate approval. Scope changes require checkpoint replay (only the changed employers when nothing else changed), and empty imports need separate storage evidence. Detailed implementation and acceptance plan: [ROADMAP_SETUP.md](ROADMAP_SETUP.md). State/recovery helpers and revised prompts are implemented; live scheduled and recipient acceptance remain open.
 
 - [x] Define the state, ownership and readiness contracts
-- [ ] Implement conservative resume and targeted invalidation
-- [ ] Improve interview, calibration and final profile approval
-- [ ] Verify capabilities early and install schedules repeatably
-- [ ] Reconcile discovery handover and operational evidence
-- [ ] Integrate templates and rehearse interruptions and recipient setup
+- [x] Implement conservative resume and targeted invalidation
+- [x] Improve interview, calibration and final profile approval
+- [x] Verify capabilities early and install schedules repeatably
+- [x] Reconcile discovery handover and operational evidence
+- [x] Integrate prompts, pristine templates and workflow documentation
+- [ ] Rehearse setup, interruptions, scheduled operation and unaided recipient setup
 
-Readiness refinements keep descriptive identity separate from search dependencies, enforce unfinished-reset recovery even after a scope revert, and derive evolving search progress separately from the historical scheduled-operation proof. These have focused regression coverage; live acceptance remains open.
+Readiness refinements keep descriptive identity separate from search dependencies, enforce unfinished-reset recovery even after a scope revert, and derive evolving search progress separately from the historical scheduled-operation proof. A second review fixed run takeover, stale stop confirmations, dependency scope and prerequisite ordering. Checked items are implemented with focused regression coverage; live acceptance remains open, so the step is not ✅.
 
 ## 9. Search quality measurement
 

@@ -1,5 +1,9 @@
 # Orchestration implementation history
 
+## 2026-11-27 — Setup run takeover and progress across interrupted runs
+
+The routine no longer continues today's unfinished folder when it is a setup discovery run (`setupDiscovery: true`) or, under a non-legacy guard, lacks the guard's setupId/setupScope; it starts a fresh tagged run and takes the folder over as an earlier unfinished run. This keeps a setup-day verification run classifiable. Setup search progress now requires a finished manifest, finish.json, due.json and source evidence only from the latest run; older interrupted runs contribute dated outcomes and due lists, and their unresolved work stays visible through coverage `unfinished` and capture-check --open, matching the existing invariants. Search scope no longer includes rating-only profile sections; an employer-only change replays only those employers. Fixture-tested (test-setup-state 18/18, full npm test); no live run.
+
 ## 2026-11-27 — Reset gating and current-scope setup progress
 
 Astra review regressions now cover approval dependency blockers, Name-only versus eligibility changes, and interrupted reset/revert recovery. A started or malformed reset blocks activation and the guard independently of scope equality or absent legacy state. Explicit --recover-current-scope preserves/archives the original journal and replays both date stores while searches remain stopped.

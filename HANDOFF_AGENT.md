@@ -1,25 +1,19 @@
 # Agent handoff
 
-Updated 2026-11-27T06:29:15Z — Codex.
+Updated 2026-11-27T12:54:35Z — Codex; implementation by Claude.
 
 ## Scope and checkout
 
-Implemented Astra's four setup review fixes. Checkout main at 4bfdf67, upstream origin/main, locally ahead two at inspection; remote/CI unverified. Preserved unrelated wrapper work and the other session's roadmap navigation/completion markers. No commit, push, live task change or distribution rebuild.
+This snapshot accompanies the user-authorized [Agent] commit of Claude's second-review setup fixes plus all pending documentation and shared-rule edits. Starting checkout main at 5985c55, upstream origin/main points to the same commit locally; remote/CI unverified. Claude is first co-author, Codex second. Deadline/Interviews was separately committed in 5985c55. Preserve unrelated untracked design/. No push, distribution build or live task change authorized/performed.
 
-## Current implementation
+## Included work
 
-app/setup-state.mjs now reports topicBlockers/structured blockers with exact missing dependency fields. Employer/source approvals explicitly use topic-level suitabilityBasis; calibration uses calibrationBasis. Whole background approval still changes for a Name correction, while dependency fingerprints exclude the recognized Name field only; authorization, experience, location/language and unknown prose remain conservative inputs.
+setup-state.mjs and setup-reset.mjs implement Claude's changes: latest-run-only finish requirements, setupDiscovery takeover handling, fresh quiescence/clearing on activation, separate calibration/suitability dependencies, employer-only replay, operation-specific verification, prerequisite-ordered blockers, Gmail activation evidence, limitation/discovery references, profile problem line numbers, deterministic sorting, optional-field validation, BOM handling, guard without progress scan and bounded previous-state backups. test-setup-state.mjs adds seven scenarios (18 total).
 
-A shared reset reader/gate blocks activation and routine searching for any started or malformed reset regardless of lastActiveScope equality or absent legacy setup state. setup-reset.mjs --recover-current-scope is an explicit stopped-search recovery after intentional revert: archive the unfinished journal and replay both date stores from saved pre-reset coverage against the restored scope. It cannot overwrite malformed/unsupported receipts.
+Includes matching setup/routine prompts and pristine copies, SETUP_WORKFLOW.md, interface, both roadmaps, orchestration/root history, PLAN corrections and the AGENTS/CLAUDE planning rule. Roadmaps show implemented work separately from unchecked live acceptance; milestones are first in ROADMAP_SETUP.md. Installed prompts and personalized artifacts remain unchanged.
 
-Operational verification retains its historical run. Evolving initialSearch/searchProgress uses installation/scope-tagged manifests since reset, dated source outcomes across runs, latest finish/retry, due evidence, unfinished coverage/manifests and open finds. A later complete label cannot erase unresolved older source evidence; later unfinished work makes progress partial. Unknown scope/chronology is reported conservatively. New routine instructions persist guard setupId/setupScope without retagging old evidence. Prompts/pristine copies, interface/workflow docs, roadmaps and histories are aligned; see app/SETUP_WORKFLOW.md.
+## Verification and remaining work
 
-## Verification and next action
+Codex reran setup recovery 18/18 and template parity successfully; whitespace/local links checked. Claude previously reported full npm test passing; it was not rerun for this commit. Fixtures do not establish live setup, platform scheduling or recipient acceptance. Existing saved scope/operation hashes may require conservative review; do not rewrite consent automatically.
 
-11 behavioral recovery groups passed, including every reported regression, malformed/no-state reset paths, explicit revert recovery, later backlog resolution/new unfinished work and scope filtering. Template parity, diagnostics, capture-check, finish-run, syntax/local-link/whitespace checks passed. No full-suite rerun or live interview, scheduled-platform, browser/recipient acceptance. All fixtures were isolated; no personal profile/workbook/inventory, coverage, installed prompt or schedule changed.
-
-Next: review these fixes, then agree model/spend cap for isolated attended setup/resume rehearsals and actual scheduled-platform/recipient acceptance. M2–M6 acceptance remains open. Existing saved dependency hashes may need conservative review after helper corrections; never silently rewrite consent. No active operations.
-
-## Deadline contract integration — Codex, 2026-11-27
-
-The routine/pristine template now request optional verified `applicationDeadline` as YYYY-MM-DD, omitted when unknown. Deadline Flags and the ban on batch urgency remain. This paragraph is staged separately from setup-resume prompt changes. Full working-tree and exact staged-snapshot npm test passed (exit 0); installed/scheduled prompts were not regenerated. Preserve the setup review fixes above as uncommitted work.
+Next: Astra reviews Codex's follow-up suggestions independently. Isolated probes showed an older check can satisfy a newer interrupted due selection, quoted unresolved content passes profileValid, and orphan ledgers remain unclassified; search-affecting §7/§9 changes also warrant review because listing readers filter before capture. Those suggestions are deliberately not implemented in this checkpoint. Afterwards agree model/spend cap for attended setup/resume and scheduled-platform/recipient rehearsals. No active operations.

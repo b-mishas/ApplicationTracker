@@ -6,6 +6,13 @@ import {readSetup, setupSnapshot, readSetupReset} from './setup-state.mjs';
 import {employerWorkbook} from './employer-workbook.mjs';
 import {withLock,writeJsonAtomic} from './store.mjs';
 
+// Which checkpoints the change can affect. If only employer rows changed since activation, replay only the
+// added/edited employers; any eligibility, source or search-setting change (or unknown history) replays everything.
+function replayPlan(state,snapshot){
+ const previous=state.lastActiveScopeParts;
+ if(!previous || previous.search!==snapshot.scopeParts.search)return {mode:'all'};
+ return {mode:'employers',employers:Object.entries(snapshot.scopeParts.employers).filter(([name,value])=>previous.employers[name]!==value).map(([name])=>name)};
+}
 export async function resetSetupScope(root,{confirmedStopped=false,recoverCurrentScope=false,beforeCoverage}={}){
  const {state}=await readSetup(root);
  if(state?.phase!=='editing' || !confirmedStopped)throw Error('Scope reset requires editing phase and explicit confirmation that schedules and active searches are stopped');
@@ -18,24 +25,28 @@ export async function resetSetupScope(root,{confirmedStopped=false,recoverCurren
   if(journal && journal.scope!==snapshot.scope && journal.status!=='complete'){
    if(!recoverCurrentScope)throw Error('Finish the interrupted scope reset before changing configuration again, or explicitly replay against the restored configuration with --recover-current-scope');
    await writeJsonAtomic(path.join(reports,'setup-backups',`scope-recovery-${Date.now()}.json`),journal);
-   journal={...journal,recoveredFromScope:journal.scope,scope:snapshot.scope,restartedAt:new Date().toISOString()};
+   journal={...journal,...replayPlan(state,snapshot),recoveredFromScope:journal.scope,scope:snapshot.scope,restartedAt:new Date().toISOString()};
    await writeJsonAtomic(receipt,journal);
   }
   const coverageFile=path.join(reports,'coverage.json');
   if(!journal || journal.scope!==snapshot.scope){
    if(journal)await writeJsonAtomic(path.join(reports,'setup-backups',`scope-${Date.now()}.json`),journal);
    const raw=await fs.readFile(coverageFile,'utf8').catch(e=>{if(e.code==='ENOENT')return null;throw e;});
-   const coverage=raw===null?{}:JSON.parse(raw);
-   journal={schemaVersion:1,scope:snapshot.scope,status:'started',startedAt:new Date().toISOString(),previousCoverage:coverage};
+   const coverage=raw===null?{}:JSON.parse(raw.replace(/^﻿/,''));
+   journal={schemaVersion:1,scope:snapshot.scope,status:'started',startedAt:new Date().toISOString(),...replayPlan(state,snapshot),previousCoverage:coverage};
    await writeJsonAtomic(receipt,journal);
   }
-  // Replay all sources for now: modest extra work avoids guessing which prose rule altered search eligibility.
-  const {employers}=await employerWorkbook({file:path.join(root,'profile/companies.xlsx')});
-  await employerWorkbook({file:path.join(root,'profile/companies.xlsx'),action:'update',records:employers.map(e=>({Company:e.Company,'Last checked':''}))});
+  // Receipts written before plans existed replay everything.
+  const all=journal.mode!=='employers',names=new Set(journal.employers||[]);
+  const file=path.join(root,'profile/companies.xlsx'),{employers}=await employerWorkbook({file});
+  const records=employers.filter(e=>all || names.has(e.Company)).map(e=>({Company:e.Company,'Last checked':''}));
+  if(records.length)await employerWorkbook({file,action:'update',records});
   const coverage=structuredClone(journal.previousCoverage);
-  coverage.gmailCheckedThrough=null;
-  for(const source of Object.values(coverage.sources||{})){source.lastSuccessfulCheckedThrough=null;source.progress={};}
-  for(const employer of Object.values(coverage.employers||{})){employer.lastChecked='';employer.method='';}
+  if(all){
+   coverage.gmailCheckedThrough=null;
+   for(const source of Object.values(coverage.sources||{})){source.lastSuccessfulCheckedThrough=null;source.progress={};}
+  }
+  for(const [name,employer] of Object.entries(coverage.employers||{}))if(all || names.has(name)){employer.lastChecked='';employer.method='';}
   // Preserve dropped, refreshes, retries, access evidence and all run folders. Profile-hash rules handle old decisions.
   if(beforeCoverage)await beforeCoverage();
   await writeJsonAtomic(coverageFile,coverage);

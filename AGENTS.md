@@ -48,6 +48,8 @@ Include UTC update time, assistant, scope/objective, branch/HEAD/upstream, chang
 
 Keep `PLAN.md` shared for future work/design decisions and `HISTORY.md` shared for verified accomplishments. Do not mark planned work as accomplished. HISTORY.md is newest first: insert new entries directly below the 20-hyphen separator line under its introduction, above older entries. Separate handoffs do not authorize concurrent editing of the same checkout; only one assistant should edit a checkout at a time.
 
+Keep plans current: show what is done, what remains, and the supporting evidence. Distinguish implementation from verification or acceptance; mark an objective complete when all its requirements are met.
+
 Updating these files does not authorize committing, pushing, stashing, switching branches or stopping another assistant's process. Do not commit or push unless the user asks. If a required handoff cannot be written, explain why and provide the snapshot in chat.
 
 ## Communication
