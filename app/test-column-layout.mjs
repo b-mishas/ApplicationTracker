@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {COLUMN_WIDTHS,PRESET_COLUMNS,defaultColumnLayout,PRESET_DEFAULTS_VERSION,upgradePresetLayouts,fitColumnWidths,clampColumnWidth,validColumnWidths} from './column-layout.mjs';
 const standard=['fit','company','group','title','star','country','city','workMode','status'];
 const applied=standard.filter(key=>key!=='star').concat('applicationDate');
-const expected={Shortlisted:[...standard,'postedDate'],New:[...standard,'firstSeen'],Urgent:[...standard,'postedDate'],'In progress':[...standard,'applicationDate'],All:standard,'Applied in total':applied,'Interviews in total':[...applied,'lastInterview'],'Offers in total':[...applied,'lastInterview']};
+const expected={Shortlisted:[...standard,'postedDate'],New:[...standard,'firstSeen'],Urgent:[...standard,'postedDate'],'In progress':[...standard,'applicationDate'],Interviews:[...standard,'applicationDate','lastInterview'],All:standard,'Applied in total':applied,'Interviews in total':[...applied,'lastInterview'],'Offers in total':[...applied,'lastInterview']};
 for(const [preset,columns] of Object.entries(expected)){
  const layout=defaultColumnLayout(preset);
  assert.deepEqual(layout.columns,columns,preset);

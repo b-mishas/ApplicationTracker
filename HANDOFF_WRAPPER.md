@@ -1,19 +1,19 @@
 # Wrapper handoff
 
-Updated 2026-11-27T06:12:00Z — Codex.
+Updated 2026-11-27T12:18:00Z — Codex.
 
 ## Scope and checkout
 
-Ported editor field cleanup from JobTracker e15d33ce646edda43ffc6b970131bfad02269a85. Checkout main, starting HEAD 2ab0c7d; upstream origin/main configured, remote/CI unverified. User authorized this implementation and a scoped commit; no push or packaging. Reciprocal guide/rules are committed in 2ab0c7d.
+User authorized checking and committing the pending deadline/Interviews port if conflict-free and tests pass. main, starting HEAD 6fd8573e818499f08b789de6c203d8bf75bd3862; upstream origin/main locally c00e12d. Remote/CI unverified. Source JobTracker commits c381bde2f7cd479e7ac6b72e464e5299da324f95 and b59ce2bb58ec0322b92c35b76594d1c69394f115. Editor cleanup 4bfdf67 remains intact. No push/build requested.
 
-## Completed editor cleanup
+## Port and integration review
 
-app/entry-editor.mjs protects otherIds, postingUrls and workModeBasis at shared validation level. entry-form.mjs hides aliases and redundant country metadata, retaining Work mode basis as read-only metadata and countries as editable. Unknown custom fields remain editable. Sources gains 20px heading spacing; Applied-row weight is 600. New test-editor-field-policy.mjs covers visibility, rejected protected edits, draft extraction, alias preservation and country synchronization; registered in package.json. Existing integration assertion now expects read-only evidence basis. INTERFACE_FOR_TRACKER and HISTORY document the behavior.
+Optional applicationDeadline imports as a verified ISO date. Newer nonblank observations update it; older/unknown observations preserve known dates. Expanded view displays a bold dark-red date; full Edit supports correction/clearing. Availability remains stored/imported and protected but hidden. Existing inventory needs no migration. Local-time dates, manual urgency and portable paths remain.
 
-Field-policy, existing editor UI-helper and transaction integration tests passed. Changed module syntax and whitespace checks passed. Initial sandbox preview was unreachable; elevated disposable fixture server worked. In-app Chromium at 1280×720 verified expanded Additional fields, hidden aliases/country, read-only basis, screenshot layout and successful notes Save. Other browsers, touch devices and physical acceptance untested. Test/preview processes stopped; no real inventory/settings modified.
+Interviews beneath Applied counts/filters current Interview entries, separately from historical interview totals. It has independent date-sorted layouts with Applied on/Last interview, and is hidden at zero. Responsive visibility caching includes it. Reviewed shared editor/schema/importer/UI/tests/package changes; routine/pristine template, interface/workflow and PLAN coordinate the optional deadline contract. Installed prompts need regeneration separately.
 
-## Separate unfinished work
+Found and removed a duplicate button after closing HTML and a trailing repeated count block from the original port; added unique-ID/navigation assertions. No unmerged entries/conflict markers. Full working-tree and exact staged-snapshot npm test passed (exit 0). A long temporary path blocked the first snapshot's Windows login test; a shorter path passed unchanged code. Chromium fixture at 1280×720 verified formatting, date editing/Save/reload, current versus historical interviews, layout persistence and zero-count hiding; screenshot reviewed. Physical devices/other browsers and actual macOS login remain untested. Preview stopped; no real inventory/settings or ZIP changes.
 
-Deadline/Interviews port remains uncommitted across UI, editor, importer/schema, layout, tests, interface/workflow and routine/template. Its source SHAs and previous passing checks remain in HISTORY; installed prompts and ZIPs unchanged. This commit stages only editor-cleanup hunks in shared files; pending deadline/Interviews changes stay in the working tree.
+## Separate work and next action
 
-Preserve unrelated PLAN, ROADMAP, ROADMAP_SETUP, setup-state/reset, employer-workbook, agent/orchestration and design work. No active operation started by this task remains. Next: review editor cleanup and separately finish/commit the earlier feature port when requested. Prior responsive physical acceptance and preference-save stress limitation remain unresolved; see PLAN and HISTORY. Releases remain stale.
+Setup implementation baseline is committed in 6fd8573; subsequent setup review fixes remain uncommitted in helpers, prompts/templates, docs/roadmaps/tests. See HANDOFF_AGENT.md. This checkpoint accompanies the user-authorized scoped feature commit; setup review fixes and design/ remain unstaged. Prior responsive physical acceptance/preference-save stress limitation and release staleness remain in PLAN/HISTORY. No other operations started by this task.

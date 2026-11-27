@@ -105,6 +105,7 @@ function newRecord(j, ctx) {
     lastObservedAt: j.observedAt, assessedAt: j.observedAt, updatedAt: ctx.now,
     workModeBasis: j.assessmentBasis, workModeAt: j.observedAt
   };
+  if (j.applicationDeadline) { r.applicationDeadline = j.applicationDeadline; r.applicationDeadlineAt = j.observedAt; }
   if (j.provider) { r.provider = j.provider; r.providerJobId = j.providerJobId; }
   if (j.availability !== 'Unverified') r.availabilityAt = j.observedAt;
   return r;
@@ -129,6 +130,8 @@ function mergeInto(rec, j, ctx) {
     for (const k of ['reasoning', 'gaps', 'seniority']) if (j[k] || !rec[k]) set(k, j[k]);
     set('assessmentBasis', j.assessmentBasis); set('assessedAt', j.observedAt);
   } else if (rec.fit == null && j.fit !== null && inRank === exRank) { set('fit', j.fit); }
+  // Unknown or older observations must not erase a verified deadline.
+  if (j.applicationDeadline && j.observedAt >= (rec.applicationDeadlineAt || '')) { set('applicationDeadline', j.applicationDeadline); set('applicationDeadlineAt', j.observedAt); }
   // availability: only evidence-backed observations, newest wins; Unverified never overrides
   if (j.availability !== 'Unverified' && j.observedAt >= (rec.availabilityAt || '')) { set('availability', j.availability); set('availabilityAt', j.observedAt); }
   // Work arrangement and geographic restrictions form one evidence-backed unit.

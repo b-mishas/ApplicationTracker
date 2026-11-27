@@ -49,6 +49,9 @@ try{
  const presetView={...sizedView,updatedAt:6,layoutPreset:'Shortlisted',presetLayouts:{Shortlisted:sizedView.layout,New:{...sizedView.layout,columns:['company','firstSeen']}}};
  assert.equal((await saveView(presetView)).status,200);
  assert.deepEqual(await (await fetch(base+'/api/view-state')).json(),presetView);
+ const interviewView={...presetView,updatedAt:7,layoutPreset:'Interviews',filters:{status:['Interview']},presetLayouts:{...presetView.presetLayouts,Interviews:{...sizedView.layout,columns:['title','status','applicationDate','lastInterview']}}};
+ assert.equal((await saveView(interviewView)).status,200);
+ assert.deepEqual(await (await fetch(base+'/api/view-state')).json(),interviewView);
  for(const presetLayouts of [null,[],{Bogus:sizedView.layout},{New:{...sizedView.layout,columns:['bogus']}}])assert.equal((await saveView({...presetView,presetLayouts})).status,400);
  assert.equal((await saveView({...presetView,layoutPreset:'Bogus'})).status,400);
  assert.equal((await saveView({...presetView,updatedAt:7,layout:{...sizedView.layout,columns:['lastInterview'],sort:'lastInterview'},filters:{lastInterview:'2026-11-01'}})).status,200);

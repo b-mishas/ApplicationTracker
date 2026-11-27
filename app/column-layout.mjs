@@ -17,13 +17,14 @@ export const PRESET_COLUMNS={
  New:[...standardColumns,'firstSeen'],
  Urgent:[...standardColumns,'postedDate'],
  'In progress':[...standardColumns,'applicationDate'],
+ Interviews:[...standardColumns,'applicationDate','lastInterview'],
  All:[...standardColumns],
  'Applied in total':[...applicationColumns],
  'Interviews in total':[...applicationColumns,'lastInterview'],
  'Offers in total':[...applicationColumns,'lastInterview'],
  Custom:[...standardColumns]
 };
-const dateSortedPresets=['In progress','All','Applied in total','Interviews in total','Offers in total'];
+const dateSortedPresets=['In progress','Interviews','All','Applied in total','Interviews in total','Offers in total'];
 export function defaultColumnLayout(preset){
  const columns=[...(PRESET_COLUMNS[preset]??standardColumns)];
  return {columns,order:[...columns,...Object.keys(COLUMN_WIDTHS).filter(key=>!columns.includes(key))],widths:{},sort:dateSortedPresets.includes(preset)?'applicationDate':'star',direction:-1};

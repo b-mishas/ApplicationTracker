@@ -58,7 +58,7 @@ From `app/`: `node import-discoveries.mjs incoming/<file>.json --root ../data [-
 Report filenames strip the final .json; prefer the report path in RESULT. Setup validation relies on two current behaviours; keep them: `--validate-only` writes nothing, and an absolute batch path outside `data/` is accepted.
 
 ## Deadlines / urgency
-The batch has no deadline/urgency fields; Part B reports deadlines in the summary's Flags. Adding such fields needs a Part B change.
+The batch accepts optional `applicationDeadline`: a verified YYYY-MM-DD date, or empty/omitted when unknown. Newer nonblank observations update it using `applicationDeadlineAt`; older/unknown observations preserve a known deadline. Full Edit can correct or clear it. The wrapper displays valid deadlines in bold dark red and hides Availability while retaining its stored/imported evidence. Part B also reports deadlines in summary Flags. Batches still cannot set manual urgency; deadlines do not automatically toggle it.
 
 ## No Python dependency
 The recipient's computer may have no Python (Windows and macOS ship without a usable one). The agent reads the workbook without installing anything and falls back to `coverage.json` for writes, so nothing in the tracker should require Python either.

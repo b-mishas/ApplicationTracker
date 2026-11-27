@@ -372,9 +372,11 @@ th .column-resize-handle:focus-visible{outline-offset:-2px}
 .column-resizing,.column-resizing *{cursor:col-resize!important;user-select:none!important}
 
 #new-count:not(.has-new){color:#829087}
-.sidebar button[data-status-preset=Urgent]{width:calc(100% - 18px);margin-left:18px;padding-block:5px;font-size:12px}
-.sidebar button[data-status-preset=Urgent] .sidebar-count{font-size:calc(12px + 1pt)}
+.sidebar button[data-status-preset=Urgent],.sidebar button[data-status-preset=Interviews]{width:calc(100% - 18px);margin-left:18px;padding-block:5px;font-size:12px}
+.sidebar button[data-status-preset=Urgent] .sidebar-count,.sidebar button[data-status-preset=Interviews] .sidebar-count{font-size:calc(12px + 1pt)}
 .sidebar button[data-status-preset=Urgent][aria-pressed=true]{box-shadow:inset 3px 0 #bb3834}
+
+.application-deadline{color:#bb3834;font-weight:700}
 th .column-label:not(.filtered):is([data-filter=workMode],[data-filter=status],[data-filter=firstSeen],[data-filter=applicationDate],[data-filter=lastInterview],[data-filter=postedDate]){white-space:nowrap}
 
 /* Responsive navigation opens over results; only pinning reserves its width. */

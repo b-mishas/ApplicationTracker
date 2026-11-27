@@ -19,3 +19,7 @@ Operational verification retains its historical run. Evolving initialSearch/sear
 11 behavioral recovery groups passed, including every reported regression, malformed/no-state reset paths, explicit revert recovery, later backlog resolution/new unfinished work and scope filtering. Template parity, diagnostics, capture-check, finish-run, syntax/local-link/whitespace checks passed. No full-suite rerun or live interview, scheduled-platform, browser/recipient acceptance. All fixtures were isolated; no personal profile/workbook/inventory, coverage, installed prompt or schedule changed.
 
 Next: review these fixes, then agree model/spend cap for isolated attended setup/resume rehearsals and actual scheduled-platform/recipient acceptance. M2–M6 acceptance remains open. Existing saved dependency hashes may need conservative review after helper corrections; never silently rewrite consent. No active operations.
+
+## Deadline contract integration — Codex, 2026-11-27
+
+The routine/pristine template now request optional verified `applicationDeadline` as YYYY-MM-DD, omitted when unknown. Deadline Flags and the ban on batch urgency remain. This paragraph is staged separately from setup-resume prompt changes. Full working-tree and exact staged-snapshot npm test passed (exit 0); installed/scheduled prompts were not regenerated. Preserve the setup review fixes above as uncommitted work.

@@ -62,6 +62,17 @@ for(const key of ['status','applicationDate','applicationStatusText','interviewD
 }
 console.log('PASS: linkless saves, primary link classification, draft visibility, stage markup and coalesced textarea resizing.');
 
+const deadlineContext=vm.createContext({...history,dateMonths:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']});
+vm.runInContext(block('function deadlineMarkup(', 'function detail('),deadlineContext);
+assert.equal(deadlineContext.deadlineMarkup({applicationDeadline:'2026-12-03'}),'\nDeadline: <strong class="application-deadline">3 Dec 2026</strong>');
+for(const value of [undefined,'','3 days ago','2026-02-30'])assert.equal(deadlineContext.deadlineMarkup({applicationDeadline:value}),'');
+const deadlineJob={...job,applicationDeadline:'2026-12-03',availability:'Open'};
+assert(formHelpers.renderEntryForm(deadlineJob).includes('data-entry-field="applicationDeadline"'));
+assert(!formHelpers.renderEntryForm(deadlineJob).includes('Availability'));
+editor.validateEntryChanges(job,{applicationDeadline:'2026-12-03'});
+assert.throws(()=>editor.validateEntryChanges(job,{applicationDeadline:'2026-02-30'}));
+console.log('PASS: bold dated deadline, invalid/unknown suppression, editable calendar and hidden availability.');
+
 // Exercise the actual sidebar scheduler/cache without a live browser or inventory.
 {
  let frames=[],measurements=0,writes=0;

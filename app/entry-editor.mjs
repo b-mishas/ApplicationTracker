@@ -7,11 +7,12 @@ export const entryFields = [
  ['url','Primary listing URL','url','Position',2000], ['linkType','Link type',['posting','search'],'Position'],
  ['reasoning','Why it fits','textarea','Assessment',50000], ['gaps','Gaps','textarea','Assessment',50000],
  ['assessmentBasis','Assessment',['Title only','Posting reviewed'],'Assessment'],
- ['seniority','Seniority','text','Assessment',300], ['availability','Availability',['Unverified','Open','Closed'],'Assessment'],
+ ['seniority','Seniority','text','Assessment',300],
  ['city','City','text','Location',200], ['countries','Countries (codes separated by commas)','countries','Location'],
  ['locationRaw','Location','text','Location',1000],
  ['workMode','Work mode',['On-site','Hybrid','Remote','Unknown'],'Location'], ['workModeRaw','Work mode as recorded','text','Location',500],
  ['firstSeen','First found','date','Location'], ['postedDate','Posted','date','Location'],
+ ['applicationDeadline','Deadline','date','Location'],
  ['status','Status',STATUS_VALUES,'Application'], ['urgent','Urgent','boolean','Application'],
  ['applicationDate','Application date','date','Application'], ['interviewDate','Interview date','date','Application'],
  ['offerDate','Offer date','date','Application'], ['interviewOutcomeDate','Rejection / withdrawal date','date','Application'],
@@ -19,7 +20,7 @@ export const entryFields = [
  ['notes','Notes','textarea','Application',50000],
  ['provider','Provider','text','Advanced',60], ['providerJobId','Provider job ID','text','Advanced',200]
 ];
-export const readOnlyFields = new Set(['id','updatedAt','createdAt','lastSeen','observedAt','otherIds','postingUrls','country','interviewOutcome','dismissedFromStatus','applicationSourceRow','applicationCity','lastObservedAt','assessedAt','workModeBasis','workModeAt','availabilityAt','statusHistory']);
+export const readOnlyFields = new Set(['id','updatedAt','createdAt','lastSeen','observedAt','otherIds','postingUrls','country','interviewOutcome','dismissedFromStatus','applicationSourceRow','applicationCity','lastObservedAt','assessedAt','workModeBasis','workModeAt','applicationDeadlineAt','availabilityAt','availability','statusHistory']);
 const unsafeKeys = new Set(['__proto__','prototype','constructor']);
 const known = new Map(entryFields.map(field=>[field[0],field]));
 export function fieldLabel(key){

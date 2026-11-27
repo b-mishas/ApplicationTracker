@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node app/launch.mjs",
-    "test": "node app/test-setup-state.mjs && node app/test-capture-check.mjs && node app/test-record-dropped.mjs && node app/test-finish-run.mjs && node app/test-read-posting.mjs && node app/test-diagnostics.mjs && node app/test-templates.mjs && node app/test-store-lock.mjs && node app/test-import.mjs && node app/test-posted-dates.mjs && node app/test-page-notice.mjs && node app/test-entry-editor.mjs && node app/test-entry-editor-ui.mjs && node app/test-editor-field-policy.mjs && node app/test-view-model.mjs && node app/test-column-layout.mjs && node app/test-group-colours.mjs && node app/check.mjs && node app/test-portable.mjs && node app/test-startup.mjs && node app/test-port-settings.mjs",
+    "test": "node app/test-setup-state.mjs && node app/test-capture-check.mjs && node app/test-record-dropped.mjs && node app/test-finish-run.mjs && node app/test-read-posting.mjs && node app/test-diagnostics.mjs && node app/test-templates.mjs && node app/test-store-lock.mjs && node app/test-import.mjs && node app/test-posted-dates.mjs && node app/test-page-notice.mjs && node app/test-entry-editor.mjs && node app/test-entry-editor-ui.mjs && node app/test-editor-field-policy.mjs && node app/test-view-model.mjs && node app/test-column-layout.mjs && node app/test-interviews-preset.mjs && node app/test-group-colours.mjs && node app/check.mjs && node app/test-portable.mjs && node app/test-startup.mjs && node app/test-port-settings.mjs",
     "check": "node app/self-check.mjs",
     "build": "node scripts/build-release.mjs"
   },

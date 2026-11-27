@@ -34,7 +34,7 @@ const rowStage=status=>stageClasses.get(status)||'';
 const defaultStatusFilter=()=>statuses.filter(status=>!['Rejected','Dismissed','Withdrawn'].includes(status));
 const filters={status:defaultStatusFilter()};
 const inProgressStatuses=['Applied','Interview','Offer'];
-const statusPresets={New:['New'],Shortlisted:['Shortlisted'],Urgent:['New','Shortlisted'],'In progress':inProgressStatuses,[APPLIED_TOTAL]:[APPLIED_TOTAL],[INTERVIEW_TOTAL]:[INTERVIEW_TOTAL],[OFFER_TOTAL]:[OFFER_TOTAL],All:statuses};
+const statusPresets={New:['New'],Shortlisted:['Shortlisted'],Urgent:['New','Shortlisted'],'In progress':inProgressStatuses,Interviews:['Interview'],[APPLIED_TOTAL]:[APPLIED_TOTAL],[INTERVIEW_TOTAL]:[INTERVIEW_TOTAL],[OFFER_TOTAL]:[OFFER_TOTAL],All:statuses};
 const compactColumns=new Set(['fit','star','country','workMode','status','firstSeen','applicationDate','lastInterview','postedDate']);
 const visible=new Set(fields.slice(0,9).map(x=>x[0]));
 let layoutPreset,presetLayouts={};
@@ -179,9 +179,14 @@ function copyRowField(control){
  if(field)field.value=control.value;
  return field;
 }
+function deadlineMarkup(job){
+ if(!validStageDate(job.applicationDeadline,{allowEmpty:false}))return '';
+ const [year,month,day]=job.applicationDeadline.split('-');
+ return `\nDeadline: <strong class="application-deadline">${Number(day)} ${dateMonths[Number(month)-1]} ${year}</strong>`;
+}
 function detail(j){
  if(editingId===j.id)return `<tr class="detail ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}"><td colspan="${visible.size}"><div class="detail-toolbar"><button type="button" class="entry-save save">Save</button><button type="button" class="entry-cancel">Cancel</button><span class="entry-save-state" role="status" aria-live="polite"></span></div>${renderEntryForm(j,stageControls(j,true),'<label>Notes<textarea class="edit-notes" data-entry-field="notes" placeholder="Questions, follow-ups, application notes…">'+esc(j.notes)+'</textarea></label>')}</td></tr>`;
- return `<tr class="detail ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}"><td colspan="${visible.size}"><div class="detail-toolbar">${detailUndoControls()}<button type="button" class="entry-edit">Edit</button></div><div class="detail-grid"><section><h3>Why it fits</h3><p>${esc(j.reasoning||'No assessment yet.')}</p><h3>Gaps</h3><p>${esc(j.gaps||'No caveats recorded.')}</p></section><section><h3>Evidence & location</h3><p>Assessment: <b>${esc(j.assessmentBasis)}</b>\nSeniority: ${esc(j.seniority||'Unknown')}\nLocation: ${esc(j.locationRaw)}\nFirst found: ${esc(j.firstSeen)}\nPosted: ${esc(j.postedDate||'Unknown')}\nAvailability: ${esc(j.availability||'Unverified')}</p><h3>Sources</h3>${j.sources.map(s=>`<p>${esc(s.label)}${safeUrl(s.url)?` · <a target="_blank" rel="noopener noreferrer" href="${safeUrl(s.url)}">${j.linkType==='search'?'Open search':'Open listing'} ↗</a>`:''}</p>`).join('')}</section><section class="application-steps"><h3>Application steps</h3>${stageControls(j)}<label>Notes<textarea class="edit-notes" placeholder="Questions, follow-ups, application notes…">${esc(j.notes)}</textarea></label><button class="save" data-id="${esc(j.id)}" disabled>Save changes</button> <button type="button" class="cancel" disabled title="Discard unsaved edits; saved status changes are kept">Cancel</button><span class="save-state" role="status"></span></section></div></td></tr>`;}
+ return `<tr class="detail ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}"><td colspan="${visible.size}"><div class="detail-toolbar">${detailUndoControls()}<button type="button" class="entry-edit">Edit</button></div><div class="detail-grid"><section><h3>Why it fits</h3><p>${esc(j.reasoning||'No assessment yet.')}</p><h3>Gaps</h3><p>${esc(j.gaps||'No caveats recorded.')}</p></section><section><h3>Evidence & location</h3><p>Assessment: <b>${esc(j.assessmentBasis)}</b>\nSeniority: ${esc(j.seniority||'Unknown')}\nLocation: ${esc(j.locationRaw)}\nFirst found: ${esc(j.firstSeen)}\nPosted: ${esc(j.postedDate||'Unknown')}${deadlineMarkup(j)}</p><h3>Sources</h3>${j.sources.map(s=>`<p>${esc(s.label)}${safeUrl(s.url)?` · <a target="_blank" rel="noopener noreferrer" href="${safeUrl(s.url)}">${j.linkType==='search'?'Open search':'Open listing'} ↗</a>`:''}</p>`).join('')}</section><section class="application-steps"><h3>Application steps</h3>${stageControls(j)}<label>Notes<textarea class="edit-notes" placeholder="Questions, follow-ups, application notes…">${esc(j.notes)}</textarea></label><button class="save" data-id="${esc(j.id)}" disabled>Save changes</button> <button type="button" class="cancel" disabled title="Discard unsaved edits; saved status changes are kept">Cancel</button><span class="save-state" role="status"></span></section></div></td></tr>`;}
 function dirty(){
  const form=document.querySelector('.entry-form');
  if(form)return formSnapshot(form)!==editorBaseline;
@@ -310,6 +315,9 @@ function refreshOverview(){
  $('new-count').textContent=data.jobs.filter(j=>j.status==='New').length;
  $('urgent').textContent=data.jobs.filter(j=>j.urgent&&statusPresets.Urgent.includes(effectiveStatus(j))).length;
  $('active').textContent=data.jobs.filter(j=>inProgressStatuses.includes(effectiveStatus(j))).length;
+ const interviews=data.jobs.filter(j=>effectiveStatus(j)==='Interview').length;
+ $('interviews-current').textContent=interviews;
+ $('interviews-preset').hidden=interviews===0;
  $('new-count').classList.toggle('has-new',Number($('new-count').textContent)>0);
  $('rail-new-count').textContent=$('new-count').textContent;
  $('rail-shortlist-count').textContent=$('shortlist').textContent;
@@ -968,7 +976,7 @@ function updateSidebarSpace(){
 function layoutSidebarSpace(){
  // Intrinsic sizes change with counts, visibility, fonts and CSS breakpoints,
  // not with every pixel of a drag. Keep constrained panel sizes out of the cache.
- const key=JSON.stringify([sidebar.textContent,$('offers-preset').hidden,
+ const key=JSON.stringify([sidebar.textContent,$('offers-preset').hidden,$('interviews-preset').hidden,
   innerWidth<=580,innerWidth<=850,compactNavigation.matches,innerWidth<=1600]);
  if(key!==sidebarMeasurementKey){sidebarMeasurementKey=key;sidebarIntrinsicWidths.clear();}
  const fullLabels=sidebarDensity==='full'||(sidebarDensity==='auto'&&innerWidth>1600);

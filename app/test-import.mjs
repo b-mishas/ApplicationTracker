@@ -32,6 +32,18 @@ await test('valid additions get ids, New status, empty notes, importer-owned dat
   const rec = d.jobs.at(-1); assert.match(rec.id, /^[0-9a-f-]{36}$/); assert.equal(rec.status, 'New'); assert.equal(rec.notes, ''); assert.equal(rec.firstSeen, '2026-11-03'); assert.equal(rec.country, 'CH');
   assert.equal((await readdir(path.join(dir, 'backups'))).length, 1);
 });
+await test('deadline imports, updates only from newer observations and survives unknown dates', async dir => {
+ const a=mk({applicationDeadline:'2026-11-10'});await imp(dir,await batch(dir,[a]));
+ let rec=(await read(dir)).jobs.find(j=>j.url===a.url);assert.equal(rec.applicationDeadline,'2026-11-10');
+ for(const [observedAt,applicationDeadline,expected] of [['2026-11-04T05:00:00Z','2026-11-12','2026-11-12'],['2026-11-02T05:00:00Z','2026-11-09','2026-11-12'],['2026-11-05T05:00:00Z','','2026-11-12']]){
+  await imp(dir,await batch(dir,[{...a,observedAt,applicationDeadline,sources:undefined}],{day:observedAt.slice(0,10)}));
+  rec=(await read(dir)).jobs.find(j=>j.url===a.url);assert.equal(rec.applicationDeadline,expected);
+ }
+});
+await test('invalid deadline is rejected without rejecting a valid neighbour', async dir => {
+ const bad=mk({applicationDeadline:'2026-02-30'}),good=mk({applicationDeadline:'2026-12-01'});
+ const result=await imp(dir,await batch(dir,[bad,good]));assert.equal(result.rejected,1);assert.equal(result.added,1);
+});
 await test('repeated import of the same batch is idempotent (no write, no new backup)', async dir => {
   const p = await batch(dir, [mk()]); await imp(dir, p); const before = await readFile(path.join(dir, 'jobs.json'), 'utf8');
   const r = await imp(dir, p); assert.equal(r.added, 0); assert.equal(r.updated, 0); assert.equal(r.unchanged, 1); assert.equal(r.written, false);

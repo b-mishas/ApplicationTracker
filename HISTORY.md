@@ -4,6 +4,11 @@
 
 --------------------
 
+## 2026-11-27 — Deadline/Interviews port verified for commit
+
+- Reviewed the pending port against editor cleanup 4bfdf67 and setup baseline 6fd8573. Removed a duplicate Interviews button after the closing HTML tag and a repeated trailing count block from the earlier port; added unique-ID/navigation-placement assertions. No unmerged entries or conflict markers found.
+- Full working-tree and exact staged-snapshot npm test passed (exit 0). The first snapshot exceeded Windows startup-command path limits; a shorter temporary path passed unchanged code. In-app Chromium at 1280×720 verified current-interview filtering versus historical totals, independent columns/layout after reload, deadline formatting, calendar Save/reload and zero-count hiding. No live records/settings, installed prompts or ZIPs changed. Source commits: c381bde2f7cd479e7ac6b72e464e5299da324f95 and b59ce2bb58ec0322b92c35b76594d1c69394f115. Separate setup review fixes remain unstaged.
+
 ## 2026-11-27 — Setup readiness review fixes
 
 - Addressed Astra's four findings: explicit employer/source approval bases and actionable topic blockers; unfinished/malformed reset gating independent of scope equality (including legacy guard); descriptive Name excluded from scope/assessment dependencies while whole-topic approval remains; evolving current-scope search progress separated from historical operational verification.
@@ -45,6 +50,13 @@
 
 - Added compare-before-patching guidance, recovery from partially applied patches, a field-contract checklist and early browser-tooling verification to WRAPPER_PORTING.md. Project rules reference the guide.
 - Documentation links and whitespace checked; no runtime checks needed for this amendment. Feature-port implementation remains separate and uncommitted.
+
+## 2026-11-26 — Verified deadlines and current Interviews preset
+
+- Ported JobTracker c381bde2f7cd479e7ac6b72e464e5299da324f95 and b59ce2bb58ec0322b92c35b76594d1c69394f115 onto main. Optional verified applicationDeadline imports from newer nonblank observations, displays in bold dark red and is editable as a calendar date. Availability stays stored/imported but is hidden in the wrapper. No migration needed.
+- Conditional Interviews beneath Applied counts/filters current Interview records, clears Urgent filtering and retains its own date-sorted layout with Applied on and Last interview. Responsive sidebar visibility caching includes the new preset.
+- Routine/pristine template and shared interface/workflow document the optional date; local-time behavior, manual urgency and portable defaults remain. Installed prompts and dist were not updated.
+- Focused importer (62/62), editor integration/UI helpers, preset/layout, view-model, API and template checks passed; localhost tests required escalation after sandbox EACCES. Syntax/whitespace checked. Playwright module loading failed; browser visual acceptance pending. No real data, commit, push or release build.
 
 ## 2026-11-26 — Responsive table and collapsible navigation
 

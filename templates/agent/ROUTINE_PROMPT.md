@@ -177,7 +177,7 @@ Reasoning: at most two sentences of specific matching evidence. Gaps: missing re
 
 Look for explicit application deadlines in reviewed postings. For New or Shortlisted vacancies, a verified deadline from today through seven calendar days ahead (Part A time zone, inclusive) is urgent; account for any stated deadline time and time zone, and never flag a passed deadline as upcoming. Do not infer deadlines from posting age; "open until filled" is not a deadline; a passed deadline alone does not prove closure.
 
-The batch has no deadline or urgency fields; do not invent fields, call the tracker's web API or edit jobs.json. Report under Flags:
+Include a verified deadline in the optional batch field `applicationDeadline` as `YYYY-MM-DD`; omit it when unknown. Never infer a date from posting age or use relative wording. Batches still do not accept `urgent`; do not add it, call the tracker's web API or edit jobs.json. Report under Flags:
 - **URGENT — YYYY-MM-DD:** Company | Title | URL
 - **Deadline passed — YYYY-MM-DD:** Company | Title | URL (existing Shortlisted records only; do not close them)
 
