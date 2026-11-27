@@ -39,6 +39,9 @@ Acceptance: walkthroughs of fresh setup, partial setup and reconfiguration reach
 - [x] Implement state persistence and validation with existing Node facilities. Prefer a small validator/persistence helper only where it prevents concrete errors; no framework or per-tool bookkeeping.
 - [x] Detect missing, malformed and unknown-version state; reconcile actual artifacts before trusting status flags.
 - [x] Implement targeted invalidation and preserve approved unaffected topics.
+- [x] Preserve stable source selection generations across resumes and carry unchanged-source obligations through selective reset transitions.
+- [x] Standardize new source outcomes/delegated evidence on millisecond UTC and regression-test same-second freshness without rounding selections.
+- [x] Provide evidence-preserving orphan classification for verified empty initialization and checked handover, with regression tests.
 - [x] Discover an existing scheduled task before creation. If creation succeeded but recording its ID failed, reconcile by installed prompt/folder and task details; ambiguous matches require clarification, not another task. (Instructions only; platform task discovery is unrehearsed.)
 - [x] Preserve existing employer rows and configuration. Use wholesale replacement only for an explicitly reviewed replacement; it is not a resume default.
 
@@ -169,8 +172,8 @@ Independent work may continue around a blocked optional source. A required unans
 
 | Change | Work that becomes stale |
 |---|---|
-| Strengths, gaps, mismatch signals or fit definitions | Relevant calibration and profile approval; routine profile-hash reassessment rules still apply; no checkpoint replay |
-| §9 special rules or exclusions | Calibration and employer/source suitability; no checkpoint replay |
+| Strengths, gaps or fit definitions | Relevant calibration and profile approval; routine profile-hash reassessment rules still apply; no checkpoint replay |
+| §7 mismatch signals or §9 special rules/exclusions | Calibration, employer/source suitability and replay of source checkpoints: listing readers use these before capture |
 | Roles, seniority, geography or authorization | Relevant calibration, employer/source suitability, final profile approval and replay of all source checkpoints |
 | Source choices | Source configuration, coverage expectations and replay of all source checkpoints |
 | Employer rows only | Employer approval and replay of just the added/edited employers; Gmail and portal checkpoints retained |
@@ -185,7 +188,7 @@ Save at meaningful boundaries (answer batch, approval, artifact change, capabili
 
 - **Protect active configuration:** before changing live artifacts, identify/pause all tasks targeting ROOT with authorization and wait for active executions to finish. Persist editing phase before edits; the new routine guard blocks new runs during editing or stale approval. Legacy installed tasks still require manual/platform coordination. Atomic writes of individual files do not protect the configuration as a whole.
 - **Semantic approval fingerprints:** profile topics use section-level content; employer approval excludes row numbering, Last checked and Careers page. Routine bookkeeping does not invalidate approval or scheduled evidence. Calibration additionally depends on the reviewed personal facts/rules. Keep the search routine's existing profile-hash contract.
-- **Scope-dependent search recovery:** changes to eligibility, roles or sources may leave uncaptured vacancies behind old checkpoints. Any eligibility, source or search-setting change replays all sources: clear Gmail/portal progress and employer successful dates in both workbook and coverage, preserving inventory/evidence. A change confined to employer rows replays only the added/edited employers. Strengths, gaps, mismatch signals and §9 never trigger replay: capture-before-selection keeps every find and profile-hash reassessment re-rates them. A private write-ahead reset receipt supports interruption/retry. Review the look-back and workload; finer source-specific resets beyond employer rows are deferred until dependencies can be established reliably.
+- **Scope-dependent search recovery:** changes to eligibility, roles or sources may leave uncaptured vacancies behind old checkpoints. Any eligibility, source or search-setting change replays all sources: clear Gmail/portal progress and employer successful dates in both workbook and coverage, preserving inventory/evidence. A change confined to employer rows replays only the added/edited employers. Strengths and gaps alone do not trigger replay. §7/§9 do trigger replay because listing readers can omit openings before the ledger sees them; reassessment alone is insufficient. A private write-ahead reset receipt supports interruption/retry. Review the look-back and workload; finer source-specific resets beyond employer rows are deferred until dependencies can be established reliably.
 - **Evidence scope:** an empty successful import skips inventory replacement/backups. Require a temporary storage/backup probe in the actual scheduled context, plus isolated positive-record insertion/rendering acceptance; never add fictional personal inventory. Label each piece of evidence by what and where it actually tested.
 - **Employer preservation:** revision-checked setup upsert changes only supplied approved fields/additions and retains other rows/content. Removal/renaming requires a reviewed replacement. The routine's restricted update operation stays restricted.
 - **Calibration representation:** historical/calibration-only examples and reading evidence stay outside the actionable ledger; current actionable vacancies use its existing states. Do not invent a ledger state or let historical examples become pending work/dropped entries.
@@ -201,12 +204,20 @@ Reset recovery is a central activation/search prerequisite even when scope equal
 
 Historical scheduled-operation proof and evolving search progress have separate evidence lifetimes. Operational verification depends on the installed prompt, installation and task identity, not on profile wording. Keep verification.runId; tag new search manifests with installation ID and scope fingerprint. Derive progress from matching runs since reset, latest finish/retry, source outcomes across runs, coverage unfinished work and open vacancies. Later successful checks may resolve initial backlog; newer unfinished sources must make progress partial again. Do not infer current scope from a newer filename or complete label. Unclassified legacy evidence remains uncertain until reviewed.
 
+### Astra refinement implementation (2026-11-27)
+
+- Source work is tracked by stable selection generations/times, journaled before due.json. Resuming/reselecting does not refresh them; older outcomes cannot satisfy newer obligations. The routine carries unresolved obligations into its compatible due/retry process within existing limits.
+- Selective reset receipts record from/to scopes and affected employers. Retained transition history carries unchanged-source obligations across multiple employer-only resets; full resets end the old era. Missing transition evidence blocks completion or requires an explicitly reviewed full replay.
+- Replay dependencies include §7/§9 because listing readers filter before capture. Strengths/gaps remain assessment-only. The profile validator exempts exact shipped guidance, not arbitrary quoted facts.
+- Orphan recovery inspects nested payloads and retains classification/proof. Empty initialization must be proven; handover checks every byte-copy/consumed reference, captured structured finds and target-run source outcomes. Changing retained evidence invalidates the classification. No deletion or inferred historical scope.
+- Automated regression coverage supports these implementation checkboxes. Attended takeover, interrupted live searches and scheduled/recipient acceptance remain open above.
+
 ### Second review fixes (2026-11-27)
 
 - Only the latest run must be finished with finish, due and source evidence. Older interrupted or taken-over runs contribute their dated outcomes and due lists where present; coverage `unfinished` and open finds carry their unresolved work, consistent with the orchestration invariants.
 - Setup discovery runs carry `setupDiscovery: true` and the setupId and are listed in `discoveryRuns`. The routine takes them over (and, when guarded, any folder without guard identity) instead of continuing them, so a setup-day verification run gets the current installation/scope identity.
 - A stopped-search confirmation must be newer than the last saved state; activation clears it.
-- Suitability uses background inputs, roles, seniority, geography and §9; calibration additionally uses §5–7. Search scope excludes strengths/gaps/mismatch signals, §9, timezone and language.
+- Suitability uses background inputs, roles, seniority, geography and §7/§9; calibration additionally uses strengths/gaps. Search scope excludes strengths/gaps, timezone and language, but includes §7/§9 listing filters.
 - Inspect orders blockers by prerequisite and uses capabilities, limitations and discoveryRuns: verified Gmail gates activation, a standing §10 limitation needs recorded consent, and profile blockers name line numbers while ignoring quoted template guidance.
 - The guard skips the search-progress scan; employer fingerprints sort locale-independently; optional state objects are shape-checked; previous-state backups are capped at 50.
 
@@ -251,6 +262,11 @@ Overall setup can be ready with accepted limitations and a recoverable initial b
 | Name correction versus authorization edit | Name retains search/assessment dependencies; authorization invalidates them |
 | Partial verification then later completed search | Progress advances from matching source evidence while original operational proof is retained |
 | Complete verification then later unfinished source work | Progress becomes partial; other-scope/untagged evidence cannot falsely complete it |
+| Selection and outcome in the same second | New evidence preserves millisecond UTC; a later .900 check satisfies .640, earlier/coarse timestamps do not; selections are never rounded |
+| Old check followed by newer interrupted due selection | Remains unresolved until a post-selection success; resume/rewrite preserves the selection generation |
+| Two selective resets with an unchanged pending source | Old obligation survives both transitions; affected employers get fresh selections |
+| Quoted unresolved facts versus exact template guidance | Fact placeholders and quoted examples have line-number blockers; exact guidance is exempt |
+| Empty orphan, nested results and verified handover | Whole-folder fingerprint and proof required; changed/missing payloads invalidate classification |
 | Diagnostics and package audit | No personal setup-state data exposed |
 | Strengths or mismatch edit after activation | Calibration review only; suitability, scope and checkpoints unchanged |
 | Employer added or edited, nothing else | Only those employers replayed; Gmail and portal checkpoints kept |

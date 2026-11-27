@@ -4,6 +4,23 @@
 
 --------------------
 
+## 2026-11-27 — Millisecond source evidence and recovery implementation commit
+
+- Addressed Astra's final precision finding: the routine now obtains system-clock UTC timestamps with node -p "new Date().toISOString()", preserving all three millisecond digits in new source-evidence at values and passing the same command/requirement to delegated employer, portal and refresh readers. Updated the pristine routine, workflow/interface and roadmap progress. Freshness comparisons and selection times are unchanged; ambiguous legacy ordering requires an actual recheck, never invented fractions or rounding.
+- Added a same-second regression: selection .640 rejects outcomes .000/.100/.639 and accepts .900, retains the exact persisted selection time, and preserves readable whole-second legacy evidence when it is demonstrably later. Also verifies the documented clock command emits millisecond ISO UTC.
+- Focused checks passed: source obligations/recovery 7/7, setup-state 18/18, template parity, finish-run, diagnostics, syntax/local links/whitespace. The broader implementation's full npm test passed in the prior milestone; it was not rerun after this instruction/regression correction. User authorized a scoped [Agent] implementation commit including the prior uncommitted Astra refinements. Unrelated design/ is excluded; no push, ZIP build, personal data or live schedule change.
+- Live setup, scheduled-platform and unaided recipient acceptance remain explicitly unfinished.
+
+
+## 2026-11-27 — Astra source-obligation and orphan-recovery refinements
+
+- Accepted Astra's five findings, treating selection freshness and selective-reset carry-over as one source-obligation model. Added app/setup-progress.mjs: stable source selection IDs/times in a per-run due-selection journal, compatible due.json, structured source-work output, and transition-aware progress. Repeated selection/resume preserves generations; an older successful check cannot satisfy newer due work. The routine carries unresolved selections into its existing due/retry flow within existing limits.
+- Reset receipts record installation/from/to scopes and affected employers; retained completed receipts carry unchanged-source work through multiple selective resets. A full reset starts a new era. Missing selective history stays unresolved, with an explicit stopped --all-sources fallback. Revert recovery uses full replay, avoiding unsafe narrowing after a partial reset.
+- Profile §7/§9 listing filters now invalidate replay/suitability; strengths/gaps alone remain assessment-only. Placeholder detection exempts exact shipped guidance rather than arbitrary blockquotes. Added attended orphan classification: full nested-file fingerprints, proven-empty initialization or verified retained handover, captured-find/source-outcome checks, consumed references and archived previous classifications. No deletion or inferred historical scope.
+- Updated roadmaps with checked implementation items and explicit design refinements; live acceptance tasks remain unchecked. Updated prompts/pristine copies, customization/workflow/interface, orchestration roadmap, test registration and future release inclusion. No runtime personal state, real inventory/profile/workbook, installed prompt or schedule changed; no commit, push or ZIP build.
+- Verification: full npm test exit 0; final refinements rechecked with source-obligation/recovery 6/6, setup-state 18/18, template parity, finish-run and diagnostics. New fixtures cover stale source success, resume/journal recovery, two selective transitions, CLI-to-finish retry integration, quoted content, nested orphan payloads, missing find/consumed references/source checks, proof drift and classification archives. Syntax, local links and whitespace checked. Live assistant behavior, platform execution and unaided recipient acceptance remain open; classification/extraction truth still needs attended evidence review.
+
+
 ## 2026-11-27 — Claude setup fixes prepared for scoped commit
 
 - User requested one [Agent] commit containing Claude's second-review setup fixes and all pending documentation/rule edits, with Claude first and Codex second in co-author trailers. Includes roadmap milestone ordering/checkbox clarification, matching AGENTS/CLAUDE planning rules and existing PLAN corrections. Unrelated design/ is excluded; deadline/Interviews implementation is already committed separately in 5985c55.

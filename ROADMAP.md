@@ -69,10 +69,10 @@ Each run saves its summary and a short `run-log.json` (models, access, checklist
 
 Turn the linear setup interview into a resumable process driven by saved prerequisites and approvals. Keep the profile and employer workbook authoritative; add a small private setup-state file for topic readiness, unanswered questions, capability evidence and installed-task references. Preserve approved work across sessions and invalidate only the checks affected by a change.
 
-Separate personalization readiness, verified scheduled operation and initial-search completion. Check feasibility early, strengthen calibration at the fit 2/3 boundary, resolve optional-access limitations consistently, and verify setup discoveries pass safely to the routine. Reconfiguration must pause schedules and wait for active searches; ordinary workbook updates do not invalidate approval. Scope changes require checkpoint replay (only the changed employers when nothing else changed), and empty imports need separate storage evidence. Detailed implementation and acceptance plan: [ROADMAP_SETUP.md](ROADMAP_SETUP.md). State/recovery helpers and revised prompts are implemented; live scheduled and recipient acceptance remain open.
+Separate personalization readiness, verified scheduled operation and initial-search completion. Check feasibility early, strengthen calibration at the fit 2/3 boundary, resolve optional-access limitations consistently, and verify setup discoveries pass safely to the routine. Reconfiguration must pause schedules and wait for active searches; ordinary workbook updates do not invalidate approval. Scope changes, including §7/§9 listing filters, require checkpoint replay (only the changed employers when nothing else changed, with unchanged-source obligations preserved), and empty imports need separate storage evidence. Detailed implementation and acceptance plan: [ROADMAP_SETUP.md](ROADMAP_SETUP.md). State/recovery helpers and revised prompts are implemented; live scheduled and recipient acceptance remain open.
 
 - [x] Define the state, ownership and readiness contracts
-- [x] Implement conservative resume and targeted invalidation
+- [x] Implement conservative resume, stable source obligations, selective carry-over and evidence-preserving orphan recovery
 - [x] Improve interview, calibration and final profile approval
 - [x] Verify capabilities early and install schedules repeatably
 - [x] Reconcile discovery handover and operational evidence

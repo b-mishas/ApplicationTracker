@@ -1,5 +1,23 @@
 # Orchestration implementation history
 
+## 2026-11-27 — Source evidence precision matches stable selections
+
+Astra reproduced a legitimate later check losing ordering when the documented date command truncated its fraction. New source-evidence timestamps, including delegated readers, now use system-clock node -p "new Date().toISOString()" and retain three millisecond digits. Strict comparisons are unchanged: rounding selections down could admit earlier same-second checks, so coarse legacy evidence remains unresolved unless its recorded instant already proves freshness. The routine/pristine copy, helper/interface docs and setup roadmap reflect this contract.
+
+Same-second regression verifies selection .640 versus earlier .000/.100/.639 and later .900, exact selection retention, legacy precision behavior and actual Node clock output. Source recovery 7/7, setup-state 18/18, template parity, finish-run, diagnostics, syntax/link/whitespace checks passed. The prior full npm pass remains recorded above its implementation milestone; no new live/platform/recipient acceptance or real-data change. This correction and the reviewed source-obligation/orphan implementation are prepared for the user-authorized scoped commit; no push or distribution rebuild.
+
+
+## 2026-11-27 — Stable source obligations across selective setup transitions
+
+Astra's additional employer-reset interaction is implemented with the stale-check fix in one model. due-selection.json journals stable selection generations before compatible due.json; repeated selections keep their timestamps and earlier obligations. A successful source outcome must postdate its applicable selection. The routine reads source-work and carries unresolved selections into the current due list, including limit-deferred sources, so the existing finish/retry flow keeps them visible. No vacancy ledger or importer contract changed.
+
+Reset receipts retain setupId/fromScope/scope and affected employers; retained completed receipts form selective carry-over history. Unchanged sources retain old obligations/outcomes across multiple transitions, affected employers are reset, and full replay starts a new era. Missing selective provenance remains blocked rather than discarded. §7/§9 enter replay dependencies because listing readers filter before capture; strengths/gaps alone remain assessment dependencies. The orchestration roadmap's invariants/file map now reflect this design.
+
+Orphan classifications retain whole-folder fingerprints and proof: only verified empty initialization is exempt, otherwise a finished tagged target must retain all files, consumed references, structured finds and successful source outcomes. Evidence drift invalidates the classification; previous classifications are archived. Historical source scope is not guessed or rewritten. Judgment/extraction completeness still needs attended review.
+
+Full npm test passed; final validation/archive refinements passed focused setup tests (18 state + 6 obligation/recovery groups), template, finish and diagnostics checks. No real-data migration, task change, paid/live run, commit or package build. Live takeover/interruption, scheduled-platform and recipient acceptance remain open. Exact commands and proof limits are in app/SETUP_WORKFLOW.md.
+
+
 ## 2026-11-27 — Setup run takeover and progress across interrupted runs
 
 The routine no longer continues today's unfinished folder when it is a setup discovery run (`setupDiscovery: true`) or, under a non-legacy guard, lacks the guard's setupId/setupScope; it starts a fresh tagged run and takes the folder over as an earlier unfinished run. This keeps a setup-day verification run classifiable. Setup search progress now requires a finished manifest, finish.json, due.json and source evidence only from the latest run; older interrupted runs contribute dated outcomes and due lists, and their unresolved work stays visible through coverage `unfinished` and capture-check --open, matching the existing invariants. Search scope no longer includes rating-only profile sections; an employer-only change replays only those employers. Fixture-tested (test-setup-state 18/18, full npm test); no live run.

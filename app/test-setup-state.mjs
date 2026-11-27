@@ -263,11 +263,16 @@ async function reviewFixes(){
   assert.equal(strengths.topics.calibration,'needs_review');assert.equal(strengths.topics.sources,'approved');assert.equal(strengths.topics.employers,'approved');
   assert.equal(strengths.snapshot.scope,current.state.lastActiveScope);
   await put('profile/candidate_profile.md',profile.replace('Fictional content 9','Fictional content 9 never defence employers'));
-  const exclusions=await inspectSetup(dir,current.state);assert.equal(exclusions.topics.employers,'needs_review');assert.equal(exclusions.snapshot.scope,current.state.lastActiveScope);
+  const exclusions=await inspectSetup(dir,current.state);assert.equal(exclusions.topics.employers,'needs_review');assert.notEqual(exclusions.snapshot.scope,current.state.lastActiveScope);
   await put('profile/candidate_profile.md',profile.replace('Fictional content 3','- Example: Company X = 4'));
   assert.match((await inspectSetup(dir,current.state)).blockers.find(b=>b.code==='profile').message,/line 13\b/);
   await put('profile/candidate_profile.md',profile);
-  pass('Strengths edits stay out of suitability and scope; exclusions reach suitability; Example lines are located');
+  await put('profile/candidate_profile.md',profile.replace('Fictional content 7','No quota sales roles'));
+  assert.notEqual((await setupSnapshot(dir)).scope,current.state.lastActiveScope);
+  await put('profile/candidate_profile.md',profile.replace('Fictional content 4','> Work eligibility: {{UNRESOLVED}}'));
+  assert.equal((await setupSnapshot(dir)).profileValid,false);
+  await put('profile/candidate_profile.md',profile);
+  pass('Strengths stay out of replay; §7/§9 trigger replay; quoted unresolved content is reported');
   const firstStop={confirmedStopped:true,at:utc(),evidence:'Fictional pause'};
   next={...structuredClone(current.state),phase:'editing',quiescence:firstStop};current=await saveSetup(dir,next,current.revision);
   next=await approve(structuredClone(current.state));next.phase='active';current=await saveSetup(dir,next,current.revision);

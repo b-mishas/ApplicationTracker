@@ -5,7 +5,7 @@ import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {withLock, writeJsonAtomic} from './store.mjs';
 import {employerWorkbook} from './employer-workbook.mjs';
-import {open as openFinds} from './capture-check.mjs';
+import {setupSearchProgress, selectSources, classifyOrphan} from './setup-progress.mjs';
 
 export const TOPICS = {background:[1], roles:[2], seniority:[3], geography:[4], strengthsGaps:[5,6,7,9], calibration:[8], sources:[10], employers:[], personalSettings:[]};
 const STATES = ['missing','draft','needs_answer','approved','needs_review'];
@@ -30,6 +30,8 @@ export async function readSetupReset(root){
  const receipt=JSON.parse(raw.replace(/^﻿/,''));
  assert(receipt.schemaVersion===1 && sha(receipt.scope) && ['started','complete'].includes(receipt.status) && instant(receipt.startedAt) && record(receipt.previousCoverage),'Malformed or unsupported setup reset receipt; preserve it and recover explicitly');
  assert(receipt.status!=='complete' || instant(receipt.completedAt),'Completed setup reset lacks a valid completion time');
+ assert(receipt.mode===undefined || ['all','employers'].includes(receipt.mode),'Invalid reset replay mode');
+ assert(receipt.mode!=='employers' || Array.isArray(receipt.employers) && receipt.employers.every(name=>typeof name==='string' && name),'Invalid selective reset employer list');
  return receipt;
 }
 async function resetReadiness(root){
@@ -54,8 +56,9 @@ export async function setupSnapshot(root){
  for(const match of profile.matchAll(/^## (\d+)\.[^\n]*\n([\s\S]*?)(?=^## \d+\.|$(?![\s\S]))/gm))sections[Number(match[1])]=canonical(match[0]);
  const partB=text=>text.slice(text.indexOf('## Part B'));
  const promptValid=filled.includes('## Part B') && routine.includes('## Part B') && partB(filled)===partB(routine) && !/\{\{[^}]*\}\}/.test(filled);
- // Quoted template guidance ("> Replace every {{…}}") is not content; report other offending line numbers only.
- const profileProblems=profile.split(/\r?\n/).flatMap((line,i)=>!/^\s*>/.test(line) && (/\{\{[^}]*\}\}/.test(line) || /^\s*-?\s*Example:/.test(line))?[i+1]:[]);
+ // Only these exact shipped guidance lines are exempt; quoted facts still require validation.
+ const guidance=new Set(['> Replace every `{{…}}` and every line starting with "Example:". Delete examples you do not need.', '> Replace every `{{…}}` and every line starting with "Example:".']);
+ const profileProblems=profile.split(/\r?\n/).flatMap((line,i)=>!guidance.has(line.trim()) && (/\{\{[^}]*\}\}/.test(line) || /^(?:\s*>)*\s*-?\s*Example:/.test(line))?[i+1]:[]);
  let employers=null;
  try{employers=(await employerWorkbook({file:path.join(root,'profile/companies.xlsx')})).employers
   .map(({row,...values})=>Object.fromEntries(Object.entries(values).filter(([key])=>!['#','Last checked','Careers page'].includes(key))))
@@ -71,11 +74,11 @@ export async function setupSnapshot(root){
  // as a dependency so authorization, experience, location and language edits cannot silently evade review.
  const backgroundInputs=sections[1]?canonical(sections[1].split('\n').filter(line=>!/^\s*(?:[-*]\s+)?Name\s*:/i.test(line)).join('\n')):null;
  // Calibration rates against every fact and rule. Employer/source suitability depends on eligibility and
- // explicit exclusions (§9), not on strengths, gaps or mismatch signals, which affect ratings only.
+ // listing exclusions (§7/§9), not on strengths or gaps, which affect ratings only.
  const assessmentBasis=digest({backgroundInputs,topics:['roles','seniority','geography','strengthsGaps'].map(id=>fingerprints[id])});
- const suitabilityBasis=digest({backgroundInputs,topics:['roles','seniority','geography'].map(id=>fingerprints[id]),rules:sections[9]||null});
- // Capture-before-selection keeps every find, so rating rules never hide vacancies: scope covers what is searched.
- const scopeParts={search:digest({backgroundInputs,topics:['roles','seniority','geography','sources'].map(id=>fingerprints[id]),searchSettings}),employers:Object.fromEntries((employers||[]).map(e=>[e.Company,digest(e)]))};
+ const suitabilityBasis=digest({backgroundInputs,topics:['roles','seniority','geography'].map(id=>fingerprints[id]),rules:[sections[7]||null,sections[9]||null]});
+ // Listing readers filter before returning finds; relaxing §7/§9 must revisit uncaptured openings.
+ const scopeParts={search:digest({backgroundInputs,topics:['roles','seniority','geography','sources'].map(id=>fingerprints[id]),rules:[sections[7]||null,sections[9]||null],searchSettings}),employers:Object.fromEntries((employers||[]).map(e=>[e.Company,digest(e)]))};
  return {fingerprints,scope:digest(scopeParts),scopeParts,assessmentBasis,suitabilityBasis,promptValid,profileValid:!!profile && !profileProblems.length,profileProblems,sectionIds:Object.keys(sections).map(Number),linkedinDirectDisabled:/LinkedIn direct reading:\s*disabled/i.test(sections[10]||''),promptFingerprint:filled?hash(filled):null,root:await fs.realpath(root)};
 }
 export function validateSetup(state){
@@ -109,80 +112,6 @@ export function validateSetup(state){
 export async function readSetup(root){
  const raw=await optional(statePath(root));
  return {state:raw===null?null:validateSetup(JSON.parse(raw.replace(/^﻿/,''))),revision:raw===null?'missing':hash(raw)};
-}
-// Operational verification is historical. Search progress follows all runs of this installation/scope,
-// carrying unresolved source outcomes forward until a later dated check actually resolves them.
-async function setupSearchProgress(root,state,snapshot,reset){
- const blockers=[],runs=[],unknown=[],folder=path.join(root,'data/reports/runs');
- const boundary=reset.receipt?.status==='complete'?Date.parse(reset.receipt.completedAt):-Infinity;
- let names=[];
- try{names=await fs.readdir(folder,{withFileTypes:true});}catch(e){if(e.code!=='ENOENT')throw e;}
- for(const entry of names.filter(e=>e.isDirectory())){
-  const runId=entry.name,manifestFile=path.join(folder,runId,'run-completion.json');
-  try{
-   const raw=await optional(manifestFile);
-   if(raw===null){
-    if((await fs.readdir(path.dirname(manifestFile))).some(name=>/^(run-ledger|source-evidence|evidence-.*)\.jsonl$/.test(name)))unknown.push({runId,at:null});
-    continue;
-   }
-   const manifest=JSON.parse(raw.replace(/^﻿/,'')),at=instant(manifest.startedAt)?Date.parse(manifest.startedAt):null;
-   // Setup discovery folders precede activation; the routine takes over their finds, which capture-check --open lists.
-   if(manifest.setupDiscovery===true)continue;
-   if(manifest.setupId===state.setupId && manifest.setupScope===snapshot.scope){
-    if(at===null || manifest.runId!==runId){blockers.push(`Run ${runId} has invalid identity/start evidence`);continue;}
-    if(at>=boundary)runs.push({runId,manifest,at});
-   }else if(!manifest.setupId || !manifest.setupScope)unknown.push({runId,at});
-  }catch(error){blockers.push(`Run ${runId} cannot be classified: ${error.message}`);}
- }
- runs.sort((a,b)=>a.at-b.at || a.runId.localeCompare(b.runId));
- if(reset.blocker)blockers.push(reset.blocker);
- if(!runs.length){
-  if(unknown.length)blockers.push('Search evidence exists without installation/scope identity; classify it before claiming progress');
-  return {status:blockers.length?'partial':'not_started',scope:snapshot.scope,runIds:[],latestRunId:null,blockers};
- }
- for(const run of unknown)if(run.at===null || run.at>=runs[0].at)blockers.push(`Run ${run.runId} needs installation/scope evidence before its work can be classified`);
- const latest=runs.at(-1),outcomes=new Map(),due=new Set();
- if(runs.length>1 && runs.at(-2).at===latest.at)blockers.push('Latest search run is ambiguous: equal start times');
- for(const {runId,manifest} of runs){
-  const dir=path.join(folder,runId),isLatest=runId===latest.runId;
-  // An older run may have been interrupted or taken over without its own finish.json. Its unresolved work lives in
-  // coverage.unfinished and open finds (checked below); its dated source outcomes and due lists still count.
-  if(isLatest){
-   if(manifest.status!=='finished')blockers.push(`Run ${runId} is unfinished`);
-   try{
-    const finish=await read(path.join(dir,'finish.json'));
-    assert(finish.runId===runId && Array.isArray(finish.retry) && ['complete','partial'].includes(finish.searchCoverage),'Invalid finish evidence');
-    if(finish.retry.length || finish.searchCoverage!=='complete')blockers.push(`Latest run ${runId} still has incomplete search/retry work`);
-   }catch(error){blockers.push(`Run ${runId} lacks trustworthy finish evidence: ${error.message}`);}
-  }
-  try{
-   const selected=await optionalJson(path.join(dir,'due.json'));
-   assert(selected || !isLatest,'Missing due list');
-   for(const kind of selected?['employer','portal']:[]){
-    assert(Array.isArray(selected[kind]),`Missing ${kind} due list`);
-    for(const name of selected[kind]){assert(typeof name==='string' && name,'Invalid due source');due.add(`${kind}|${name}`);}
-   }
-   const files=await fs.readdir(dir),evidenceFiles=files.filter(name=>name==='source-evidence.jsonl' || /^evidence-.*\.jsonl$/.test(name));
-   assert(files.includes('source-evidence.jsonl') || !isLatest,'Source evidence missing');
-   for(const file of evidenceFiles)for(const line of (await fs.readFile(path.join(dir,file),'utf8')).split(/\r?\n/).filter(s=>s.trim())){
-    const evidence=JSON.parse(line.replace(/^﻿/,''));
-    assert(['employer','portal','alerts','refresh'].includes(evidence.kind) && typeof evidence.source==='string' && evidence.source && instant(evidence.at) && ['checked','partial','deferred','failed'].includes(evidence.status),'Invalid source evidence');
-    assert(Date.parse(evidence.at)>=Date.parse(manifest.startedAt),'Source evidence predates this run');
-    const key=`${evidence.kind}|${evidence.source}`,at=Date.parse(evidence.at),old=outcomes.get(key);
-    if(!old || at>old.at)outcomes.set(key,{at,status:evidence.status});
-    else if(at===old.at && evidence.status!==old.status)outcomes.set(key,{at,status:'conflict'});
-   }
-  }catch(error){blockers.push(`Run ${runId} has incomplete source evidence: ${error.message}`);}
- }
- for(const key of due)if(!outcomes.has(key))blockers.push(`Due source ${key} has no dated outcome`);
- for(const [key,outcome] of outcomes)if(outcome.status!=='checked')blockers.push(`Source ${key} remains ${outcome.status}`);
- try{
-  const coverage=await read(path.join(root,'data/reports/coverage.json'));
-  assert(record(coverage) && Array.isArray(coverage.unfinished),'Coverage unfinished-work evidence is missing');
-  if(coverage.unfinished.length)blockers.push('Coverage still records unfinished source work');
-  if(openFinds(path.join(root,'data')).some(line=>line.startsWith('open | ')))blockers.push('Captured vacancies still need work');
- }catch(error){blockers.push(`Current search evidence cannot be reconciled: ${error.message}`);}
- return {status:blockers.length?'partial':'complete',scope:snapshot.scope,runIds:runs.map(r=>r.runId),latestRunId:latest.runId,blockers};
 }
 export async function inspectSetup(root,state,{progress=true}={}){
  const snapshot=await setupSnapshot(root);
@@ -310,8 +239,15 @@ if(process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.
  try{
   const args=process.argv.slice(2),command=args.shift(),option=name=>{const i=args.indexOf(name);return i<0?undefined:args[i+1];};
   const root=path.resolve(option('--root')||'.');
-  assert(['init','inspect','save','guard'].includes(command),'Use setup-state.mjs init|inspect|save|guard [--root ROOT] [--input FILE --expected-revision HASH]');
-  if(command==='guard')console.log(JSON.stringify(await setupGuard(root)));
+  assert(['init','inspect','save','guard','source-work','select-sources','classify-orphan'].includes(command),'Use setup-state.mjs init|inspect|save|guard|source-work|select-sources|classify-orphan [--root ROOT] [--run-id ID --input FILE --expected-revision HASH]');
+  if(command==='select-sources')console.log(JSON.stringify(await selectSources(root,option('--run-id'),await read(option('--input'))),null,2));
+  else if(command==='classify-orphan')console.log(JSON.stringify(await classifyOrphan(root,option('--run-id'),await read(option('--input'))),null,2));
+  else if(command==='source-work'){
+   const {state}=await readSetup(root);
+   assert(state,'Source-work requires setup state; use ordinary retry/coverage recovery for legacy installations');
+   const result=await inspectSetup(root,state);console.log(JSON.stringify(result.searchProgress,null,2));
+  }
+  else if(command==='guard')console.log(JSON.stringify(await setupGuard(root)));
   else{
    const result=command==='init'?await initializeSetup(root):command==='save'?await saveSetup(root,await read(option('--input')),option('--expected-revision')):await readSetup(root);
    console.log(JSON.stringify({...result,readiness:await inspectSetup(root,result.state)},null,2));

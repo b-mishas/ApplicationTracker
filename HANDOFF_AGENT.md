@@ -1,19 +1,19 @@
 # Agent handoff
 
-Updated 2026-11-27T12:54:35Z — Codex; implementation by Claude.
+Updated 2026-11-27T13:28:28Z — Codex.
 
 ## Scope and checkout
 
-This snapshot accompanies the user-authorized [Agent] commit of Claude's second-review setup fixes plus all pending documentation and shared-rule edits. Starting checkout main at 5985c55, upstream origin/main points to the same commit locally; remote/CI unverified. Claude is first co-author, Codex second. Deadline/Interviews was separately committed in 5985c55. Preserve unrelated untracked design/. No push, distribution build or live task change authorized/performed.
+This snapshot accompanies the user-authorized scoped [Agent] commit of Astra's reviewed source-obligation/orphan implementation plus the final timestamp precision fix. Starting main at 41e4200, upstream origin/main, branch locally ahead one at inspection; remote/CI unverified. Preserve unrelated untracked design/. No push, distribution build, live task or personal-data change requested/performed.
 
-## Included work
+## Included implementation
 
-setup-state.mjs and setup-reset.mjs implement Claude's changes: latest-run-only finish requirements, setupDiscovery takeover handling, fresh quiescence/clearing on activation, separate calibration/suitability dependencies, employer-only replay, operation-specific verification, prerequisite-ordered blockers, Gmail activation evidence, limitation/discovery references, profile problem line numbers, deterministic sorting, optional-field validation, BOM handling, guard without progress scan and bounded previous-state backups. test-setup-state.mjs adds seven scenarios (18 total).
+app/setup-progress.mjs provides stable source-selection generations, transition-aware progress and attended orphan classification. select-sources journals immutable IDs/times before compatible due.json; source-work carries unresolved selections into the routine's existing due/retry flow. Reset receipts and retained archives preserve unchanged-source obligations across selective scope changes; full replay starts a new era. Missing transition provenance remains blocked, with an explicit stopped --all-sources fallback. §7/§9 listing filters trigger replay; strengths/gaps alone remain assessment-only. Exact template guidance is exempt from placeholders, not arbitrary quoted facts.
 
-Includes matching setup/routine prompts and pristine copies, SETUP_WORKFLOW.md, interface, both roadmaps, orchestration/root history, PLAN corrections and the AGENTS/CLAUDE planning rule. Roadmaps show implemented work separately from unchecked live acceptance; milestones are first in ROADMAP_SETUP.md. Installed prompts and personalized artifacts remain unchanged.
+Orphan recovery retains nested-file fingerprints and either proven-empty initialization or verified handover to a finished tagged run. Copies, consumed references, captured structured finds and source outcomes are checked; changed proof invalidates classification, and previous receipts are archived. Semantic extraction/context truth still requires attended review. See app/SETUP_WORKFLOW.md for commands and limits.
 
-## Verification and remaining work
+Astra's final precision finding is fixed in routine/delegation instructions and pristine copy: new source evidence uses millisecond UTC from the compatible Node executable's Date.toISOString(). Selection times and strict comparisons are unchanged. Legacy coarse evidence is not assigned invented fractions; ambiguous ordering needs a real recheck. Roadmap checkboxes, interface/workflow, customization/setup prompts, orchestration docs/history, tests and future release inclusion are aligned.
 
-Codex reran setup recovery 18/18 and template parity successfully; whitespace/local links checked. Claude previously reported full npm test passing; it was not rerun for this commit. Fixtures do not establish live setup, platform scheduling or recipient acceptance. Existing saved scope/operation hashes may require conservative review; do not rewrite consent automatically.
+## Verification and next action
 
-Next: Astra reviews Codex's follow-up suggestions independently. Isolated probes showed an older check can satisfy a newer interrupted due selection, quoted unresolved content passes profileValid, and orphan ledgers remain unclassified; search-affecting §7/§9 changes also warrant review because listing readers filter before capture. Those suggestions are deliberately not implemented in this checkpoint. Afterwards agree model/spend cap for attended setup/resume and scheduled-platform/recipient rehearsals. No active operations.
+Focused final checks passed: 7 source-recovery groups, 18 setup-state groups, template parity, finish-run, diagnostics, syntax/local links/whitespace. The prior broader implementation passed full npm test; no redundant full rerun after the instruction/regression correction. All fixtures isolated. Live interview/takeover, scheduled-platform and recipient acceptance remain open. Next: agree model/spend cap for attended rehearsals and actual platform/recipient gates. Old hashes or selective receipts lacking transition provenance need explicit review/replay, not silent approval rewriting. No active operations.

@@ -14,6 +14,7 @@ The [routine](../ROUTINE_PROMPT.md), [workflow](../../app/SEARCH_WORKFLOW.md), [
 |---|---|
 | run-completion.json | **Identify the run.** Records its id, start time, status, profile hash and the result files its ledger took in (older run-state folders: manifest.json). Unfinished source work is carried in coverage.json `unfinished`, not in a separate task list. |
 | run-ledger.jsonl | **Keep track of every discovered job vacancy.** Kept by the agent: one line per find with identity, source, state and decision, so unfinished work is not lost. The newest entry of a vacancy across runs counts. |
+| due.json / due-selection.json | Select due sources and retain immutable selection IDs/times across resumes. Selective setup-reset transitions carry unchanged-source obligations across scopes; an outcome must satisfy the newest applicable selection. |
 | source-evidence.jsonl | **Show what was actually checked.** Records search methods, pages/items inspected, coverage evidence, failures and where to continue. |
 | coverage.json | **Decide what to check next time.** Remembers successful source checks, reusable access methods, dropped vacancies and refresh/recheck history across runs. |
 | Inventory and importer reports | **Show what was stored.** jobs.json source files tell which run added or touched a record, regardless of retries; importer reports give counts and records to repair. |
@@ -33,6 +34,7 @@ The agent keeps the ledger itself and calls one read-only script, `capture-check
 - **Assessment is not delivery.** Preserve reusable results and distinguish prepared batches from confirmed imports. Deduplicate conservatively; retain distinct vacancies and source occurrences.
 - Save after discovery/result batches, assessments, source attempts and imports, and before blocking calls—not after every tool call. On restart, inspect saved pending work before repeating external work.
 - Respect current scope and profile revisions. Temporary exclusions never become permanent preferences. Resume mutable listings with overlap and deduplication.
+- Source obligations survive interruption and selective scope changes. Keep selection timestamps stable; old successful checks do not satisfy a later selection. Retain explicit orphan classification/handover evidence instead of deleting or retagging unclassified payloads.
 - **Source coverage needs evidence.** Partial listings never earn successful check dates; cached methods and task labels do not prove coverage.
 - Derive delivery and "added this run" from the inventory, not from per-attempt receipts. The importer is idempotent, so an interrupted import is simply rerun; its report describes the latest attempt only.
 - Preserve unresolved work and all dependencies. Current policy retains all runs; destructive pruning remains deferred. No automatic legacy migration.
