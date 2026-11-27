@@ -20,6 +20,10 @@ Claude primarily maintains `agent/`, `guides/` and pristine `profile/` templates
 
 Do not change the original personal tracker or its data. Runtime `data/`, customized profiles, employer workbooks, CVs and filled prompts are private. Never build a release from a customized installation. Keep CSS one rule per line.
 
+## Porting wrapper features from JobTracker
+
+Before porting JobTracker UI, storage/import, settings, export or launcher features into this project, read [WRAPPER_PORTING.md](WRAPPER_PORTING.md). It defines source pinning, file mapping, destination contracts, isolated verification and completion evidence. Keep JobTracker read-only; adapt selected features rather than replacing the wrapper wholesale.
+
 ## Handoff is required
 
 Maintain `HANDOFF_AGENT.md` and `HANDOFF_WRAPPER.md` as separate operational snapshots. Update only the handoff relevant to work performed. For work spanning both areas, update both, keeping each focused on its own area and cross-referencing shared dependencies instead of duplicating detailed accounts. Do not rewrite the other area's handoff merely because its timestamp or Git HEAD is older.

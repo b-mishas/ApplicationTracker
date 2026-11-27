@@ -4,12 +4,22 @@
 
 --------------------
 
+## 2026-11-27 — Porting guide refined after first reverse port
+
+- Added compare-before-patching guidance, recovery from partially applied patches, a field-contract checklist and early browser-tooling verification to WRAPPER_PORTING.md. Project rules reference the guide.
+- Documentation links and whitespace checked; no runtime checks needed for this amendment. Feature-port implementation remains separate and uncommitted.
+
 ## 2026-11-26 — Responsive table and collapsible navigation
 
 - Automatic columns shrink to readable minimums before scrolling, with exact whole-pixel allocation, conservative fractional-width measurement and a stable scrollbar gutter. Saved widths remain intact; manual resizing and persisted validation share the compressed minimums.
 - Labels shorten at <=1600 px; navigation collapses at <=1150 px into a 44 px New/List/Applied count rail plus a 10 px spacer. Only the outlined rail opens on hover. Pinning reserves space; full labels wrap rather than cover entries. The centered 10 × 55 px edge control supports drag, double-click and keyboard sizing; it is hidden/disabled while collapsed. No gap remains before results.
 - Rail counts refresh after edits; Applied includes Applied/Interview/Offer. Only the selected rail summary is bold, without a background/edge highlight. New is not independently bold. Whole-preset hover hints retain full titles; menu-to-New spacing is 24 px. Sidebar width updates batch per frame, cache intrinsic measurements, invalidate for counts/fonts/breakpoints and avoid redundant writes. No additional view heading or phone layout was added.
 - Column, sidebar/editor-helper, view-model, syntax and isolated API checks passed, including lower saved-width boundaries. Chromium verified sizing, drag/double-click, pinning, rail counts/selection, live status updates and visibility/spacing. Firefox fractional-width tests passed at 100%/125% scale; physical laptop jitter, touch devices and recipient acceptance remain pending. No real data/settings or release archives changed.
+
+## 2026-11-26 — Reciprocal wrapper porting guide
+
+- Added WRAPPER_PORTING.md for selected JobTracker-to-ApplicationTracker ports: pinned source revisions, reverse file mapping, portable defaults, export/date differences, fixture isolation, migration safeguards and verification/completion evidence.
+- Linked the procedure from AGENTS.md and CLAUDE.md. Checked destination paths/contracts against source code and reviewed documentation links/whitespace; no runtime changes, tests, live migration or release build required. Existing responsive-layout work preserved.
 
 ## 2026-11-26 — Full entry correction editor
 

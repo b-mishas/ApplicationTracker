@@ -22,6 +22,10 @@ Preserve all unfinished work. Only one agent should edit a checkout at a time. S
 
 Do not modify the original personal tracker at C:\Users\misha\Claude\Code\JobTracker, its data, or use the older Applications workspace as this project's source. Personalized profiles, settings, CVs, workbooks, filled prompts and runtime data are private and must stay out of Git/releases. Retain JOBTRACKER_* environment-variable names unless the user requests a change.
 
+## Porting wrapper features from JobTracker
+
+Before porting JobTracker UI, storage/import, settings, export or launcher features into this project, read [WRAPPER_PORTING.md](WRAPPER_PORTING.md). It defines source pinning, file mapping, destination contracts, isolated verification and completion evidence. Keep JobTracker read-only; adapt selected features rather than replacing the wrapper wholesale.
+
 ## Distribution builds
 
 Prepare, rebuild or modify dist/ ZIP files and their checksums only when the user explicitly asks. Routine development, UI edits, tests, commits and pushes do not authorize a distribution rebuild. For routine testing, use the source checkout and explain when the ZIP does not include newer changes.

@@ -1,19 +1,19 @@
 # Wrapper handoff
 
-Updated 2026-11-26T19:25:49Z - Codex.
+Updated 2026-11-27T05:15:54Z — Codex.
 
 ## Scope and checkout
 
-Responsive table/navigation feature and Astra's review fixes are included in the user-authorized local commit on feature/responsive-layout (parent 06e7e52); no upstream configured. main remains unchanged. Remote/CI unverified. No push or distribution build requested. Preserve unrelated AGENTS.md, CLAUDE.md, PLAN.md, ROADMAP.md, WRAPPER_PORTING.md and design/ changes; the reciprocal-guide HISTORY entry is excluded from this commit.
+Ported verified deadlines and current Interviews from JobTracker c381bde2f7cd479e7ac6b72e464e5299da324f95 and b59ce2bb58ec0322b92c35b76594d1c69394f115. Actual checkout is main, HEAD/upstream origin/main c00e12def26753309b9a29a82bee3b859e6789f4 (local ref); remote/CI unverified. This corrects the previous handoff's stale feature-branch statement. Feature port remains uncommitted. User authorized a separate documentation commit: WRAPPER_PORTING.md plus AGENTS.md/CLAUDE.md references and scoped history. The guide now covers compare-before-patching, field contracts and early browser-tooling verification. Links and whitespace passed. No push/build requested.
 
-## Current implementation
+## Implementation and files
 
-app/column-layout.mjs fits automatic columns before scrolling, assigns exact whole CSS pixels and shares lower minimums with manual resizing/saved-state validation. app.js measures fractional usable space conservatively; style.css stabilizes the scrollbar gutter. Manual widths stay intact, and shrinking gestures cannot enlarge compressed columns.
+app/app.js, index.html and style.css show valid deadlines in bold dark red and add conditional Interviews beneath Applied. Entry editor/form support optional calendar-date correction; Availability is hidden but retained as protected evidence. Batch schema/importer accept applicationDeadline and merge newer nonblank observations with applicationDeadlineAt; older/unknown dates preserve known values. No inventory migration. column-layout.mjs registers the independent Interviews layout (Applied on/Last interview, newest application first). Responsive sidebar caching includes visibility changes. Manual urgency, execution-local dates, general-purpose fields and portable paths remain.
 
-At <=1600 px navigation labels compact; at <=1150 px a 44 px New/List/Applied count rail plus 10 px spacer replaces the sidebar. Only the outlined rail opens on hover; keyboard focus also opens. Pinning reserves space, and long full labels wrap rather than overlap entries. Manual full labels return to automatic on window narrowing. The 10 × 55 px centered edge control supports dragging, double-click and keyboard modes, sits outside the separator and meets results with no gap. It is hidden/disabled while collapsed. Pin state is session-only; label density persists separately from table preferences.
+Tests updated: importer, entry UI helper, column layout, API check; new test-interviews-preset.mjs registered in package.json. Interface/workflow, routine/template, PLAN and HISTORY updated; agent scope is in HANDOFF_AGENT.md. Preserve separate feature-port, PLAN.md, ROADMAP.md and design/ work.
 
-Rail counts mirror the sidebar (Applied includes Applied/Interview/Offer). Selection uses bold only; positive New counts have no independent bold. Full-title hints cover whole preset buttons; menu-to-New spacing is 24 px. Sidebar sizing coalesces per frame, caches by content/visibility/breakpoint, invalidates on fonts and skips unchanged writes. No current-view heading, automatic column hiding or phone cards.
+## Verification and next
 
-## Verification and next action
+Importer 62/62, editor integration/UI helper, Interviews preset, column-layout, view-model, API persistence and template checks passed. Initial sandbox EACCES for localhost was resolved with escalated fixture-only runs. Changed runtime JavaScript syntax and diff whitespace passed. Playwright module failed to load; browser visual acceptance for these features remains pending. No real data/settings or installed prompt changes; temporary test processes exited. No active operations.
 
-Focused column, sidebar/editor-helper, view-model, syntax and isolated API checks passed. Fresh Chromium checked sizing, drag/double-click, pinning, mixed/live counts, selection, control visibility and spacing; screenshots reviewed. Firefox fractional-width tests passed at 100%/125% device scale. Physical laptop jitter, touch devices, font-change rendering and recipient acceptance remain pending; earlier preference-save stress limitation remains unresolved. No real data/settings changed; fixture processes stopped. Next: user review and physical acceptance. Release archives remain stale. No active operations.
+Responsive c00e12d includes shrinking whole-pixel columns and collapsible/adjustable navigation; prior Chromium and Firefox fractional-scale checks passed. Physical laptop jitter, touch devices/font changes and recipient acceptance remain pending; earlier preference-save stress limitation unresolved. Next: browser/user review of both new features and physical responsive acceptance. ZIPs remain stale; see PLAN.md before any separately authorized packaging.
