@@ -8,27 +8,31 @@ import {validApplicationDate} from './export-applications.mjs';
 import {withLock} from './store.mjs';
 const headers=['#','Group','Company','HQ country','Sites / scope','Focus','Role types to watch','Website','Careers page','Priority','Status','Notes','Last checked'];
 const text=v=>v instanceof Date?v.toISOString().slice(0,10):v?.text??v?.result??v??'';
-async function work({file,action='read',records}){
+async function work({file,action='read',records,expectedRevision}){
  const original=await fs.readFile(file),hash=crypto.createHash('sha256').update(original).digest('hex');
  const workbook=new ExcelJS.Workbook();await workbook.xlsx.load(original);
  const sheet=workbook.getWorksheet('Companies');if(!sheet)throw Error('Workbook needs a Companies sheet.');
  const columns=new Map();sheet.getRow(1).eachCell((cell,i)=>columns.set(String(text(cell.value)),i));
  for(const header of headers)if(!columns.has(header))throw Error(`Missing employer column: ${header}`);
  const rows=[];sheet.eachRow((row,i)=>{if(i>1&&text(row.getCell(columns.get('Company')).value))rows.push({row:i,...Object.fromEntries(headers.map(h=>[h,text(row.getCell(columns.get(h)).value)]))});});
- if(action==='read')return {employers:rows};
- if(!['replace','update'].includes(action)||!Array.isArray(records)||records.length>1000)throw Error('Use replace/update with a JSON array (maximum 1000 entries).');
+ if(action==='read')return {employers:rows,revision:hash};
+ if(!['replace','update','upsert'].includes(action)||!Array.isArray(records)||records.length>1000)throw Error('Use replace/update/upsert with a JSON array (maximum 1000 entries).');
+ if(action==='upsert'&&expectedRevision!==hash)throw Error('Workbook changed or revision missing; read before setup edits.');
  for(const record of records){
   if(!record||typeof record!=='object'||Array.isArray(record)||typeof record.Company!=='string'||!record.Company.trim())throw Error('Each employer needs a Company name.');
-  const allowed=action==='update'?['Company','Careers page','Last checked']:headers;
+  const allowed=action==='update'?['Company','Careers page','Last checked']:action==='upsert'?headers.filter(h=>!['#','Last checked'].includes(h)):headers;
   for(const [key,value] of Object.entries(record))if(!allowed.includes(key)||!['string','number'].includes(typeof value)||String(value).length>5000)throw Error(`Invalid employer field: ${key}`);
   if(record['Last checked']&&!validApplicationDate(record['Last checked']))throw Error('Last checked must be YYYY-MM-DD.');
  }
  if(new Set(records.map(r=>r.Company)).size!==records.length)throw Error('Duplicate employer names.');
  if(action==='replace')for(const row of rows)for(const h of headers)sheet.getRow(row.row).getCell(columns.get(h)).value=null;
+ let nextRow=Math.max(1,...rows.map(r=>r.row))+1;
  records.forEach((record,index)=>{
   const matches=rows.filter(r=>r.Company===record.Company);
   if(action==='update'&&matches.length!==1)throw Error(`Employer must match exactly one row: ${record.Company}`);
-  const row=sheet.getRow(action==='replace'?index+2:matches[0].row);
+  if(action==='upsert'&&matches.length>1)throw Error(`Ambiguous employer name: ${record.Company}`);
+  const row=sheet.getRow(action==='replace'?index+2:matches[0]?.row??nextRow++);
+  if(action==='upsert'&&!matches.length){for(const h of headers)row.getCell(columns.get(h)).style=structuredClone(sheet.getRow(2).getCell(columns.get(h)).style);row.getCell(columns.get('#')).value=row.number-1;}
   for(const [key,value] of Object.entries(record)){const cell=row.getCell(columns.get(key));cell.value=key==='Last checked'&&value?new Date(value+'T00:00:00Z'):value;if(key==='Last checked')cell.numFmt='yyyy-mm-dd';}
   if(action==='replace')row.getCell(columns.get('#')).value=index+1;
  });
@@ -48,6 +52,6 @@ if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.ur
   const file=arg('--file')||fileURLToPath(new URL('../profile/companies.xlsx',import.meta.url));
   const input=arg('--input');
   const records=input?JSON.parse((await fs.readFile(input,'utf8')).replace(/^\uFEFF/,'')):undefined;
-  console.log(JSON.stringify(await employerWorkbook({file,action:args[0]||'read',records})));
+  console.log(JSON.stringify(await employerWorkbook({file,action:args[0]||'read',records,expectedRevision:arg('--expected-revision')})));
  }catch(e){console.error(e.message);process.exitCode=1;}
 }

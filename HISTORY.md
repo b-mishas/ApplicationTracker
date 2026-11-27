@@ -4,10 +4,42 @@
 
 --------------------
 
+## 2026-11-27 — Setup readiness review fixes
+
+- Addressed Astra's four findings: explicit employer/source approval bases and actionable topic blockers; unfinished/malformed reset gating independent of scope equality (including legacy guard); descriptive Name excluded from scope/assessment dependencies while whole-topic approval remains; evolving current-scope search progress separated from historical operational verification.
+- Added explicit stopped-search recovery after a deliberate scope revert: archive the started receipt and replay both stores against the restored scope using saved pre-reset coverage. It does not discard the journal or bypass malformed/unsupported receipt diagnosis.
+- New guarded run manifests retain setupId/setupScope. Search progress reconciles matching runs since reset, dated source outcomes across runs, latest finish/retry, due evidence, coverage unfinished work and open vacancies. Later complete labels alone cannot erase unresolved earlier sources; unclassified evidence stays uncertain. Updated prompts/pristine copies, helper/interface/workflow docs and both roadmaps; preserved prior roadmap navigation/completion markers.
+- Verification: 11 behavioral recovery groups passed, including omitted approval bases, name versus authorization edits, interrupted reset + revert + activation/guard, malformed/no-state reset paths, explicit recovery, partial-to-complete later source resolution, later unfinished work, foreign/unknown scope and persistent coverage backlog. Template parity, diagnostics, capture-check, finish-run, syntax, local-link and whitespace checks passed. No full-suite rerun, live setup/scheduled/recipient acceptance, personal data edit, schedule change, commit, push or packaging.
+
+
+## 2026-11-27 — Setup roadmap navigation and completion markers
+
+- Added linked contents and a ✅ marker to the completed M1 milestone in ROADMAP_SETUP.md. Clarified that implementation spans M2–M6 while their acceptance remains open; no additional milestone marked complete. Contents anchors checked; documentation only.
+
+
+## 2026-11-27 — Resumable setup implementation and recovery checks
+
+- Amended both setup roadmaps for the combined seven concerns; retained Astra's later consistency corrections and acceptance scenarios. M1 has a step/dependency map and concrete version-1 contract; live acceptance remains open.
+- Added setup-state.mjs for revision-checked atomic private state, semantic topic approvals, dependent calibration/employer/source review, editing guard, exact prompt checks and separate readiness outcomes. Added setup-reset.mjs with a write-ahead receipt for conservative scope/window replay across workbook/coverage. A scope reset preserves inventory, dropped/refresh evidence and run folders; the routine must not reuse pre-reset source/mail completion markers to skip replay.
+- Added revision-checked employer upsert preserving omitted fields/other rows, and machine-readable self-check output. Updated setup/customization/routine/guides and pristine counterparts, helper/interface/workflow documentation, test registration and future release inclusion. No installed task, real profile/workbook/inventory, schedule or ZIP changed.
+- Verification: seven behavioral recovery groups (including concurrent stale saves, fresh-process inspection, partial reset replay, dependent invalidation, mounted-path identity, malformed/version rejection, evidence scope, diagnostics privacy and an actual isolated JSON storage probe); template and diagnostics tests; capture-check and finish-run tests; importer 62/62; portability 15/15; syntax/whitespace checks. Initial sandbox importer server test failed fetch; it passed with localhost access. No full-suite rerun, live agent interview, scheduled-platform execution, browser positive-row acceptance or unaided recipient trial in this work. Positive insertion/backup uses isolated portability fixtures; it is not evidence of positive live import.
+
+
+## 2026-11-27 — Setup roadmap review reconciliation
+
+- Reconciled obsolete baseline/contract wording with the other session’s review decisions: semantic approval dependencies and bounded empty-import claims. Added explicit acceptance scenarios for the seven concerns; main ROADMAP.md retained unchanged. Documentation only; no implementation or platform verification claimed.
+
+
 ## 2026-11-27 — Protect and hide internal editor fields
 
 - Ported JobTracker e15d33ce646edda43ffc6b970131bfad02269a85: importer aliases otherIds/postingUrls are protected and hidden; redundant country metadata is hidden while countries stays editable. Work mode basis is read-only metadata. Unknown custom fields remain editable.
 - Added Sources heading spacing and reduced Applied-row font weight to 600. Field-policy regression, existing editor helper/integration suites, syntax and whitespace checks passed. Isolated in-app Chromium verified Additional fields, metadata visibility, screenshot layout and saving notes. No live inventory or distribution changes; other browsers/devices untested.
+
+## 2026-11-27 — Setup implementation roadmap
+
+- Added ROADMAP_SETUP.md: proposed lightweight setup state, authoritative artifact boundaries, approval/recovery dependencies, six implementation milestones and acceptance scenarios. Added a high-level section before search-quality measurement in ROADMAP.md.
+- Planning documentation only; setup/runtime behavior remains unchanged. No live setup rehearsal, schedule change or package rebuild. Existing unrelated edits preserved.
+
 
 ## 2026-11-27 — Porting guide refined after first reverse port
 

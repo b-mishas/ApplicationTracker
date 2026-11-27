@@ -36,7 +36,9 @@ export async function selfCheck({root=dataRoot,settings,requireConfigured=false,
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2),index=args.indexOf('--root');
- const report=await selfCheck({root:index<0?dataRoot:path.resolve(args[index+1]),requireConfigured:args.includes('--require-configured')});
- for(const r of report.results)console.log(`${r.ok?'OK':'FAIL'} ${r.name}${r.detail?': '+r.detail:''}`);
+ const employersIndex=args.indexOf('--employers');
+ const report=await selfCheck({root:index<0?dataRoot:path.resolve(args[index+1]),employers:employersIndex<0?undefined:path.resolve(args[employersIndex+1]),requireConfigured:args.includes('--require-configured')});
+ if(args.includes('--json'))console.log(JSON.stringify(report));
+ else for(const r of report.results)console.log(`${r.ok?'OK':'FAIL'} ${r.name}${r.detail?': '+r.detail:''}`);
  process.exitCode=report.ok?0:1;
 }

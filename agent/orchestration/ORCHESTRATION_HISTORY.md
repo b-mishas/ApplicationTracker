@@ -1,5 +1,30 @@
 # Orchestration implementation history
 
+## 2026-11-27 — Reset gating and current-scope setup progress
+
+Astra review regressions now cover approval dependency blockers, Name-only versus eligibility changes, and interrupted reset/revert recovery. A started or malformed reset blocks activation and the guard independently of scope equality or absent legacy state. Explicit --recover-current-scope preserves/archives the original journal and replays both date stores while searches remain stopped.
+
+Operational verification retains its original run. New guarded search manifests save installation setupId and setupScope; setup inspect derives evolving progress from matching runs after reset, source outcomes across runs, latest finish/retry, due-source evidence, unfinished manifests/coverage and global open finds. Later source success can resolve initial backlog; newer unfinished work makes progress partial again. Wrong-scope/unknown/malformed or ambiguous evidence cannot establish completion. Existing inventory, profile-hash and finish-run contracts remain; the routine/pristine copy adds only run identity instructions and stronger reset-guard wording. Name-only profile edits still need profile/assembled approval but leave dependency fingerprints current; unknown background prose remains conservative.
+
+Eleven isolated behavioral groups, template/diagnostics, capture/finish, syntax/link/whitespace checks passed. No live agent/platform/recipient acceptance, real data/checkpoint migration, task change, commit or build. Helper fields and recovery commands are in app/SETUP_WORKFLOW.md; focused scope/results are in root HISTORY.md.
+
+
+## 2026-11-27 — Implemented setup coordination and scope recovery
+
+Setup now has a private version-1 validator/persistence/readiness helper and editing guard; the importer remains independent. setup-reset.mjs journals an explicit conservative replay after approved scope/search-window changes: successful Gmail/portal/employer dates and portal progress are cleared, cached filtered employer methods reset, and workbook dates cleared, retaining inventory and prior discovery/decision evidence. Started resets resume before activation. New routine instructions prohibit pre-reset source/mail completion markers from bypassing replay, while finds/readings remain reusable under the unchanged profile-hash/finish contracts. Historical calibration-only examples stay outside the actionable ledger. Accepted no-direct-LinkedIn reading reaches profile §10 and employer fallback, rather than setup consent alone.
+
+Focused recovery fixtures, capture/finish, template/diagnostics, importer 62/62 and portability 15/15 passed (localhost tests required escalation). The guard is cooperative: old installed tasks and active runs must be paused/drained with platform evidence; the helper cannot establish consent/context truth or stop a task. No live/paid rehearsal, installed prompt/schedule change, real-data migration, ZIP rebuild or platform/recipient acceptance. Exact helper/schema/evidence contract is in app/SETUP_WORKFLOW.md; full verified scope is in root HISTORY.md. Astra's roadmap consistency amendments were retained.
+
+
+## 2026-11-27 — Setup roadmap consistency review
+
+Reconciled earlier ROADMAP_SETUP.md wording with its new review decisions and added corresponding recovery/acceptance scenarios. No new orchestration design or runtime change; implementation and live acceptance remain the implementing session’s responsibility.
+
+
+## 2026-11-27 — Proposed setup coordination
+
+ROADMAP_SETUP.md now specifies lightweight private setup readiness/approval state and recovery milestones. It reuses the existing vacancy ledger, profile hash and finish/retry contracts; no search orchestration implementation or runtime contract changed. All setup milestones remain proposed. Main ROADMAP.md links the plan; no rehearsal performed.
+
 Detailed, durable record for future development sessions. Newest verified milestone first. Record implementation, rationale, verification and limitations here; amend [ORCHESTRATION_ROADMAP.md](ORCHESTRATION_ROADMAP.md) only when the overall plan changes. Runtime command/field contracts belong in the linked app documentation; checkout status belongs in [HANDOFF_AGENT.md](../../HANDOFF_AGENT.md).
 
 ## 2026-11-24 — Codex review of ac8fa4b..2bb2f48, fixes (Claude)

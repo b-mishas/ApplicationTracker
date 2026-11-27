@@ -60,3 +60,11 @@ Open a conversation with access to the job-search folder and send, for example:
 
 ## Updating to a newer package version
 Replace `agent/ROUTINE_PROMPT.md` Part B and `app/` with the new version; keep your `profile/`, `data/` and the filled Part A. Then ask the assistant: "Read `agent/CUSTOMIZE.md`, rebuild `agent/ROUTINE_PROMPT.filled.md` from the new Part B and my existing Part A, and update my scheduled task with it."
+
+## Resumable setup and later reconfiguration
+
+Follow app/SETUP_WORKFLOW.md before modifying an installation with setup state. Pause identified schedules with authorization, wait for active searches to finish, and enter editing phase before live changes; a per-file atomic write cannot protect a multi-file configuration. The helper guard blocks new runs during editing. Never infer that a legacy task has the guard installed.
+
+Save user approvals against topic fingerprints; routine Last checked/Careers page updates do not invalidate employer choices. Revisit only affected approvals and dependent calibration. After eligibility/source scope changes, review the look-back and use the explicit scope reset while searches are stopped; whole-scope replay is currently conservative. Rebuild the filled prompt from current Part B, reconcile the existing task, and approve the assembled configuration before activation. No blanket replacement or duplicate task on resume.
+
+Historical calibration-only examples stay in profile §8 and reading evidence, outside the actionable ledger. Standing optional-access limitations must also be in profile §10. For accepted lack of direct LinkedIn reading use `LinkedIn direct reading: disabled; employer fallback only`; preserve alert extraction and employer lookup. Temporary errors do not authorize this rule. Gmail remains required.

@@ -6,7 +6,7 @@ The setup itself is a conversation: `START_HERE.html` gives you one instruction 
 - A paid Claude plan (Pro or higher) and the **Claude desktop app** (Windows or macOS).
 - A Gmail account that receives your job alerts.
 - The extracted job-search folder somewhere you will keep it, e.g. `Documents/Application tracker`.
-- Your CV, and about an hour and a half. You can stop after the employer list and continue the next day.
+- Your CV. Setup duration depends on your decisions and access checks; saved progress can be resumed in a new conversation with the same folder.
 
 ## What only you can do
 1. **Install and sign in** to the Claude desktop app.
@@ -30,7 +30,13 @@ The setup itself is a conversation: `START_HERE.html` gives you one instruction 
 - **"Gmail not read":** check *Connectors*, and that the task has Gmail enabled.
 - **"LinkedIn access: none":** sign in to LinkedIn again in the built-in browser.
 - **The run stops and waits:** choose the approval mode that does not ask before each action.
-- **Model:** set the task to Sonnet in its settings. The smallest model rates fit badly; the largest only uses up your allowance faster, because the routine already hands simple reading to the smallest model.
+- **Model:** set the task to Sonnet in its settings. Confirm currently available models and choose based on measured quality and usage; the routine delegates supported simple reading where available.
 - **Changing the task's instruction** needs one confirmation in the desktop app.
 
 Official help: [Schedule recurring tasks in Claude](https://support.claude.com/en/articles/13854387-schedule-recurring-tasks-in-claude-cowork).
+
+## Pausing setup or changing the search later
+
+Saved setup progress is in the same job-search folder. Ask the assistant to resume it rather than start over. Before changing an active configuration, pause its schedule and let any running search finish; the assistant will preserve approved topics and existing employers. New routine prompts stop while setup is being edited. If roles, geography or sources change, the assistant reviews the look-back and replays search checkpoints so newly eligible results are not missed.
+
+Setup reports personalization, scheduled-operation verification and initial-search progress separately. An accepted LinkedIn limitation may use employer-page fallback; it does not prove direct LinkedIn access. A recoverable backlog remains partial. Empty imports need a separate temporary storage/backup probe in the scheduled environment. Model, scheduling and permission options must be checked against the current platform tools/help during installation.

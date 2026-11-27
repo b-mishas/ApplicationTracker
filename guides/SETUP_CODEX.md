@@ -8,7 +8,7 @@ The setup itself is a conversation: `START_HERE.html` gives you one instruction 
 - A ChatGPT plan that includes Codex, and the **Codex desktop app** (Windows or macOS).
 - A Gmail account that receives your job alerts.
 - The extracted job-search folder somewhere you will keep it, e.g. `Documents/Application tracker`. Nothing else needs installing.
-- Your CV, and about an hour and a half. You can stop after the employer list and continue the next day.
+- Your CV. Setup duration depends on your decisions and access checks; saved progress can be resumed in a new conversation with the same folder.
 
 ## What only you can do
 1. **Install and sign in** to the Codex app.
@@ -17,7 +17,7 @@ The setup itself is a conversation: `START_HERE.html` gives you one instruction 
 4. **Approve** the profile, the employer list and the schedule when the assistant shows them.
 
 ## If Codex cannot create the automation itself
-Sidebar → *Automations* → *New automation* → name "Daily job search" → project = your job-search folder → paste the raw content of `agent/ROUTINE_PROMPT.filled.md` → schedule: weekdays at your time → model: Terra → reasoning: high → permissions: a mode that lets it read and write inside the project without asking each time, with web access allowed → if asked where it runs, choose the project folder itself (local), not a worktree or copy.
+Sidebar → *Automations* → *New automation* → name "Daily job search" → project = your job-search folder → paste the raw content of `agent/ROUTINE_PROMPT.filled.md` → schedule: weekdays at your time → choose an available model/reasoning setting with the assistant after checking current capabilities → permissions: a mode that lets it read and write inside the project without asking each time, with web access allowed → if asked where it runs, choose the project folder itself (local), not a worktree or copy.
 
 ## Every day
 - Keep the computer awake and the Codex app running at the scheduled time.
@@ -34,3 +34,9 @@ Sidebar → *Automations* → *New automation* → name "Daily job search" → p
 - **Permissions:** with "ask before acting" modes, unattended runs pause. Prefer the narrowest mode that works unattended inside the project folder.
 
 Official overview: [Codex automations](https://openai.com/academy/codex-automations).
+
+## Pausing setup or changing the search later
+
+Saved setup progress is in the same job-search folder. Ask the assistant to resume it rather than start over. Before changing an active configuration, pause its schedule and let any running search finish; the assistant will preserve approved topics and existing employers. New routine prompts stop while setup is being edited. If roles, geography or sources change, the assistant reviews the look-back and replays search checkpoints so newly eligible results are not missed.
+
+Setup reports personalization, scheduled-operation verification and initial-search progress separately. An accepted LinkedIn limitation may use employer-page fallback; it does not prove direct LinkedIn access. A recoverable backlog remains partial. Empty imports need a separate temporary storage/backup probe in the scheduled environment. Model, scheduling and permission options must be checked against the current platform tools/help during installation.
