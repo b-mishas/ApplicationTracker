@@ -5,7 +5,7 @@ import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {withLock, writeJsonAtomic} from './store.mjs';
 import {employerWorkbook} from './employer-workbook.mjs';
-import {setupSearchProgress, selectSources, classifyOrphan} from './setup-progress.mjs';
+import {setupSearchProgress} from './setup-progress.mjs';
 
 export const TOPICS = {background:[1], roles:[2], seniority:[3], geography:[4], strengthsGaps:[5,6,7,9], calibration:[8], sources:[10], employers:[], personalSettings:[]};
 const STATES = ['missing','draft','needs_answer','approved','needs_review'];
@@ -239,15 +239,8 @@ if(process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.
  try{
   const args=process.argv.slice(2),command=args.shift(),option=name=>{const i=args.indexOf(name);return i<0?undefined:args[i+1];};
   const root=path.resolve(option('--root')||'.');
-  assert(['init','inspect','save','guard','source-work','select-sources','classify-orphan'].includes(command),'Use setup-state.mjs init|inspect|save|guard|source-work|select-sources|classify-orphan [--root ROOT] [--run-id ID --input FILE --expected-revision HASH]');
-  if(command==='select-sources')console.log(JSON.stringify(await selectSources(root,option('--run-id'),await read(option('--input'))),null,2));
-  else if(command==='classify-orphan')console.log(JSON.stringify(await classifyOrphan(root,option('--run-id'),await read(option('--input'))),null,2));
-  else if(command==='source-work'){
-   const {state}=await readSetup(root);
-   assert(state,'Source-work requires setup state; use ordinary retry/coverage recovery for legacy installations');
-   const result=await inspectSetup(root,state);console.log(JSON.stringify(result.searchProgress,null,2));
-  }
-  else if(command==='guard')console.log(JSON.stringify(await setupGuard(root)));
+  assert(['init','inspect','save','guard'].includes(command),'Use setup-state.mjs init|inspect|save|guard [--root ROOT] [--input FILE --expected-revision HASH]');
+  if(command==='guard')console.log(JSON.stringify(await setupGuard(root)));
   else{
    const result=command==='init'?await initializeSetup(root):command==='save'?await saveSetup(root,await read(option('--input')),option('--expected-revision')):await readSetup(root);
    console.log(JSON.stringify({...result,readiness:await inspectSetup(root,result.state)},null,2));

@@ -14,7 +14,7 @@ The [routine](../ROUTINE_PROMPT.md), [workflow](../../app/SEARCH_WORKFLOW.md), [
 |---|---|
 | run-completion.json | **Identify the run.** Records its id, start time, status, profile hash and the result files its ledger took in (older run-state folders: manifest.json). Unfinished source work is carried in coverage.json `unfinished`, not in a separate task list. |
 | run-ledger.jsonl | **Keep track of every discovered job vacancy.** Kept by the agent: one line per find with identity, source, state and decision, so unfinished work is not lost. The newest entry of a vacancy across runs counts. |
-| due.json / due-selection.json | Select due sources and retain immutable selection IDs/times across resumes. Selective setup-reset transitions carry unchanged-source obligations across scopes; an outcome must satisfy the newest applicable selection. |
+| due.json | Select due sources; finish-run reports each one without evidence, and `--retry-for` carries the unchecked due sources of interrupted runs into the next run. |
 | source-evidence.jsonl | **Show what was actually checked.** Records search methods, pages/items inspected, coverage evidence, failures and where to continue. |
 | coverage.json | **Decide what to check next time.** Remembers successful source checks, reusable access methods, dropped vacancies and refresh/recheck history across runs. |
 | Inventory and importer reports | **Show what was stored.** jobs.json source files tell which run added or touched a record, regardless of retries; importer reports give counts and records to repair. |
@@ -34,7 +34,7 @@ The agent keeps the ledger itself and calls one read-only script, `capture-check
 - **Assessment is not delivery.** Preserve reusable results and distinguish prepared batches from confirmed imports. Deduplicate conservatively; retain distinct vacancies and source occurrences.
 - Save after discovery/result batches, assessments, source attempts and imports, and before blocking calls—not after every tool call. On restart, inspect saved pending work before repeating external work.
 - Respect current scope and profile revisions. Temporary exclusions never become permanent preferences. Resume mutable listings with overlap and deduplication.
-- Source obligations survive interruption and selective scope changes. Keep selection timestamps stable; old successful checks do not satisfy a later selection. Retain explicit orphan classification/handover evidence instead of deleting or retagging unclassified payloads.
+- Source obligations survive interruption and selective scope changes through the finish/retry chain and reset-cleared checkpoints. Interrupted runs are taken over (`takenOverBy`), never deleted or retagged; their saved finds must reach a ledger.
 - **Source coverage needs evidence.** Partial listings never earn successful check dates; cached methods and task labels do not prove coverage.
 - Derive delivery and "added this run" from the inventory, not from per-attempt receipts. The importer is idempotent, so an interrupted import is simply rerun; its report describes the latest attempt only.
 - Preserve unresolved work and all dependencies. Current policy retains all runs; destructive pruning remains deferred. No automatic legacy migration.
@@ -79,5 +79,7 @@ The work began with 1fbdd54 (2026-11-19), which answered the rehearsal below by 
 The earlier rehearsal lost plausible extracted job vacancies, began discovery before formal run capture, stalled in browser access and produced inconsistent summaries. Files helped continuity, but did not establish autonomous recovery or token savings. Original local evidence: [report](../../rehearsal/runs/terra-rehearsal-20261119T201042Z/evaluation/REPORT.md), [prompt log](../../rehearsal/runs/terra-rehearsal-20261119T201042Z/evaluation/REHEARSAL_PROMPT_LOG.md). These ignored artifacts may be absent elsewhere. Design initially reviewed with gpt-6.1-sol at Medium effort.
 
 ## Current next action
+
+Setup recovery was simplified under [setup roadmap M7](../../ROADMAP_SETUP.md#m7--evaluate-recovery-simplification-before-broader-acceptance): existing checkpoints, the retry chain and routine takeover replaced historical scope reconstruction, selection journals and generic orphan verification after common outcome tests passed. The attended rehearsal (M7.4) is still open; no new pending-work store or deletion of evidence was added. This evaluation precedes broader setup acceptance and does not replace the ordinary-run observations below.
 
 Observe a few ordinary scheduled searches with the capture check: what `--open` lists at start and finish, whether Not done agrees with it, and cost against earlier runs; revisit parts of the full helper only for failures they would have prevented (for example a listing gone before a resume, leaving saved extracts as the only copy). Real runs are Claude desktop scheduled tasks or Codex automations, not the CLI: rehearsal costs compare arms, but absolute costs and cache pricing differ there.

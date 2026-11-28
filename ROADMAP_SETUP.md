@@ -1,6 +1,6 @@
 # State-driven setup — implementation roadmap
 
-Status: implementation in progress, 2026-11-27. Contracts, state/recovery helpers, revised setup/routine instructions and the second review fixes (section 5) are implemented and fixture-tested; live setup, platform and recipient acceptance remain open. This is maintainer guidance, not an installed setup prompt or scheduled-run instruction. Installed helper contract: [app/SETUP_WORKFLOW.md](app/SETUP_WORKFLOW.md).
+Status: recovery simplified and fixture-verified, 2026-11-28. Contracts, state/recovery helpers, revised setup/routine instructions and the second review fixes (section 5) are implemented and fixture-tested. M7.1 passed and the simpler recovery design is integrated. M7.2/M7.3 were reopened after Codex's review found five defect classes; fixes and regressions are in place and await re-review. The capped attended rehearsal (M7.4) follows, before broader M6 rehearsals. Live setup, platform and recipient acceptance remain open. This is maintainer guidance, not an installed setup prompt or scheduled-run instruction. Installed helper contract: [app/SETUP_WORKFLOW.md](app/SETUP_WORKFLOW.md).
 
 ## Contents
 
@@ -11,6 +11,7 @@ Status: implementation in progress, 2026-11-27. Contracts, state/recovery helper
    - [M4 — Move feasibility early and make installation repeatable](#m4--move-feasibility-early-and-make-installation-repeatable)
    - [M5 — Preserve discovery handover and verify readiness](#m5--preserve-discovery-handover-and-verify-readiness)
    - [M6 — Integrate and rehearse](#m6--integrate-and-rehearse)
+   - [M7 — Evaluate recovery simplification before broader acceptance](#m7--evaluate-recovery-simplification-before-broader-acceptance)
 2. [Objective and boundaries](#2-objective-and-boundaries)
 3. [Original baseline and problems addressed](#3-original-baseline-and-problems-addressed)
 4. [State and ownership](#4-state-and-ownership)
@@ -39,9 +40,9 @@ Acceptance: walkthroughs of fresh setup, partial setup and reconfiguration reach
 - [x] Implement state persistence and validation with existing Node facilities. Prefer a small validator/persistence helper only where it prevents concrete errors; no framework or per-tool bookkeeping.
 - [x] Detect missing, malformed and unknown-version state; reconcile actual artifacts before trusting status flags.
 - [x] Implement targeted invalidation and preserve approved unaffected topics.
-- [x] Preserve stable source selection generations across resumes and carry unchanged-source obligations through selective reset transitions.
-- [x] Standardize new source outcomes/delegated evidence on millisecond UTC and regression-test same-second freshness without rounding selections.
-- [x] Provide evidence-preserving orphan classification for verified empty initialization and checked handover, with regression tests.
+- [x] Preserve pending source work across resumes and selective resets: finish-run `--retry-for` carries the newest retry list plus unchecked due sources of later unfinished runs, and resets clear only affected checkpoints (M7 retired the selection journal and scope-transition history).
+- [x] Order source outcomes by system-clock `at` timestamps (M7 retired the selection-precision rule with the journal).
+- [x] Preserve orphan evidence: the routine takes interrupted folders over (`takenOverBy`) and progress requires their saved finds in a run ledger (M7 replaced the attended fingerprint/handover classifier).
 - [x] Discover an existing scheduled task before creation. If creation succeeded but recording its ID failed, reconcile by installed prompt/folder and task details; ambiguous matches require clarification, not another task. (Instructions only; platform task discovery is unrehearsed.)
 - [x] Preserve existing employer rows and configuration. Use wholesale replacement only for an explicitly reviewed replacement; it is not a resume default.
 
@@ -102,6 +103,20 @@ Acceptance: no setup discovery is silently lost; saved assessments are reused wh
 - [ ] Run an unaided nontechnical-recipient trial and record friction, repeated questions and unfinished steps.
 
 Acceptance: scenario matrix below passes or has explicit unresolved limitations; no full acceptance claim from fixture tests alone. No runtime personal data in tracked files or release inputs.
+
+### M7 — Evaluate recovery simplification before broader acceptance
+
+**Objective:** choose the simplest recovery design that preserves saved answers, vacancies and required source work without false completion. Freeze recovery expansion during evaluation. Keep setup state/approvals, editing guards, safe workbook writes, storage checks, run tags and journalled checkpoint resets. Historical reconstruction, selection journals and generic orphan verification remain provisional until compared with a simpler design using existing records.
+
+Implementation choices, scenarios and evidence requirements live in [PLAN.md](PLAN.md#m7-implementation-plan--recovery-simplification). Results belong in history; existing runtime contracts remain in force until a replacement is verified.
+
+- [x] **M7.1 — Baseline ready:** common outcome criteria and current-design results recorded before prototyping. Shared scenarios in app/test-recovery-outcomes.mjs, reproducible against reference 4931d22 with `node scripts/compare-recovery-baseline.mjs`: first 14 scenarios gave 2 MUST and 3 SHOULD failures; the 21 shared scenarios after review give 3 MUST failures (false completion with a missing Gmail checkpoint and with never-selected employers; a finished legacy run's failed portal lost) and 5 SHOULD failures.
+- [ ] **M7.2 — Replacement correct:** the same correctness and compatibility scenarios pass before selecting the replacement. Reopened 2026-11-28: Codex reproduced erased carried work, an older success satisfying a newer selection, suffix-based run order, hidden content after takeover and an empty finish.json passing. Fixed; 24/24 scenarios (21 shared, 3 compatibility) pass, and the 9 new regressions fail on the pre-fix version. Closes on Codex re-review.
+- [ ] **M7.3 — Design selected:** correctness and burden comparison supports a documented choice. Simpler design retained after the review fixes; comparison in HISTORY.md and agent/orchestration/ORCHESTRATION_HISTORY.md. Closes with M7.2.
+- [ ] **M7.4 — Attended recovery verified:** one rehearsal with an agreed model/spend cap passes. Not run; needs the model and spend cap agreed first.
+- [ ] **M7.5 — Integration complete:** chosen implementation, tests, instructions and compatibility guidance agree; evidence and remaining acceptance work are recorded. Integrated ahead of M7.4 at the user's instruction (2026-11-28), with the reference recoverable at 4931d22; closes after M7.4 passes.
+
+**Acceptance:** all five checkpoints pass with evidence. Failed gates block dependent work, not unrelated progress; passed gates do not require repeated permission. M7 precedes the remaining broad M6 platform/recipient rehearsals and does not replace them.
 
 ## 2. Objective and boundaries
 
@@ -202,14 +217,13 @@ All three dependent approvals have an explicit basis: calibration uses calibrati
 
 Reset recovery is a central activation/search prerequisite even when scope equals lastActiveScope. An unfinished or malformed receipt must block both paths. If configuration was intentionally reverted during an interruption, allow an explicit stopped-search recovery that archives the receipt and replays both stores against the restored scope; never silently dismiss the journal.
 
-Historical scheduled-operation proof and evolving search progress have separate evidence lifetimes. Operational verification depends on the installed prompt, installation and task identity, not on profile wording. Keep verification.runId; tag new search manifests with installation ID and scope fingerprint. Derive progress from matching runs since reset, latest finish/retry, source outcomes across runs, coverage unfinished work and open vacancies. Later successful checks may resolve initial backlog; newer unfinished sources must make progress partial again. Do not infer current scope from a newer filename or complete label. Unclassified legacy evidence remains uncertain until reviewed.
+Historical scheduled-operation proof and evolving search progress have separate evidence lifetimes. Operational verification depends on the installed prompt, installation and task identity, not on profile wording. Keep verification.runId; tag new search manifests with installation ID and scope fingerprint. Derive progress from the latest tagged run (finished, current scope, after the last reset), the carried retry list, employer/Gmail/portal checkpoints, coverage unfinished work, takeovers and open vacancies (M7). Later successful checks may resolve initial backlog; newer unfinished work must make progress partial again. Do not infer current scope from a newer filename or complete label.
 
 ### Astra refinement implementation (2026-11-27)
 
-- Source work is tracked by stable selection generations/times, journaled before due.json. Resuming/reselecting does not refresh them; older outcomes cannot satisfy newer obligations. The routine carries unresolved obligations into its compatible due/retry process within existing limits.
-- Selective reset receipts record from/to scopes and affected employers. Retained transition history carries unchanged-source obligations across multiple employer-only resets; full resets end the old era. Missing transition evidence blocks completion or requires an explicitly reviewed full replay.
+- Superseded by M7 (2026-11-28): selection generations/times, the selection journal and reconstructed scope transitions were replaced by the retry chain and reset-cleared checkpoints. Reset receipts still record from/to scopes and affected employers as provenance.
 - Replay dependencies include §7/§9 because listing readers filter before capture. Strengths/gaps remain assessment-only. The profile validator exempts exact shipped guidance, not arbitrary quoted facts.
-- Orphan recovery inspects nested payloads and retains classification/proof. Empty initialization must be proven; handover checks every byte-copy/consumed reference, captured structured finds and target-run source outcomes. Changing retained evidence invalidates the classification. No deletion or inferred historical scope.
+- Superseded by M7: attended orphan classification (fingerprints, byte copies, transfers) was replaced by routine takeover plus the captured-finds check. No deletion or inferred historical scope.
 - Automated regression coverage supports these implementation checkboxes. Attended takeover, interrupted live searches and scheduled/recipient acceptance remain open above.
 
 ### Second review fixes (2026-11-27)
@@ -234,6 +248,8 @@ Report three independent outcomes:
 Overall setup can be ready with accepted limitations and a recoverable initial backlog, but must never label that backlog complete. Missing required access, wrong ROOT, failed import, stale installed prompt or unverified scheduled execution blocks operational verification. Zero new vacancies is legitimate; a successful empty batch verifies empty-batch processing, not inventory replacement, backup creation or positive-row rendering. Record the separate scheduled storage/backup probe and isolated positive-record insertion/rendering evidence required above. A probe does not establish that a positive import into the live inventory occurred. Never fabricate personal inventory or require a relevant vacancy to exist before setup can finish.
 
 ## 7. Verification scenarios
+
+The matrix below includes checks of the current implementation. The M7 outcome scenarios (app/test-recovery-outcomes.mjs) are architecture-independent and replaced the selection-timestamp and orphan-receipt checks.
 
 | Scenario | Required observation |
 |---|---|
@@ -262,11 +278,15 @@ Overall setup can be ready with accepted limitations and a recoverable initial b
 | Name correction versus authorization edit | Name retains search/assessment dependencies; authorization invalidates them |
 | Partial verification then later completed search | Progress advances from matching source evidence while original operational proof is retained |
 | Complete verification then later unfinished source work | Progress becomes partial; other-scope/untagged evidence cannot falsely complete it |
-| Selection and outcome in the same second | New evidence preserves millisecond UTC; a later .900 check satisfies .640, earlier/coarse timestamps do not; selections are never rounded |
-| Old check followed by newer interrupted due selection | Remains unresolved until a post-selection success; resume/rewrite preserves the selection generation |
-| Two selective resets with an unchanged pending source | Old obligation survives both transitions; affected employers get fresh selections |
+| Success then failure of one source within a run | The later attempt wins; the source stays owed |
+| Finished run omits a carried source, or a later run reselects it | It stays owed until checked in the latest selecting run or later, or replayed by a completed reset |
+| Two runs started in the same minute | Ordered by manifest startedAt, not by the random folder suffix |
+| Taken-over folder with JSON results, unknown files or a stale empty receipt | Finds must reach a ledger; other files need `reviewed`; an empty receipt holds only while empty |
+| Interrupted run with selected but unattempted sources | They are carried to the next run, also across selective resets; a removed source drops out after one run |
+| Two selective resets with an unchanged pending source | It stays owed through both; affected employers are due by their cleared dates |
 | Quoted unresolved facts versus exact template guidance | Fact placeholders and quoted examples have line-number blockers; exact guidance is exempt |
-| Empty orphan, nested results and verified handover | Whole-folder fingerprint and proof required; changed/missing payloads invalidate classification |
+| Empty orphan, nested results and takeover | An all-empty folder needs nothing; a taken-over folder blocks completion until its saved finds are in a ledger |
+| Full replay with Gmail or a source never completed | Initial search stays partial until every checkpoint is set |
 | Diagnostics and package audit | No personal setup-state data exposed |
 | Strengths or mismatch edit after activation | Calibration review only; suitability, scope and checkpoints unchanged |
 | Employer added or edited, nothing else | Only those employers replayed; Gmail and portal checkpoints kept |
@@ -278,4 +298,4 @@ Measure user question/approval counts, repeated answers, elapsed interaction tim
 
 ## 8. Next action
 
-The M1 contract is in app/SETUP_WORKFLOW.md and app/setup-state.mjs; M2–M5 helpers/instructions, including the second review fixes, are implemented with focused fixture verification recorded in HISTORY.md. Next conduct isolated attended setup/resume rehearsals, then actual scheduled verification on each supported assistant and the nontechnical-recipient trial. Fixture results do not close those acceptance gates. Agree model/spend cap before paid rehearsals. No live scheduling, commit, push or distribution rebuild is authorized by this document.
+The M1 contract is in app/SETUP_WORKFLOW.md and app/setup-state.mjs; M2–M5 helpers/instructions, including the second review fixes, are implemented with focused fixture verification recorded in HISTORY.md. M7.1 passed and the simpler recovery design is integrated; review fixes for M7.2/M7.3 await Codex re-review. Next: re-review, agree the model and spend cap, then run the M7.4 attended rehearsal (fresh-chat interview resume and a stopped search with saved pending work) and close M7.5. Resume the remaining M6 scheduled-platform and nontechnical-recipient gates afterward; fixture results and the narrow rehearsal do not close them. Agree model/spend cap before paid rehearsals. No branch switch, live scheduling, commit, push or distribution rebuild is authorized by this document.

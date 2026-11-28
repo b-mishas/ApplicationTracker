@@ -1,19 +1,45 @@
 # Agent handoff
 
-Updated 2026-11-27T13:28:28Z — Codex.
+Updated 2026-11-28T07:49:23Z — Claude.
 
 ## Scope and checkout
 
-This snapshot accompanies the user-authorized scoped [Agent] commit of Astra's reviewed source-obligation/orphan implementation plus the final timestamp precision fix. Starting main at 41e4200, upstream origin/main, branch locally ahead one at inspection; remote/CI unverified. Preserve unrelated untracked design/. No push, distribution build, live task or personal-data change requested/performed.
+The user asked for M7 recovery simplification (ROADMAP_SETUP.md), followed by fixes for Codex's review; no commit, push or distribution rebuild. Main is at 4931d22, tracking origin/main; remote and CI are unverified. Codex's concurrent wrapper port is uncommitted in the same checkout (see HANDOFF_WRAPPER.md), and both sets of changes are intact. The untracked design/ folder was left alone. No personal data, task or live run was touched.
 
-## Included implementation
+## Implemented (uncommitted)
 
-app/setup-progress.mjs provides stable source-selection generations, transition-aware progress and attended orphan classification. select-sources journals immutable IDs/times before compatible due.json; source-work carries unresolved selections into the routine's existing due/retry flow. Reset receipts and retained archives preserve unchanged-source obligations across selective scope changes; full replay starts a new era. Missing transition provenance remains blocked, with an explicit stopped --all-sources fallback. §7/§9 listing filters trigger replay; strengths/gaps alone remain assessment-only. Exact template guidance is exempt from placeholders, not arbitrary quoted facts.
+- app/finish-run.mjs `previousRetry`:
+  - runs are ordered by manifest startedAt (folder names only as a fallback; at equal times an unfinished folder counts as later);
+  - the carry is the newest valid finish.json retry list plus due sources of later unfinished folders;
+  - a source counts only when checked in the latest run that selected it or later;
+  - a completed setup reset drops only the carried sources it replayed.
+  finishRun keeps unchecked inherited employer/portal items.
+- app/setup-progress.mjs derives progress from the latest run (validated, unambiguous), the carried retry list, workbook/coverage/Gmail/portal checkpoints, coverage unfinished work, open finds and takeovers.
+  - Takeover checks finds in JSON and JSON-lines result files.
+  - Other non-empty files need the taker's `reviewed` list.
+  - Legacy empty receipts must still be empty.
+- setup-state.mjs: the source-work, select-sources and classify-orphan commands are removed.
+- Routine and pristine copies: no source-work or select-sources step and no millisecond selection rule. `takenOverBy` marks taken-over runs; carried items persist until checked.
+- Tests: app/test-recovery-outcomes.mjs has 24 scenarios (21 shared, 3 compatibility).
+- scripts/compare-recovery-baseline.mjs reproduces the reference comparison from Git.
+- Docs aligned: SETUP_PROMPT, CUSTOMIZE, SETUP_WORKFLOW, SEARCH_WORKFLOW, INTERFACE, orchestration roadmap invariants, ROADMAP_SETUP, PLAN and both histories.
 
-Orphan recovery retains nested-file fingerprints and either proven-empty initialization or verified handover to a finished tagged run. Copies, consumed references, captured structured finds and source outcomes are checked; changed proof invalidates classification, and previous receipts are archived. Semantic extraction/context truth still requires attended review. See app/SETUP_WORKFLOW.md for commands and limits.
+## Verification
 
-Astra's final precision finding is fixed in routine/delegation instructions and pristine copy: new source evidence uses millisecond UTC from the compatible Node executable's Date.toISOString(). Selection times and strict comparisons are unchanged. Legacy coarse evidence is not assigned invented fractions; ambiguous ordering needs a real recheck. Roadmap checkboxes, interface/workflow, customization/setup prompts, orchestration docs/history, tests and future release inclusion are aligned.
+- Current design: 24/24 scenarios pass. The 9 regressions for Codex's review fail on the pre-fix version.
+- Reference 4931d22: 3 MUST and 5 SHOULD failures across the 21 shared scenarios.
+- Full `npm test`: exit 0.
+- Everything is fixture-only.
 
-## Verification and next action
+## Limits and next action
 
-Focused final checks passed: 7 source-recovery groups, 18 setup-state groups, template parity, finish-run, diagnostics, syntax/local links/whitespace. The prior broader implementation passed full npm test; no redundant full rerun after the instruction/regression correction. All fixtures isolated. Live interview/takeover, scheduled-platform and recipient acceptance remain open. Next: agree model/spend cap for attended rehearsals and actual platform/recipient gates. Old hashes or selective receipts lacking transition provenance need explicit review/replay, not silent approval rewriting. No active operations.
+Limits:
+- Portals absent from coverage.json are not detected.
+- A check within a run is assumed to satisfy that run's own selections.
+
+Next actions:
+- Codex re-review closes M7.2/M7.3.
+- Then the M7.4 attended rehearsal. The proposal is Sonnet 5.5, a USD 5 cap and a fictional isolated installation; it is not yet approved.
+- Commit the M7 work separately from the wrapper port.
+
+No active operations.

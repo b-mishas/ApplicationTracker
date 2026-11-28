@@ -4,6 +4,40 @@
 
 --------------------
 
+## 2026-11-28 — Recovery review fixes; M7.2/M7.3 reopened (Claude)
+
+- Codex's review reproduced five defect classes in the simplified design:
+  - a finished run could erase carried work;
+  - an older success could satisfy a newer unattempted selection;
+  - random run-ID suffixes decided run order;
+  - takeover could hide non-JSON-lines or unknown content, and a stale empty receipt was trusted;
+  - an empty finish.json passed.
+- Fixes:
+  - finish-run keeps inherited employer/portal items until they are checked. A source counts only when checked in the latest run that selected it or later.
+  - Runs are ordered by manifest startedAt. Only a completed setup reset drops the carried sources it replays.
+  - Finish records are validated.
+  - Takeover checks finds in JSON and JSON-lines results; other non-empty files need the taker's `reviewed` list, and legacy empty receipts must still be empty.
+  - Progress also reports ambiguous or invalid start times.
+- 9 regression scenarios added (24 total), each failing on the pre-fix version. scripts/compare-recovery-baseline.mjs now reproduces the reference comparison from Git. The reference fails 3 MUST and 5 SHOULD checks across the 21 shared scenarios; the current design fails none.
+- Documented limits that remain: portals absent from coverage.json are not detected, and a check within a run is assumed to satisfy that run's own selections.
+- Full `npm test` exit 0. M7.2/M7.3 stay open until Codex re-reviews. Fixture-only; not committed.
+
+
+## 2026-11-28 — Setup recovery simplified (M7.1–M7.3, Claude)
+
+- Baseline: app/test-recovery-outcomes.mjs runs 14 outcome scenarios (interruptions, forced retries, same-run ordering, selective and full resets, orphans, removed sources, checkpoint disagreement). Its assertions do not depend on any recovery file format. Run against pinned reference 4931d22, it found 2 MUST failures: "complete" with a missing Gmail checkpoint, and with never-selected sources. It also found 3 SHOULD failures: a redundant re-check, and 3 attended orphan steps including an empty folder.
+- Replacement: setup-progress.mjs reads checkpoints, coverage `unfinished`, open finds, run identity and `finish-run.mjs --retry-for`. That list now also carries due sources that later unfinished runs left unchecked. The routine marks the runs it takes over with `takenOverBy`, and their saved finds must reach a run ledger. The scenarios pass 14/14 plus a legacy-file scenario, and mutation checks confirm they catch removed protections.
+- Retired: the source-work, select-sources and classify-orphan commands, the selection journal, scope-transition reconstruction, the millisecond selection rule and test-setup-progress.mjs. Earlier due-selection.json and setup-recovery.json files are still read.
+- Burden: setup-progress.mjs went from 224 to 92 lines, plus 17 lines in finish-run. The routine prompt went from 9,702 to 9,546 words and SETUP_WORKFLOW from 3,444 to 2,990. A guarded run makes one helper call (`--retry-for`) instead of three or more.
+- Verification: full `npm test` exit 0, including setup-state 19/19 with progress fixtures made routine-consistent. Fixture-only: no attended rehearsal (M7.4), live platform or recipient run. Not committed.
+
+## 2026-11-28 — Plan setup recovery simplification comparison
+
+- Assessed Claude/Codex proposals against current reset, scheduling and finish/retry behaviour. Added ROADMAP_SETUP.md M7 and a PLAN.md priority: freeze recovery expansion, baseline common outcome tests, evaluate reuse of current checkpoints and simpler attended orphan recovery, choose on correctness/burden, then run one capped attended rehearsal before broader acceptance.
+- Renamed the evaluation milestone M7 and added five evidence gates. Kept the roadmap high-level; moved implementation choices, scenario details and checkpoint evidence requirements into PLAN.md. Results will be recorded in history as work completes.
+- Retained core safeguards in the plan. Explicitly covered forced retries despite recent dates, same-day ordering, interrupted runs without finish/retry files, selective-reset scope and uncaptured orphan payloads. No replacement implementation or acceptance result is claimed; runtime contracts remain unchanged. Linked the orchestration roadmap to the new evaluation sequence.
+- Documentation-only change; no paid/live rehearsal, branch switch, personal-data change, commit, push or distribution rebuild.
+
 ## 2026-11-27 — Millisecond source evidence and recovery implementation commit
 
 - Addressed Astra's final precision finding: the routine now obtains system-clock UTC timestamps with node -p "new Date().toISOString()", preserving all three millisecond digits in new source-evidence at values and passing the same command/requirement to delegated employer, portal and refresh readers. Updated the pristine routine, workflow/interface and roadmap progress. Freshness comparisons and selection times are unchanged; ambiguous legacy ordering requires an actual recheck, never invented fractions or rounding.

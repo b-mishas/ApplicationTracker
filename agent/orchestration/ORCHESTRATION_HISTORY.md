@@ -1,5 +1,26 @@
 # Orchestration implementation history
 
+## 2026-11-28 — Review fixes to the simplified recovery
+
+Codex rejected the accepted gap that a finished run could drop carried work, and found four more defects. The design is unchanged in shape:
+- `previousRetry` orders runs by startedAt, with names only as a fallback, and an unfinished folder sorts later at an equal time. It tracks the latest run that selected each source and requires a check in that run or later. finishRun re-inherits unchecked employer/portal items. A carried item ends only when it is checked or replayed: the setup reset is the one place where configuration changes, so a completed reset after an item's run drops what that reset made due again (mode `all`, or the listed employers).
+- Takeover verification reads JSON and JSON-lines result files. It needs `reviewed` entries for any other non-empty file except run records and helper scripts, and checks that legacy empty receipts still describe an empty folder.
+- Finish records need runId, searchCoverage and a retry array.
+
+No selection timestamps, scope eras or file fingerprints were reintroduced. The reference comparison is now reproducible from the checkout (scripts/compare-recovery-baseline.mjs).
+
+## 2026-11-28 — Recovery simplified to checkpoints, retry chain and takeover
+
+M7 compared the reference recovery design (4931d22) with a simpler design using 14 architecture-independent outcome scenarios in app/test-recovery-outcomes.mjs; the reference adapter ran from a pinned copy outside the repository. The reference failed two correctness checks: it reported initial search complete with a null Gmail checkpoint after a full replay, and with sources never selected (its obligations covered only selected sources). It failed three burden checks: an obligation from before a run was not met by that run's earlier check, and orphan recovery needed attended handover classification, also for an empty folder.
+
+The simpler design keeps the setup guard, approvals, journalled resets and run tags. Obligations travel through `previousRetry`: the newest finish.json retry list, plus the due sources of later folders without one whose latest attempt is not checked. A retried source checked there is dropped. Any obligation's cause precedes the run that selects it, or is an attempt inside that run, so a checked latest outcome within a run or later satisfies it without selection timestamps. Resets clear only the affected checkpoints, so employer-only resets need no scope-history reconstruction. The routine takes earlier unfinished runs over and marks them `takenOverBy`, including folders without a manifest that hold non-empty files. Progress then requires each such folder's saved finds in some run ledger. A folder whose files are all empty is ignored.
+
+Known limits: a source absent from coverage.json is not detected. A finished run that ignores its carried list drops forced work for sources not otherwise due by date. Folder names order runs at minute granularity. Correctness passed on fixtures only; the M7.4 attended rehearsal has not run.
+
+## 2026-11-28 — Recovery simplification evaluation planned
+
+ROADMAP_SETUP.md M7 now precedes broader setup acceptance, with five high-level evidence gates and implementation/scenario detail in PLAN.md; PLAN.md and the orchestration roadmap link that sequence. Keep core setup safeguards and freeze recovery expansion. Prefer reusing checkpoints/unfinished work and simpler attended orphan takeover, subject to common outcome tests against the current implementation. Dates cover ordinary overdue sources but not every forced retry or resumed-run ordering case; interrupted runs may lack finish.json entirely. The comparison must cover those gaps, selective resets, evidence/checkpoint write boundaries and orphan payloads not yet captured. Choose on correctness before prompt/code burden and expert-only interventions, then perform one agreed-cap attended rehearsal and retire superseded code/instructions only after verification. This is a design/sequence decision, not an implemented replacement or evidence of lower cost. No runtime contracts, personal state or schedules changed.
+
 ## 2026-11-27 — Source evidence precision matches stable selections
 
 Astra reproduced a legitimate later check losing ordering when the documented date command truncated its fraction. New source-evidence timestamps, including delegated readers, now use system-clock node -p "new Date().toISOString()" and retain three millisecond digits. Strict comparisons are unchanged: rounding selections down could admit earlier same-second checks, so coarse legacy evidence remains unresolved unless its recorded instant already proves freshness. The routine/pristine copy, helper/interface docs and setup roadmap reflect this contract.

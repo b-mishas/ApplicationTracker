@@ -155,9 +155,14 @@ try{
  next.verification={operation:result.operation,context:'scheduled',runId,gmail:'verified',importReport:'data/reports/import.json',storageProbe:'data/reports/probe.json'};
  assert.equal((await inspectSetup(root,next)).scheduledOperationVerified,true);
  assert.equal((await inspectSetup(root,next)).initialSearch,'partial');
- await put('data/reports/coverage.json',{...resetCoverage,unfinished:[]});
  await put(`data/reports/runs/${runId}/finish.json`,{runId,searchCoverage:'complete',retry:[]});
- assert.equal((await inspectSetup(root,next)).initialSearch,'complete');
+ let progress=await inspectSetup(root,next);
+ assert.equal(progress.initialSearch,'partial','reset checkpoints are still empty');
+ for(const words of ['Gmail','Portal','Fictional Employer'])assert(progress.searchProgress.blockers.some(b=>b.includes(words)),words);
+ // Checkpoints the routine writes after successful checks.
+ const searched={...resetCoverage,unfinished:[],gmailCheckedThrough:utc(),employers:Object.fromEntries((await employerWorkbook({file:workbook})).employers.map(e=>[e.Company,{...resetCoverage.employers[e.Company],lastChecked:utc().slice(0,10)}])),sources:Object.fromEntries(Object.entries(resetCoverage.sources).map(([k,v])=>[k,{...v,lastSuccessfulCheckedThrough:utc()}]))};
+ await put('data/reports/coverage.json',searched);
+ progress=await inspectSetup(root,next);assert.equal(progress.initialSearch,'complete',progress.searchProgress.blockers.join(' | '));
  const evidence=(source,status,at)=>JSON.stringify({kind:'portal',source,status,at,error:status==='checked'?'':'Fictional read failure'})+'\n';
  await put(`data/reports/runs/${runId}/due.json`,{employer:[],portal:['Fictional Portal']});
  await put(`data/reports/runs/${runId}/source-evidence.jsonl`,evidence('Fictional Portal','partial',startedAt));
@@ -165,13 +170,14 @@ try{
  const laterId='run-202611270801-later',laterAt=new Date(Date.parse(startedAt)+1000).toISOString();
  const manifest=(id,at,status='finished',scope=result.snapshot.scope)=>({runId:id,startedAt:at,status,setupId:next.setupId,setupScope:scope});
  await put(`data/reports/runs/${laterId}/run-completion.json`,manifest(laterId,laterAt));
- await put(`data/reports/runs/${laterId}/due.json`,{employer:[],portal:[]});
+ await put(`data/reports/runs/${laterId}/due.json`,{employer:[],portal:['Fictional Portal']});
  await put(`data/reports/runs/${laterId}/run-ledger.jsonl`,'');
  await put(`data/reports/runs/${laterId}/source-evidence.jsonl`,'');
- await put(`data/reports/runs/${laterId}/finish.json`,{runId:laterId,searchCoverage:'complete',retry:[]});
- let progress=await inspectSetup(root,next);
+ await put(`data/reports/runs/${laterId}/finish.json`,{runId:laterId,searchCoverage:'partial',retry:['portal Fictional Portal: no evidence']});
+ progress=await inspectSetup(root,next);
  assert.equal(progress.initialSearch,'partial');assert(progress.searchProgress.blockers.some(s=>s.includes('Fictional Portal')));
  await put(`data/reports/runs/${laterId}/source-evidence.jsonl`,evidence('Fictional Portal','checked',laterAt));
+ await put(`data/reports/runs/${laterId}/finish.json`,{runId:laterId,searchCoverage:'complete',retry:[]});
  progress=await inspectSetup(root,next);assert.equal(progress.initialSearch,'complete');assert.equal(progress.searchProgress.latestRunId,laterId);assert.equal(progress.scheduledOperationVerified,true);assert.equal(next.verification.runId,runId);
  const interruptedId='run-202611270802-interrupted',interruptedAt=new Date(Date.parse(laterAt)+1000).toISOString();
  await put(`data/reports/runs/${interruptedId}/run-completion.json`,manifest(interruptedId,interruptedAt,'started'));
@@ -180,20 +186,24 @@ try{
  await put(`data/reports/runs/${interruptedId}/due.json`,{employer:[],portal:['Another Portal']});
  await put(`data/reports/runs/${interruptedId}/run-ledger.jsonl`,'');
  await put(`data/reports/runs/${interruptedId}/source-evidence.jsonl`,evidence('Another Portal','failed',interruptedAt));
- await put(`data/reports/runs/${interruptedId}/finish.json`,{runId:interruptedId,searchCoverage:'complete',retry:[]});
+ await put(`data/reports/runs/${interruptedId}/finish.json`,{runId:interruptedId,searchCoverage:'partial',retry:['portal Another Portal: failed (Fictional read failure)']});
  assert.equal((await inspectSetup(root,next)).initialSearch,'partial');
  await put(`data/reports/runs/${interruptedId}/source-evidence.jsonl`,evidence('Another Portal','checked',interruptedAt));
+ await put(`data/reports/runs/${interruptedId}/finish.json`,{runId:interruptedId,searchCoverage:'complete',retry:[]});
  assert.equal((await inspectSetup(root,next)).initialSearch,'complete');
  const otherId='run-other-scope',otherAt=new Date(Date.parse(interruptedAt)+1000).toISOString();
  await put(`data/reports/runs/${otherId}/run-completion.json`,manifest(otherId,otherAt,'started','0'.repeat(64)));
+ assert.equal((await inspectSetup(root,next)).initialSearch,'partial','an interrupted old-scope run waits for takeover');
+ await put(`data/reports/runs/${otherId}/run-completion.json`,{...manifest(otherId,otherAt,'finished','0'.repeat(64)),takenOverBy:interruptedId});
  assert.equal((await inspectSetup(root,next)).initialSearch,'complete');
+ // A finished legacy run without setup identity neither advances nor blocks progress.
  const unknownId='run-unknown-scope';await put(`data/reports/runs/${unknownId}/run-completion.json`,{runId:unknownId,startedAt:otherAt,status:'finished'});
- assert.equal((await inspectSetup(root,next)).initialSearch,'partial');
+ assert.equal((await inspectSetup(root,next)).searchProgress.latestRunId,interruptedId);
  await fs.rm(path.join(root,'data/reports/runs',unknownId),{recursive:true});
- await put('data/reports/coverage.json',{...resetCoverage,unfinished:['Unresolved current-scope work']});
+ await put('data/reports/coverage.json',{...searched,unfinished:['Unresolved current-scope work']});
  assert.equal((await inspectSetup(root,next)).initialSearch,'partial');
- await put('data/reports/coverage.json',{...resetCoverage,unfinished:[]});
- pass('Current-scope progress follows later resolution and unfinished sources without replacing operational verification');
+ await put('data/reports/coverage.json',searched);
+ pass('Current-scope progress follows checkpoints, carried retries and takeovers without replacing operational verification');
  await put('data/reports/probe.json',{ok:false,results:[]});assert.equal((await inspectSetup(root,next)).scheduledOperationVerified,false);
  await put('data/reports/probe.json',{ok:true,results:[{name:'Storage and backup',ok:true}]});
  await put(next.task.promptEvidence,'drift');assert.equal((await inspectSetup(root,next)).scheduledOperationVerified,false);
@@ -327,13 +337,15 @@ async function reviewFixes(){
   await put(`data/reports/runs/${newRun}/source-evidence.jsonl`,'');
   await put(`data/reports/runs/${newRun}/finish.json`,{runId:newRun,searchCoverage:'complete',retry:[]});
   let progress=await inspectSetup(dir,current.state);
+  assert.equal(progress.initialSearch,'partial');
+  for(const words of [oldRun,discovery,'Zeta Employer','New Employer'])assert(progress.searchProgress.blockers.some(b=>b.includes(words)),words);
+  // The finished run takes both unfinished folders over and checks the replayed employers.
+  for(const id of [oldRun,discovery]){const file=`data/reports/runs/${id}/run-completion.json`;await put(file,{...JSON.parse(await text(file)),status:'finished',takenOverBy:newRun});}
+  await put('data/reports/coverage.json',{...after,employers:{...after.employers,'Zeta Employer':{lastChecked:at(3).slice(0,10)},'New Employer':{lastChecked:at(3).slice(0,10)}}});
+  progress=await inspectSetup(dir,current.state);
   assert.equal(progress.initialSearch,'complete',progress.searchProgress.blockers.join('; '));
-  await put(`data/reports/runs/${oldRun}/due.json`,{employer:['Zeta Employer'],portal:[]});
-  assert.equal((await inspectSetup(dir,current.state)).initialSearch,'partial','an older due source without any outcome stays open');
-  await put(`data/reports/runs/${newRun}/source-evidence.jsonl`,JSON.stringify({kind:'employer',source:'Zeta Employer',status:'checked',at:at(3)})+'\n');
-  assert.equal((await inspectSetup(dir,current.state)).initialSearch,'complete');
   assert.equal((await setupGuard(dir)).setupScope,scope);
-  pass('Older interrupted runs block progress only through unresolved due sources; setup discovery runs are not unclassified');
+  pass('Interrupted and setup discovery runs stop blocking once a finished run takes them over and replayed employers are checked');
   // Verification depends on installed operation, not profile wording.
   const probe='data/reports/probe.json',report='data/reports/import.json';
   await put(probe,{ok:true,results:[{name:'Storage and backup',ok:true}]});
@@ -346,5 +358,11 @@ async function reviewFixes(){
   await put('agent/ROUTINE_PROMPT.filled.md',(await text('agent/ROUTINE_PROMPT.filled.md')).replace('Candidate: Fictional','Candidate: Corrected'));
   assert.notEqual((await inspectSetup(dir,verifiedState)).operation,ready.operation);
   pass('A profile Name edit keeps operation evidence current; a changed installed prompt does not');
+  const guide='> Replace every `{{…}}` and every line starting with "Example:". Delete examples you do not need.\n';
+  await put('profile/candidate_profile.md',guide+profile);assert.equal((await setupSnapshot(dir)).profileValid,true);
+  for(const line of ['> Eligibility: {{UNRESOLVED}}','>> Eligibility: {{UNKNOWN}}','> - Example: Fictional role','> Replace every `{{…}}` and every line starting with "Example:". Delete examples you do not need. Extra {{UNKNOWN}}']){
+   await put('profile/candidate_profile.md',profile+'\n'+line);const result=await setupSnapshot(dir);assert.equal(result.profileValid,false,line);assert(result.profileProblems.length);
+  }
+  pass('Only exact template guidance is exempt; quoted facts, examples and altered guidance fail');
  }finally{await fs.rm(dir,{recursive:true,force:true,maxRetries:10,retryDelay:100});}
 }
