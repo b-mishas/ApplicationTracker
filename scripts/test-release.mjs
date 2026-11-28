@@ -41,13 +41,13 @@ try{
   const metadata=JSON.parse(await candidate.file('Application tracker/RUNTIME_CHECKSUMS.json').async('string'));
   assert.equal(metadata.artifacts.length,1,`Expected one checksum entry in ${filename}`);
   assert.equal(metadata.artifacts[0].file.includes('-'+target.runtime+'.'),true);
-  const own=target.os==='windows'?['Start (Windows).cmd','Restart (Windows).cmd','Stop (Windows).cmd']:['Start (Mac).command','Restart (Mac).command','Stop (Mac).command'];
-  const other=target.os==='windows'?['Start (Mac).command','Restart (Mac).command','Stop (Mac).command']:['Start (Windows).cmd','Restart (Windows).cmd','Stop (Windows).cmd'];
+  const own=target.os==='windows'?['Application Tracker.cmd','Restart tracker.cmd','Stop tracker.cmd']:['Application Tracker.command','Restart tracker.command','Stop tracker.command'];
+  const other=target.os==='windows'?['Application Tracker.command','Restart tracker.command','Stop tracker.command']:['Application Tracker.cmd','Restart tracker.cmd','Stop tracker.cmd'];
   for(const name of own)assert(candidate.file('Application tracker/'+name),`${filename} missing ${name}`);
   for(const name of other)assert(!candidate.file('Application tracker/'+name),`${filename} contains ${name}`);
   for(const entry of Object.values(candidate.files))if(!entry.dir&&entry.name.startsWith('Application tracker/app/'))assert.deepEqual(await entry.async('nodebuffer'),await fs.readFile(path.join(root,entry.name.replace('Application tracker/',''))),`Stale release file: ${entry.name}`);
   if(target.os==='mac'){
-   assert.equal(candidate.file('Application tracker/Start (Mac).command').unixPermissions&0o777,0o755);
+   assert.equal(candidate.file('Application tracker/Application Tracker.command').unixPermissions&0o777,0o755);
    assert.equal(candidate.file(`Application tracker/runtime/${target.runtime}/node`).unixPermissions&0o777,0o755);
    for(const name of own)assert(!((await candidate.file('Application tracker/'+name).async('string')).includes('\r')),`${filename} contains CRLF in ${name}`);
   }
@@ -69,7 +69,7 @@ try{
  const probe=net.createServer();await new Promise(resolve=>probe.listen(0,'127.0.0.1',resolve));env.JOBTRACKER_PORT=String(probe.address().port);await new Promise(resolve=>probe.close(resolve));
  const runtime=path.join(directory,'runtime',`${process.platform==='win32'?'win':'darwin'}-${process.arch}`,process.platform==='win32'?'node.exe':'node');
  const invoke=(script,args=[])=>{const r=spawnSync(runtime,[path.join(directory,'app',script),...args],{env,encoding:'utf8',timeout:30000,windowsHide:true});assert.equal(r.status,0,r.stderr||r.stdout);return r.stdout;};
- const starter=process.platform==='win32'?'Start (Windows).cmd':'Start (Mac).command';
+ const starter=process.platform==='win32'?'Application Tracker.cmd':'Application Tracker.command';
  const command=process.platform==='win32'?process.env.ComSpec:'/bin/sh';
  const args=process.platform==='win32'?['/d','/s','/c',`""${path.join(directory,starter)}""`]:[path.join(directory,starter)];
  const start=()=>{const result=spawnSync(command,args,{env,encoding:'utf8',timeout:30000,windowsHide:true,windowsVerbatimArguments:process.platform==='win32'});assert.equal(result.status,0,result.stderr||result.stdout);return result.stdout;};
@@ -86,7 +86,7 @@ try{
  assert.equal((await fetch(repeated.url+'/api/export/applications.xlsx',{signal:AbortSignal.timeout(10000)})).status,200);
  assert.deepEqual(JSON.parse(await fs.readFile(path.join(directory,'settings/tracker.json'),'utf8')),{schemaVersion:1,exportLanguage:'en'});
  assert(!Object.keys(zip.files).some(n=>/^Application tracker\/(?:HANDOFF(?:_AGENT|_WRAPPER)?|PLAN|HISTORY|CLAUDE)\.md$/.test(n)));
- const stopCommand=process.platform==='win32'?'Stop (Windows).cmd':'Stop (Mac).command';
+ const stopCommand=process.platform==='win32'?'Stop tracker.cmd':'Stop tracker.command';
  const stopArgs=process.platform==='win32'?['/d','/s','/c',`""${path.join(directory,stopCommand)}""`]:[path.join(directory,stopCommand)];
  const stopped=spawnSync(command,stopArgs,{env,encoding:'utf8',timeout:30000,windowsHide:true,windowsVerbatimArguments:process.platform==='win32'});
  assert.equal(stopped.status,0,stopped.stderr||stopped.stdout);

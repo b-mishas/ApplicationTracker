@@ -4,6 +4,12 @@
 
 --------------------
 
+## 2026-11-28 — Plain-language START_HERE, renamed starter files (Claude)
+
+- Starters renamed in every package: `Application Tracker.cmd/.command`, `Restart tracker.cmd/.command`, `Stop tracker.cmd/.command` (each ZIP holds one system's files, so the "(Windows)/(Mac)" suffix went). scripts/build-release.mjs, scripts/test-release.mjs, app/test-startup.mjs and app/README.md follow.
+- START_HERE.html cut to what a non-technical user needs: no local address, port, server or start-at-login text, no Settings list, no Coverage check; "Open the Claude or ChatGPT desktop app"; Restart/Stop moved to "If something goes wrong"; bookmark sentence kept with a fallback to the file. The Mac Open Anyway steps use the new name.
+- npm test passed. The Windows/Mac views were checked in the built-in browser. scripts/test-release.mjs and a build were not run; the Windows "allow it" wording is untested against a real download.
+
 ## 2026-11-28 — Restore Shortlisted when clearing an application date
 
 - Ported JobTracker c9e75e0f4981d35b26df9440d1e3f217f05c60e0: clearing a recorded application date returns only a currently Applied entry to Shortlisted. Normal expanded view autosaves the correction; full Edit stages until Save. Clear/reapply, failure restoration, Cancel, notes, explicit blanks and Undo are preserved; undated legacy Applied entries and later stages remain unchanged.

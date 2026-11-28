@@ -98,7 +98,7 @@ for(const target of selected){
  const archive=new JSZip();
  const addFile=(name,data,executable=false)=>archive.file('Application tracker/'+name,data,{unixPermissions:executable?0o100755:0o100644});
  for(const entry of shared)addFile(entry.name,entry.data,entry.executable);
- for(const name of config.os==='windows'?['Start (Windows).cmd','Restart (Windows).cmd','Stop (Windows).cmd']:['Start (Mac).command','Restart (Mac).command','Stop (Mac).command']){
+ for(const name of config.os==='windows'?['Application Tracker.cmd','Restart tracker.cmd','Stop tracker.cmd']:['Application Tracker.command','Restart tracker.command','Stop tracker.command']){
   const content=await fs.readFile(path.join(root,name));
   // Shell scripts need LF even when Windows Git checks out source files with CRLF.
   addFile(name,name.endsWith('.command')?Buffer.from(content.toString().replace(/\r\n/g,'\n')):content,name.endsWith('.command'));

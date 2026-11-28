@@ -45,9 +45,9 @@ try{
   if(await fs.access(bundled).then(()=>true,()=>false)){
    const starter=async name=>execute(process.env.ComSpec,['/d','/s','/c','""'+path.join(repo,name)+'""'],{env,windowsHide:true,windowsVerbatimArguments:true,timeout:25000});
    await fs.writeFile(metadata,JSON.stringify({...state,reuseMarker:true}));
-   const opened=await starter('Start (Windows).cmd');assert(!opened.stdout.includes('stopped'));
+   const opened=await starter('Application Tracker.cmd');assert(!opened.stdout.includes('stopped'));
    assert.equal(JSON.parse(await fs.readFile(metadata,'utf8')).reuseMarker,true);
-   const restarted=await starter('Restart (Windows).cmd');assert(restarted.stdout.includes('stopped'));
+   const restarted=await starter('Restart tracker.cmd');assert(restarted.stdout.includes('stopped'));
    assert.equal(JSON.parse(await fs.readFile(metadata,'utf8')).url,state.url);
    console.log('PASS: actual Windows Start and Restart files reuse/restart disposable data with the bundled Node runtime.');
   }
