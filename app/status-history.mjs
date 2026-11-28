@@ -56,7 +56,10 @@ export function updateStage(job, input, today) {
  const before = interviewDetails(job), oldStatus = effectiveStatus(job);
  const legacyOutcome = Object.hasOwn(input,'interviewOutcome');
  if (legacyOutcome && !before.hasInterview && !['Interview','Offer'].includes(input.status)) throw new StatusHistoryError('Record an interview before setting its outcome.');
- const status = legacyOutcome ? input.interviewOutcome || 'Interview' : input.status;
+ let status = legacyOutcome ? input.interviewOutcome || 'Interview' : input.status;
+ // Clearing a recorded application date corrects a pending application back to the shortlist.
+ // Undated legacy applications and deliberate moves to other stages stay unchanged.
+ if(oldStatus==='Applied'&&status==='Applied'&&job.applicationDate&&input.applicationDate==='')status='Shortlisted';
  const changed = status !== oldStatus;
  job.status = status;
  delete job.interviewOutcome;

@@ -4,6 +4,13 @@
 
 --------------------
 
+## 2026-11-28 — Restore Shortlisted when clearing an application date
+
+- Ported JobTracker c9e75e0f4981d35b26df9440d1e3f217f05c60e0: clearing a recorded application date returns only a currently Applied entry to Shortlisted. Normal expanded view autosaves the correction; full Edit stages until Save. Clear/reapply, failure restoration, Cancel, notes, explicit blanks and Undo are preserved; undated legacy Applied entries and later stages remain unchanged.
+- Adapted editor/model/integration regressions and documented the status contract. Full npm test passed before splitting; isolated Chrome verified normal clear/autosave/reapply, retained unsaved notes, staged Edit/Cancel and desktop/narrow layout. First commit's exact index snapshot separately passed UI-helper, Interviews and view-model checks. Firefox, touch and physical-device acceptance remain open.
+- User requested three scoped wrapper commits; source types/Interviews and compact controls are separate preceding commits. No source checkout, live data/settings, push, live restart or ZIP changes. Untracked design/ remains separate; unrelated recovery work was committed independently in b856b44.
+
+
 ## 2026-11-28 — Compact responsive application controls
 
 - Ported JobTracker c802981687b8ef9e7f9836d10b330e4cfcdb2cb5: matching 145 px Status/date controls, 12 px adjacent-control gaps, outcome buttons beside interview date, consistent labels and extra Cancel separation without changing button sizes.

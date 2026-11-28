@@ -16,6 +16,7 @@ The routine prompt (`agent/ROUTINE_PROMPT.md`, Part B) relies on exactly these p
 Not shipped: `AGENTS.md`, `CLAUDE.md`, `HANDOFF_AGENT.md`, `HANDOFF_WRAPPER.md`, `PLAN.md`, `HISTORY.md`, `PORTABILITY.md`, this file, tests, `.git`, any filled profile, CV, `ROUTINE_PROMPT.filled.md`, or data from a real installation. Build from pristine templates, never from a customized folder.
 
 ## Implemented tracker interface
+- Clearing a recorded application date returns only a currently Applied entry to Shortlisted. Normal expanded view autosaves this correction; full Edit stages it until Save. Undated legacy Applied records and later stages stay unchanged. Undo restores the prior entry.
 - The current Interviews preset includes Interview and Offer; historical interview totals retain their milestone rules.
 - Sources accept optional `linkType` (posting/search), including batch validation and import. A source matching the primary URL must agree with the vacancy type. Existing untyped sources remain valid; edits synchronize the primary type, untyped refreshes preserve known classifications, and unknown secondary sources display "Open source".
 - Editor metadata: `otherIds` and `postingUrls` are protected importer aliases and hidden from forms/metadata. `workModeBasis` is read-only metadata. The derived `country` is hidden; editing `countries` still updates it. Unknown custom fields remain editable.

@@ -216,7 +216,8 @@ for (const [status,key] of [['Applied','applicationDate'],['Offer','offerDate'],
  updateStage(job,{status},transitionDay);
  assert.equal(job[key],transitionDay,status+' gets transition date');
  updateStage(job,{status,[key]:''},transitionDay);
- updateStage(job,{status},'2026-11-19');
+ if(status==='Applied')assert.equal(job.status,'Shortlisted','Clearing a recorded application returns it to Shortlisted');
+ updateStage(job,{status:job.status},'2026-11-19');
  assert.equal(job[key],'',status+' ordinary saves preserve cleared date');
  const retrospective={status:'Shortlisted'};
  updateStage(retrospective,{status,[key]:'2026-10-01'},transitionDay);

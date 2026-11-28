@@ -1,19 +1,19 @@
 # Wrapper handoff
 
-Updated 2026-11-27T12:18:00Z — Codex.
+Updated 2026-11-28T08:18:52Z — Codex.
 
 ## Scope and checkout
 
-User authorized checking and committing the pending deadline/Interviews port if conflict-free and tests pass. main, starting HEAD 6fd8573e818499f08b789de6c203d8bf75bd3862; upstream origin/main locally c00e12d. Remote/CI unverified. Source JobTracker commits c381bde2f7cd479e7ac6b72e464e5299da324f95 and b59ce2bb58ec0322b92c35b76594d1c69394f115. Editor cleanup 4bfdf67 remains intact. No push/build requested.
+Port the relevant features of four pinned JobTracker commits using WRAPPER_PORTING.md. Destination main, pre-final-commit HEAD 943aabb. User requested three commits: ba78173 contains source types/Interviews; 943aabb contains compact responsive controls; this checkpoint accompanies the date-clearing commit. Locally recorded origin/main is 4931d22; no push requested. Remote/CI unverified. Source read-only at c9e75e0f4981d35b26df9440d1e3f217f05c60e0; full source SHAs and decisions are in HISTORY.md. Commit authorized; no push/build requested.
 
-## Port and integration review
+## Implemented
 
-Optional applicationDeadline imports as a verified ISO date. Newer nonblank observations update it; older/unknown observations preserve known dates. Expanded view displays a bold dark-red date; full Edit supports correction/clearing. Availability remains stored/imported and protected but hidden. Existing inventory needs no migration. Local-time dates, manual urgency and portable paths remain.
+e15d33c was already present: aliases/derived country hidden, evidence basis protected and Sources spacing/Applied font weight correct. Ported 85fd966: optional per-source link types, primary synchronization, neutral unknown-source labels, importer validation/enrichment and current Interviews including Offers. Ported c802981: compact 145 px Status/date fields, consistent spacing and outcome buttons. Added container-based stacking/wrapping for this wrapper's narrow responsive panels. Ported c9e75e0: clearing a recorded date on Applied returns it to Shortlisted; normal view autosaves, full Edit stages until Save. Clear/reapply, Cancel, failure recovery, notes, Undo and later-status exemptions are covered.
 
-Interviews beneath Applied counts/filters current Interview entries, separately from historical interview totals. It has independent date-sorted layouts with Applied on/Last interview, and is hidden at zero. Responsive visibility caching includes it. Reviewed shared editor/schema/importer/UI/tests/package changes; routine/pristine template, interface/workflow and PLAN coordinate the optional deadline contract. Installed prompts need regeneration separately.
+Changed wrapper files: app.js, style.css, entry-form/editor, status-history, importer, batch/inventory schemas and affected UI/editor/import/view-model/Interviews/check tests. Updated INTERFACE_FOR_TRACKER.md, app/SEARCH_WORKFLOW.md and the optional-field sentence in routine/pristine template. No new runtime modules/dependencies or migration; curated release list already includes affected modules. Portable settings, general-purpose countries/groups, local dates and Excel/PDF implementation retained.
 
-Found and removed a duplicate button after closing HTML and a trailing repeated count block from the original port; added unique-ID/navigation assertions. No unmerged entries/conflict markers. Full working-tree and exact staged-snapshot npm test passed (exit 0). A long temporary path blocked the first snapshot's Windows login test; a shorter path passed unchanged code. Chromium fixture at 1280×720 verified formatting, date editing/Save/reload, current versus historical interviews, layout persistence and zero-count hiding; screenshot reviewed. Physical devices/other browsers and actual macOS login remain untested. Preview stopped; no real inventory/settings or ZIP changes.
+## Verification and remaining work
 
-## Separate work and next action
+Full npm test passed. Isolated headless Chrome 1440×1000/900×900 exercised source switching/save, Offer-only Interviews, automatic and staged date clears/reapply/Cancel and retained unsaved notes. Screenshots inspected; no browser exceptions; narrow application controls now fit their 244 px panel. CUA/Node helpers could not start because chat cwd names the old folder; temporary Chrome/CDP provided browser checks. Test browser/server/fixture stopped/removed. Firefox, touch, physical laptop and recipient acceptance remain untested; prior responsive/release limitations remain in PLAN/HISTORY.
 
-Setup implementation baseline is committed in 6fd8573; subsequent setup review fixes remain uncommitted in helpers, prompts/templates, docs/roadmaps/tests. See HANDOFF_AGENT.md. This checkpoint accompanies the user-authorized scoped feature commit; setup review fixes and design/ remain unstaged. Prior responsive physical acceptance/preference-save stress limitation and release staleness remain in PLAN/HISTORY. No other operations started by this task.
+Unrelated setup/recovery work was committed independently in b856b44; untracked design/ remains outside these commits. Installed prompts need separate regeneration. No live records/settings, login registration, running installation or ZIP changed. No active operations from this port. Next: user review; Firefox/touch/physical-device checks remain open. Remote/CI unverified.

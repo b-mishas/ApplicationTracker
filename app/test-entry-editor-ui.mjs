@@ -62,6 +62,57 @@ vm.runInContext(block('function stageFields(', 'function applicationText('),cont
 assert.equal(context.stageFields(draftJob).interview,true);
 assert.equal(context.stageFields(draftJob).offerDate,true);
 assert.equal(draftJob.applicationDate,'2026-11-20');
+// Clearing is a staged correction in both editor modes; it never writes saved data.
+context.localToday=()=> '2026-11-28';
+const pendingJob={id:'pending',status:'Applied',applicationDate:'2026-11-27',notes:'Unsaved notes survive'};
+context.data.jobs.push(pendingJob);context.open=pendingJob.id;
+const pendingSelect={value:'Applied'},statusText={value:'Old wording'};
+const pendingSection={querySelector:selector=>selector==='.edit-status'?pendingSelect:statusText};
+const clearedDate={value:'',validity:{badInput:false},closest:()=>pendingSection};
+context.syncStageControls=(section,record)=>{draftJob=record;pendingSelect.value=record.status;};
+for(const editingId of [null,pendingJob.id]){
+ context.editingId=editingId;pendingSelect.value='Applied';
+ assert.equal(context.stageApplicationDateClear(clearedDate),true);
+ assert.equal(pendingSelect.value,'Shortlisted');assert.equal(draftJob.applicationDate,'');assert.equal(draftJob.notes,pendingJob.notes);
+ assert.equal(pendingJob.status,'Applied');assert.equal(pendingJob.applicationDate,'2026-11-27');
+ assert.equal(statusText.value,'');
+}
+pendingSelect.value='Applied';clearedDate.validity.badInput=true;assert.equal(context.stageApplicationDateClear(clearedDate),false);
+clearedDate.validity.badInput=false;clearedDate.value='2026-11-28';assert.equal(context.stageApplicationDateClear(clearedDate),false);
+clearedDate.value='';pendingSelect.value='Interview';assert.equal(context.stageApplicationDateClear(clearedDate),false);
+// Full Edit can re-apply an unsaved clear, restoring a date before Save.
+context.editingId=pendingJob.id;pendingSelect.value='Applied';
+pendingSelect.closest=()=>pendingSection;
+pendingSection.querySelector=selector=>selector==='.edit-status'?pendingSelect:selector==='.edit-application-date'?clearedDate:statusText;
+pendingSection.querySelectorAll=()=>[];
+context.stageEntryStatus(pendingSelect);
+assert.equal(clearedDate.value,'2026-11-27');assert.equal(draftJob.status,'Applied');assert.equal(draftJob.applicationDate,'2026-11-27');
+const reappliedDraft=structuredClone(pendingJob);editor.applyEntryChanges(reappliedDraft,{status:draftJob.status,applicationDate:draftJob.applicationDate},'2026-11-28');assert.equal(reappliedDraft.status,'Applied');
+context.editingId=job.id;clearedDate.value='';context.stageEntryStatus(pendingSelect);assert.equal(clearedDate.value,'2026-11-28','A newly applied editor draft prefills today');
+
+// Expanded clearing autosaves only status/date; reapplying then prefills today.
+let statusPayload;
+const autoDate={value:'',validity:{badInput:false}},autoText={value:''},autoNotes={value:'Unsaved notes'},autoIndicator={textContent:''};
+const classes={remove(){},toggle(){},add(){}},autoRow={classList:classes,querySelector:()=>null},autoDetail={classList:classes,previousElementSibling:autoRow};
+const autoSection={closest:()=>autoDetail,querySelectorAll:()=>[],querySelector:selector=>selector==='.edit-application-date'?autoDate:selector==='.edit-application-status'?autoText:selector==='.edit-notes'?autoNotes:autoIndicator};
+const autoSelect={value:'Shortlisted',closest:()=>autoSection};
+const autosaveContext=vm.createContext({...history,data:{jobs:[pendingJob]},open:pendingJob.id,pendingSave:false,
+ document:{querySelectorAll:()=>[],activeElement:null},stageClasses:new Map(),rowStage:()=>'',refreshOverview(){},dirty:()=>true,
+ localToday:()=> '2026-11-28',applicationText:()=> 'Saved application wording',milestoneDraft:()=>({}),refreshEditorButtons(){},setPendingSave(){},clearMessage(){},
+ syncStageControls:(section,record)=>{autoSelect.value=record.status;},saveJobEdit:async payload=>{statusPayload=payload;const saved={...autosaveContext.data.jobs[0],status:payload.status,applicationDate:payload.applicationDate};autosaveContext.data.jobs[0]=saved;return saved;}
+});
+vm.runInContext(block('async function saveStatus(', "$('body').addEventListener('change'"),autosaveContext);
+await autosaveContext.saveStatus(autoSelect,{applicationDate:''});
+assert.equal(statusPayload.status,'Shortlisted');assert.equal(statusPayload.applicationDate,'');
+assert.equal(Object.hasOwn(statusPayload,'notes'),false);assert.equal(Object.hasOwn(statusPayload,'applicationStatusText'),false);assert.equal(autoNotes.value,'Unsaved notes');
+autoSelect.value='Applied';await autosaveContext.saveStatus(autoSelect);
+assert.equal(statusPayload.applicationDate,'2026-11-28');assert.equal(autoDate.value,'2026-11-28');assert.equal(autosaveContext.data.jobs[0].status,'Applied');
+// A failed clear restores the saved stage/date without losing notes.
+autoDate.value='';autoSelect.value='Shortlisted';autoText.value='';
+autosaveContext.saveJobEdit=async()=>{throw Error('Simulated save failure');};
+await autosaveContext.saveStatus(autoSelect,{applicationDate:''});
+assert.equal(autoSelect.value,'Applied');assert.equal(autoDate.value,'2026-11-28');assert.equal(autoNotes.value,'Unsaved notes');assert.match(autoIndicator.textContent,/Simulated save failure/);
+context.editingId=job.id;
 vm.runInContext(block('let assessmentResizeFrame=', 'function resizeAssessmentFields('),context);
 context.scheduleAssessmentResize();context.scheduleAssessmentResize();
 assert.equal(queued.length,1);queued.shift()();assert.equal(resizes,1);

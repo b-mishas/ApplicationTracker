@@ -1,6 +1,6 @@
 import {renderEntryForm, renderRowControl, formSnapshot, readEntryChanges, sourceRow, fitTextHeights} from './entry-form.mjs';
 import {validateEntryChanges, inferredLinkType} from './entry-editor.mjs';
-import {STATUS_VALUES, INTERVIEW_OUTCOMES, MILESTONE_DATES, interviewDetails, effectiveStatus, interviewHistoryText, validStageDate, isRejectedAfterInterview, hasSentApplication, hasReceivedOffer} from './status-history.mjs';
+import {STATUS_VALUES, INTERVIEW_OUTCOMES, MILESTONE_DATES, interviewDetails, effectiveStatus, interviewHistoryText, validStageDate, isRejectedAfterInterview, hasSentApplication, hasReceivedOffer, updateStage} from './status-history.mjs';
 import {filterAndSort,choicesFor,columnValue,EMPTY,REJECTED_AFTER_INTERVIEW,APPLIED_TOTAL,INTERVIEW_TOTAL,OFFER_TOTAL} from './view-model.mjs';
 import {groupColour,ensureGroupColours} from './group-colours.mjs';
 import {COLUMN_WIDTHS,defaultColumnLayout,PRESET_DEFAULTS_VERSION,upgradePresetLayouts,minimumColumnWidth,MAX_COLUMN_WIDTH,clampColumnWidth,fitColumnWidths} from './column-layout.mjs';
@@ -151,11 +151,24 @@ function editableCell(job,key){
 }
 function stageEntryStatus(select){
  const job=data.jobs.find(item=>item.id===editingId),section=select.closest('section');
+ const date=section.querySelector('.edit-application-date');
+ if(select.value==='Applied'&&!date.value&&!date.validity.badInput)date.value=(effectiveStatus(job)==='Applied'?job.applicationDate:'')||localToday();
  const draft=Object.fromEntries([...section.querySelectorAll('[data-milestone]')].map(field=>[field.dataset.milestone,field.value]));
- syncStageControls(section,{...job,...draft,applicationDate:section.querySelector('.edit-application-date').value,status:select.value,interviewOutcome:undefined},draft);
+ syncStageControls(section,{...job,...draft,applicationDate:date.value,status:select.value,interviewOutcome:undefined},draft);
  hideRowDuplicateFields();
  syncRowFields();
  refreshEditorButtons();
+}
+function stageApplicationDateClear(input){
+ if(input.value!==''||input.validity.badInput)return false;
+ const section=input.closest('section'),select=section.querySelector('.edit-status');
+ const job=data.jobs.find(item=>item.id===(editingId??open)),draft={...job};
+ updateStage(draft,{status:select.value,applicationDate:''},localToday());
+ if(effectiveStatus(draft)===select.value)return false;
+ syncStageControls(section,draft,interviewDetails(draft));
+ section.querySelector('.edit-application-status').value=interviewHistoryText(draft);
+ if(editingId){hideRowDuplicateFields();syncRowFields();}
+ return true;
 }
 // Additional fields need not repeat editable row columns. The main panel,
 // including all Application steps controls, retains its existing controls.
@@ -784,7 +797,7 @@ document.querySelector('.table-wrap').addEventListener('scroll',closeFilter);
 $('body').addEventListener('submit',event=>{if(event.target.matches('.entry-form')){event.preventDefault();saveEntry();}});
 // Save only the stage (and an automatic first application date). Keep the
 // editor in place so unsaved notes/date/text and edits made while saving survive.
-async function saveStatus(select){
+async function saveStatus(select,{applicationDate}={}){
  const job=data.jobs.find(job=>job.id===open);if(!job)return;
  const previous=effectiveStatus(job);
  if(pendingSave){select.value=previous;return;}
@@ -792,8 +805,8 @@ async function saveStatus(select){
  const status=select.value;
  const section=select.closest('section'),date=section.querySelector('.edit-application-date'),text=section.querySelector('.edit-application-status'),indicator=section.querySelector('.save-state');
  const dateBefore=date.value,oldText=applicationText(job);
- const autoDate=status==='Applied'?localToday():undefined;
- const payload={id:job.id,status,statusDate:localToday(),...(autoDate?{applicationDate:autoDate}:{})};
+ const autoDate=applicationDate??(status==='Applied'?localToday():undefined);
+ const payload={id:job.id,status,statusDate:localToday(),...(autoDate!==undefined?{applicationDate:autoDate}:{})};
  // Keep native editor calendars stable by leaving date inputs enabled.
  const controls=[...section.querySelectorAll('button,select'),...document.querySelectorAll('.sidebar button,.toolbar input:not([type=date]),.toolbar button,.toolbar select,#head button,#settings-open')];
  const focused=document.activeElement;
@@ -812,13 +825,31 @@ async function saveStatus(select){
   // filter. Filters apply again on collapse/navigation, after drafts are handled.
   indicator.textContent=dirty()?'Status saved ✓; other edits are unsaved.':'Status saved ✓';
   clearMessage();
- }catch(error){select.value=previous;indicator.textContent='Status not saved: '+error.message;}
+ }catch(error){
+  select.value=previous;
+  if(applicationDate===''){
+   if(date.value===dateBefore)date.value=job.applicationDate||'';
+   syncStageControls(section,job,milestoneDraft(section,job,{includeHidden:true}));
+   if(text.value==='')text.value=oldText;
+  }
+  indicator.textContent='Status not saved: '+error.message;
+ }
  finally{setPendingSave(false);disabled.forEach(({control,wasDisabled})=>control.disabled=wasDisabled);refreshEditorButtons();if(focused===select&&document.activeElement===document.body)select.focus();}
 }
 $('body').addEventListener('change',event=>{
+ if(event.target.matches('.edit-application-date')&&stageApplicationDateClear(event.target)){
+  if(editingId)refreshEditorButtons();
+  else saveStatus(event.target.closest('section').querySelector('.edit-status'),{applicationDate:''});
+  return;
+ }
  if(event.target.matches('[data-source-type]')){updatePrimarySource();refreshEditorButtons();return;}
  if(event.target.matches('[data-source-primary]')){updatePrimarySource(event.target);refreshEditorButtons();return;}
- if(event.target.matches('[data-entry-row-field]')){const field=copyRowField(event.target);if(field?.matches('.edit-status'))stageEntryStatus(field);else refreshEditorButtons();return;}
+ if(event.target.matches('[data-entry-row-field]')){
+  const field=copyRowField(event.target);
+  if(field?.matches('.edit-status'))stageEntryStatus(field);
+  else{if(field?.matches('.edit-application-date')&&!event.target.validity.badInput)stageApplicationDateClear(field);refreshEditorButtons();}
+  return;
+ }
  if(event.target.closest('.entry-form')){if(event.target.matches('.edit-status'))stageEntryStatus(event.target);else{syncRowFields();refreshEditorButtons();}return;}
  if(event.target.matches('.edit-status'))saveStatus(event.target);
  else if(event.target.closest('.detail')){

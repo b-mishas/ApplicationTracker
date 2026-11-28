@@ -98,7 +98,7 @@ export function applyEntryChanges(job,changes,today,options){
  if(stageKeys.some(key=>Object.hasOwn(changes,key)))updateStage(job,{...changes,status:changes.status??oldStatus},today);
  // Date corrections are independent of the current stage. Only a real stage
  // transition applies the existing automatic milestone reset/prefill rules.
- if(!Object.hasOwn(changes,'status')||changes.status===oldStatus){
+ if(effectiveStatus(job)===oldStatus){
   for(const key of stageKeys.slice(1))if(Object.hasOwn(changes,key))job[key]=changes[key];
  }
  for(const [key,value] of Object.entries(changes))if(!stageKeys.includes(key))job[key]=structuredClone(value);

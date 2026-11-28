@@ -193,6 +193,19 @@ try{
  // The primary stage stays visible, but no dated interview sequence is generated.
  assert.equal(planApplications([],[loadedAfterClear]).rows[0].values[4],'Interview');
  console.log('PASS: milestone rollback, date clearing, notes/reload, generated export wording and Undo preserve date-OR-status membership.');
+ const appliedToClear=await update({status:'Applied',applicationDate:'2026-11-20',applicationStatusText:'Pending application',notes:'Retain this note'});
+ const clearedApplication=await update({status:'Applied',applicationDate:''});
+ assert.equal(clearedApplication.job.status,'Shortlisted');assert.equal(clearedApplication.job.applicationDate,'');
+ assert.equal(clearedApplication.job.notes,'Retain this note');assert.equal(clearedApplication.job.applicationStatusText,undefined);
+ assert.equal(planApplications([],[clearedApplication.job]).rows.length,0);
+ assert.equal((await(await fetch(base+'/api/jobs')).json()).data.jobs.find(item=>item.id===job.id).status,'Shortlisted');
+ const undoApplicationClear=await undo(clearedApplication);assert.equal(undoApplicationClear.status,200);
+ assert.deepEqual(withoutTimestamp((await undoApplicationClear.json()).job),withoutTimestamp(appliedToClear.job));
+ for(const status of ['Interview','Offer','Rejected','Withdrawn']){
+  await update({status,applicationDate:'2026-11-20'});
+  const corrected=await update({status,applicationDate:''});assert.equal(corrected.job.status,status);
+ }
+ console.log('PASS: clearing a pending application date restores Shortlisted, persists across reload, removes export membership and supports Undo; later stages stay unchanged.');
  const module=await fetch(base+'/view-model.mjs');assert.equal(module.status,200);assert(module.headers.get('content-type').includes('javascript'));
  console.log('PASS: save/revision/origin checks; reversible and idempotent quick dismissal; notes/date/German detail preserved; frontend module served.');
 }finally{if(child){child.kill();await new Promise(resolve=>child.once('exit',resolve));}await rm(dir,{recursive:true,force:true});}

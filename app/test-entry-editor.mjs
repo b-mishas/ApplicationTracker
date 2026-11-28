@@ -191,7 +191,19 @@ try{
  assert.equal(switchedPrimary.url,original.sources[0].url);
  assert(switchedPrimary.sources.some(source=>source.url===missingPrimary.url),'switching primary preserves the previous link');
  console.log('PASS: stage transitions, generated/manual application text, milestone rollback, legacy preservation, advanced fields and escaped rendering.');
-
+ const pendingState=await state();
+ const pendingResponse=await patch({id:original.id,revision:pendingState.revision,changes:{status:'Applied',applicationDate:'2026-11-27',notes:'Keep this note'}});
+ assert.equal(pendingResponse.status,200);const pendingApplication=await pendingResponse.json();
+ const clearResponse=await patch({id:original.id,revision:pendingApplication.revision,changes:{applicationDate:''}});
+ assert.equal(clearResponse.status,200);const clearedApplication=await clearResponse.json();
+ assert.equal(clearedApplication.job.status,'Shortlisted');assert.equal(clearedApplication.job.applicationDate,'');assert.equal(clearedApplication.job.notes,'Keep this note');
+ assert.deepEqual(clearedApplication.job.statusHistory,original.statusHistory,'Preserve historical evidence while explicit empty date suppresses fallback');
+ const restoreResponse=await patch({id:original.id,revision:clearedApplication.revision,quickAction:'undo',undoToken:clearedApplication.undoToken});
+ assert.equal(restoreResponse.status,200);assert.deepEqual(withoutTimestamp((await restoreResponse.json()).job),withoutTimestamp(pendingApplication.job));
+ const undated={...original,status:'Applied',applicationDate:''};applyEntryChanges(undated,{notes:'Unrelated correction',applicationDate:''},'2026-11-28');assert.equal(undated.status,'Applied');
+ const backward={...original,status:'Applied',applicationDate:'2026-11-27',interviewDate:'2026-11-26'};
+ applyEntryChanges(backward,{applicationDate:'',interviewDate:'2026-11-25'},'2026-11-28');assert.equal(backward.status,'Shortlisted');assert.equal(backward.interviewDate,'');
+ console.log('PASS: editor application-date clearing restores Shortlisted atomically; Undo and history survive, legacy undated applications stay Applied.');
 }finally{
  if(server&&server.exitCode===null){const stopped=new Promise(resolve=>server.once('exit',resolve));server.kill();await stopped;}
  await rm(directory,{recursive:true,force:true,maxRetries:5});
