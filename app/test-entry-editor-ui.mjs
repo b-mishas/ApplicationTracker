@@ -28,14 +28,28 @@ vm.runInContext(block('function updatePrimarySource(', 'function cancelEntry(')+
 await context.saveEntry();
 assert.equal(saved.changes.notes,'Corrected');assert.equal(rendered,1);assert.equal(url.value,'');
 context.editingId=job.id;
-const choice=value=>({checked:false,closest:()=>({querySelector:()=>({value})})});
+const choice=(value,selectedType='',initialUrl='')=>{
+ const radios=['search','posting'].map(value=>({value,checked:value===selectedType})),toggle={hidden:false};
+ const row={dataset:{typeUrl:initialUrl},querySelectorAll:()=>radios,querySelector:selector=>selector==='[data-source-field="url"]'?{value}:selector==='.source-type'?toggle:radios.find(radio=>radio.checked)};
+ return {checked:false,closest:()=>row};
+};
 choices=[choice('https://www.linkedin.com/jobs/search/?keywords=protein')];
 context.updatePrimarySource(choices[0]);assert.equal(type.value,'search');
 choices=[choice('https://www.linkedin.com/jobs/view/123')];
 context.updatePrimarySource(choices[0]);assert.equal(type.value,'posting');
 choices=[choice('https://example.org/vacancy')];
 context.updatePrimarySource(choices[0]);assert.equal(type.value,'');
-type.value='posting';context.updatePrimarySource();assert.equal(type.value,'posting','Save preserves the explicit choice');
+choices[0].closest().querySelectorAll().forEach(radio=>radio.checked=radio.value==='posting');
+context.updatePrimarySource();assert.equal(type.value,'posting','Save preserves the explicit choice');
+choices.push(choice('https://example.org/search','search','https://example.org/search'));
+context.updatePrimarySource(choices[1]);assert.equal(type.value,'search');assert.equal(url.value,'https://example.org/search');
+assert.equal(choices[0].closest().querySelector('.source-type').hidden,false);
+assert(choices[0].closest().querySelectorAll().every(radio=>radio.disabled));
+assert.equal(choices[1].closest().querySelector('.source-type').hidden,false);
+assert(choices[1].closest().querySelectorAll().every(radio=>!radio.disabled));
+assert.equal(choices[0].closest().querySelector('[data-source-type]:checked').value,'posting','Disabling the old primary preserves its classification');
+choices[1].closest().querySelectorAll().forEach(radio=>radio.checked=radio.value==='posting');
+context.updatePrimarySource();assert.equal(type.value,'posting','Changing primary source type updates vacancy type');
 assert.equal(editor.inferredLinkType('https://linkedin.com.evil.test/jobs/search/'),null);
 let draftJob;
 context.syncStageControls=(section,record)=>{draftJob=record;};
@@ -98,3 +112,26 @@ console.log('PASS: bold dated deadline, invalid/unknown suppression, editable ca
  assert.equal(measurements,4,'Count changes invalidate both cached label widths');
 }
 console.log('PASS: sidebar updates coalesce, reuse intrinsic measurements and invalidate changed counts.');
+
+const typedJob={...job,url:'https://example.org/primary',linkType:'posting',sources:[{label:'Primary',url:'https://example.org/primary',file:'evidence.json'},{label:'Search',url:'https://example.org/search',file:'evidence.json',linkType:'search'}]};
+const typedMarkup=formHelpers.renderEntryForm(typedJob);
+assert(typedMarkup.includes('type="hidden" data-entry-field="linkType"'));
+assert(!typedMarkup.includes('>Link type</span>'));
+assert.equal((typedMarkup.match(/data-source-type/g)||[]).length,4);
+assert(typedMarkup.indexOf('class="source-type"')<typedMarkup.indexOf('class="source-primary"'));
+const primaryMarkup=formHelpers.sourceRow(typedJob.sources[0],0,true,'posting');
+const secondaryMarkup=formHelpers.sourceRow(typedJob.sources[1],1,false);
+assert(primaryMarkup.indexOf('>Search</label>')<primaryMarkup.indexOf('>Posting</label>'));
+assert(!primaryMarkup.includes('aria-label="Link type" hidden'));
+assert(!secondaryMarkup.includes('aria-label="Link type" hidden'));
+assert.equal((secondaryMarkup.match(/ disabled/g)||[]).length,2);
+assert(!formHelpers.sourceRow({url:'https://unknown.example'}).includes(' checked'));
+editor.applyEntryChanges(typedJob,{url:'https://example.org/search'},'2026-11-27');assert.equal(typedJob.linkType,'search');
+assert.throws(()=>editor.applyEntryChanges(typedJob,{linkType:'posting'},'2026-11-27'),/must match/);
+assert.throws(()=>editor.validateEntryChanges(typedJob,{sources:[{...typedJob.sources[0],linkType:'other'}]}),/link type/);
+console.log('PASS: independent source radios, primary switching/type synchronization, unknown sources and invalid types.');
+
+const radioDraft={type:'radio',value:'search',checked:false,hasAttribute:()=>false};
+const snapshotForm={querySelectorAll:()=>[radioDraft]};
+const beforeRadio=formHelpers.formSnapshot(snapshotForm);radioDraft.checked=true;
+assert.notEqual(formHelpers.formSnapshot(snapshotForm),beforeRadio,'Secondary-source type changes must enable Save');

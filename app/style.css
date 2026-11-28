@@ -316,12 +316,16 @@ tr.job.urgent>td:first-child,tr.detail.urgent>td{box-shadow:inset var(--row-edge
 .entry-form .entry-source>label:first-child input{margin-top:6px}
 .entry-source button,[data-add-source]{padding:5px 8px}
 .entry-source-actions{position:absolute;top:0;right:0;display:flex;align-items:center;gap:14px;height:22px}
+.entry-source+.entry-source>.entry-source-actions{top:13px}
 .entry-source-actions .source-primary{display:inline-flex;align-items:center;gap:4px;margin:0;font-size:11px;line-height:1;cursor:pointer}
 .entry-form .entry-source .source-primary input{display:block;flex:none;width:11px;height:11px;margin:0;padding:0;accent-color:var(--green)}
 .entry-source-actions>[data-remove-source]{width:22px;height:22px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:18px;line-height:1;border:0;border-radius:4px;background:transparent;color:#7a7a7a;box-shadow:none}
 .entry-source-actions>[data-remove-source]:enabled:hover,.entry-source-actions>[data-remove-source]:focus-visible{background:#e3e3e3;color:#555}
 .entry-source-actions>[data-remove-source]:focus-visible{outline:2px solid #999;outline-offset:1px}
-.entry-source+.entry-source>.entry-source-actions{top:13px}
+.entry-source-actions .source-type{display:inline-flex;align-items:center;gap:8px;margin-right:14px}
+.entry-source-actions .source-type label:has(input:disabled){color:#9b9f9b;cursor:default}
+.entry-source-actions .source-type label{display:inline-flex;align-items:center;gap:3px;margin:0;font-size:11px;line-height:1;cursor:pointer}
+.entry-form .entry-source .source-type input{display:inline-block;flex:none;width:11px;height:11px;margin:0;padding:0;accent-color:var(--green)}
 .entry-form [data-add-source]{height:30px;margin-top:12px;padding:5px 8px;font-size:12px;line-height:18px}
 .entry-advanced{margin-top:12px}
 .entry-advanced summary{cursor:pointer}
@@ -464,3 +468,7 @@ td.title{min-width:0;max-width:none}
 @media(max-width:1150px){
  .sidebar-shell:not(.is-open) .sidebar-size-handle{visibility:hidden;pointer-events:none}
 }
+
+/* Source actions wrap inside narrow responsive detail columns. */
+.entry-evidence{container-type:inline-size}
+@container(max-width:330px){.entry-source-actions{position:static;flex-wrap:wrap;height:auto;margin-top:8px;gap:8px}.entry-source-actions .source-type{margin-right:0}}

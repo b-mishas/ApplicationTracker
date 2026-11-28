@@ -4,6 +4,14 @@
 
 --------------------
 
+## 2026-11-28 — Source link types and current Offers in Interviews
+
+- Ported JobTracker 85fd9667b25620cd23ac6644371829b91e137062: optional per-source posting/search types, primary synchronization, neutral unknown-source labels, validated import/enrichment and preservation through untyped refreshes. Interviews includes current Interview and Offer. Source actions wrap in narrow detail panels.
+- Batch/inventory schemas, interface/workflow and routine/pristine template document the optional field. Existing untyped records remain valid; no migration. Installed prompts need separate regeneration. Portable paths, country/group rules, local dates and exports retained.
+- JobTracker e15d33ce646edda43ffc6b970131bfad02269a85 was already present: internal fields protected/hidden, Sources spacing and Applied font weight correct. No duplicate legacy fields copied.
+- Verification before splitting: full npm test and isolated headless Chrome at 1440×1000/900×900 passed, including source labels, switching/save and Offer-only Interviews. Firefox/touch/physical-device acceptance remains open. No live data/settings, source checkout, push or ZIP change.
+
+
 ## 2026-11-28 — Recovery review fixes; M7.2/M7.3 reopened (Claude)
 
 - Codex's review reproduced five defect classes in the simplified design:

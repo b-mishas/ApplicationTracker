@@ -34,7 +34,7 @@ const rowStage=status=>stageClasses.get(status)||'';
 const defaultStatusFilter=()=>statuses.filter(status=>!['Rejected','Dismissed','Withdrawn'].includes(status));
 const filters={status:defaultStatusFilter()};
 const inProgressStatuses=['Applied','Interview','Offer'];
-const statusPresets={New:['New'],Shortlisted:['Shortlisted'],Urgent:['New','Shortlisted'],'In progress':inProgressStatuses,Interviews:['Interview'],[APPLIED_TOTAL]:[APPLIED_TOTAL],[INTERVIEW_TOTAL]:[INTERVIEW_TOTAL],[OFFER_TOTAL]:[OFFER_TOTAL],All:statuses};
+const statusPresets={New:['New'],Shortlisted:['Shortlisted'],Urgent:['New','Shortlisted'],'In progress':inProgressStatuses,Interviews:['Interview','Offer'],[APPLIED_TOTAL]:[APPLIED_TOTAL],[INTERVIEW_TOTAL]:[INTERVIEW_TOTAL],[OFFER_TOTAL]:[OFFER_TOTAL],All:statuses};
 const compactColumns=new Set(['fit','star','country','workMode','status','firstSeen','applicationDate','lastInterview','postedDate']);
 const visible=new Set(fields.slice(0,9).map(x=>x[0]));
 let layoutPreset,presetLayouts={};
@@ -186,7 +186,7 @@ function deadlineMarkup(job){
 }
 function detail(j){
  if(editingId===j.id)return `<tr class="detail ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}"><td colspan="${visible.size}"><div class="detail-toolbar"><button type="button" class="entry-save save">Save</button><button type="button" class="entry-cancel">Cancel</button><span class="entry-save-state" role="status" aria-live="polite"></span></div>${renderEntryForm(j,stageControls(j,true),'<label>Notes<textarea class="edit-notes" data-entry-field="notes" placeholder="Questions, follow-ups, application notes…">'+esc(j.notes)+'</textarea></label>')}</td></tr>`;
- return `<tr class="detail ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}"><td colspan="${visible.size}"><div class="detail-toolbar">${detailUndoControls()}<button type="button" class="entry-edit">Edit</button></div><div class="detail-grid"><section><h3>Why it fits</h3><p>${esc(j.reasoning||'No assessment yet.')}</p><h3>Gaps</h3><p>${esc(j.gaps||'No caveats recorded.')}</p></section><section><h3>Evidence & location</h3><p>Assessment: <b>${esc(j.assessmentBasis)}</b>\nSeniority: ${esc(j.seniority||'Unknown')}\nLocation: ${esc(j.locationRaw)}\nFirst found: ${esc(j.firstSeen)}\nPosted: ${esc(j.postedDate||'Unknown')}${deadlineMarkup(j)}</p><h3>Sources</h3>${j.sources.map(s=>`<p>${esc(s.label)}${safeUrl(s.url)?` · <a target="_blank" rel="noopener noreferrer" href="${safeUrl(s.url)}">${j.linkType==='search'?'Open search':'Open listing'} ↗</a>`:''}</p>`).join('')}</section><section class="application-steps"><h3>Application steps</h3>${stageControls(j)}<label>Notes<textarea class="edit-notes" placeholder="Questions, follow-ups, application notes…">${esc(j.notes)}</textarea></label><button class="save" data-id="${esc(j.id)}" disabled>Save changes</button> <button type="button" class="cancel" disabled title="Discard unsaved edits; saved status changes are kept">Cancel</button><span class="save-state" role="status"></span></section></div></td></tr>`;}
+ return `<tr class="detail ${rowStage(effectiveStatus(j))} ${isRejectedAfterInterview(j)?'rejected-after-interview':''} ${j.urgent?'urgent':''}"><td colspan="${visible.size}"><div class="detail-toolbar">${detailUndoControls()}<button type="button" class="entry-edit">Edit</button></div><div class="detail-grid"><section><h3>Why it fits</h3><p>${esc(j.reasoning||'No assessment yet.')}</p><h3>Gaps</h3><p>${esc(j.gaps||'No caveats recorded.')}</p></section><section><h3>Evidence & location</h3><p>Assessment: <b>${esc(j.assessmentBasis)}</b>\nSeniority: ${esc(j.seniority||'Unknown')}\nLocation: ${esc(j.locationRaw)}\nFirst found: ${esc(j.firstSeen)}\nPosted: ${esc(j.postedDate||'Unknown')}${deadlineMarkup(j)}</p><h3>Sources</h3>${j.sources.map(s=>`<p>${esc(s.label)}${safeUrl(s.url)?` · <a target="_blank" rel="noopener noreferrer" href="${safeUrl(s.url)}">${(s.linkType??(s.url===j.url?j.linkType:null))==='search'?'Open search':(s.linkType??(s.url===j.url?j.linkType:null))==='posting'?'Open listing':'Open source'} ↗</a>`:''}</p>`).join('')}</section><section class="application-steps"><h3>Application steps</h3>${stageControls(j)}<label>Notes<textarea class="edit-notes" placeholder="Questions, follow-ups, application notes…">${esc(j.notes)}</textarea></label><button class="save" data-id="${esc(j.id)}" disabled>Save changes</button> <button type="button" class="cancel" disabled title="Discard unsaved edits; saved status changes are kept">Cancel</button><span class="save-state" role="status"></span></section></div></td></tr>`;}
 function dirty(){
  const form=document.querySelector('.entry-form');
  if(form)return formSnapshot(form)!==editorBaseline;
@@ -211,22 +211,25 @@ function refreshEditorButtons(){
 function updatePrimarySource(selected){
  const form=document.querySelector('.entry-form');if(!form)return;
  const choices=[...form.querySelectorAll('[data-source-primary]')];
- const primary=selected??choices.find(choice=>choice.checked)??choices.find(choice=>choice.closest('[data-source-index]').querySelector('[data-source-field="url"]').value);
- for(const choice of choices)choice.checked=choice===primary;
- const urlControl=form.querySelector('[data-entry-field="url"]');
- const next=primary?.closest('[data-source-index]').querySelector('[data-source-field="url"]').value??'';
- if(next!==urlControl.value){
-  const job=data.jobs.find(job=>job.id===editingId),type=form.querySelector('[data-entry-field="linkType"]');
-  // Never guess that an arbitrary search page is a posting identity.
-  const inferred=inferredLinkType(next);
-  if(next===job.url)type.value=job.linkType;
-  else if(next){
-   if(![...type.options].some(option=>option.value===''))type.add(new Option('Choose link type',''));
-   type.value=inferred??'';
+ for(const choice of choices){
+  const row=choice.closest('[data-source-index]'),url=row.querySelector('[data-source-field="url"]').value;
+  if(row.dataset.typeUrl!==url){
+   // A type chosen for a previous address must not silently classify a replacement.
+   const inferred=inferredLinkType(url);
+   for(const radio of row.querySelectorAll('[data-source-type]'))radio.checked=radio.value===inferred;
+   row.dataset.typeUrl=url;
   }
-  urlControl.value=next;
  }
-
+ const primary=selected??choices.find(choice=>choice.checked)??choices.find(choice=>choice.closest('[data-source-index]').querySelector('[data-source-field="url"]').value);
+ for(const choice of choices){
+  choice.checked=choice===primary;
+  const source=choice.closest('[data-source-index]');
+  for(const radio of source.querySelectorAll('[data-source-type]'))radio.disabled=!choice.checked||pendingSave;
+ }
+ const row=primary?.closest('[data-source-index]'),next=row?.querySelector('[data-source-field="url"]').value??'';
+ form.querySelector('[data-entry-field="url"]').value=next;
+ // The legacy vacancy-level field follows the primary source for compatibility.
+ form.querySelector('[data-entry-field="linkType"]').value=next?(row?.querySelector('[data-source-type]:checked')?.value??''):(data.jobs.find(job=>job.id===editingId).linkType||'posting');
 }
 function cancelEntry(){
  if(pendingSave)return;
@@ -315,7 +318,7 @@ function refreshOverview(){
  $('new-count').textContent=data.jobs.filter(j=>j.status==='New').length;
  $('urgent').textContent=data.jobs.filter(j=>j.urgent&&statusPresets.Urgent.includes(effectiveStatus(j))).length;
  $('active').textContent=data.jobs.filter(j=>inProgressStatuses.includes(effectiveStatus(j))).length;
- const interviews=data.jobs.filter(j=>effectiveStatus(j)==='Interview').length;
+ const interviews=data.jobs.filter(j=>statusPresets.Interviews.includes(effectiveStatus(j))).length;
  $('interviews-current').textContent=interviews;
  $('interviews-preset').hidden=interviews===0;
  $('new-count').classList.toggle('has-new',Number($('new-count').textContent)>0);
@@ -813,6 +816,7 @@ async function saveStatus(select){
  finally{setPendingSave(false);disabled.forEach(({control,wasDisabled})=>control.disabled=wasDisabled);refreshEditorButtons();if(focused===select&&document.activeElement===document.body)select.focus();}
 }
 $('body').addEventListener('change',event=>{
+ if(event.target.matches('[data-source-type]')){updatePrimarySource();refreshEditorButtons();return;}
  if(event.target.matches('[data-source-primary]')){updatePrimarySource(event.target);refreshEditorButtons();return;}
  if(event.target.matches('[data-entry-row-field]')){const field=copyRowField(event.target);if(field?.matches('.edit-status'))stageEntryStatus(field);else refreshEditorButtons();return;}
  if(event.target.closest('.entry-form')){if(event.target.matches('.edit-status'))stageEntryStatus(event.target);else{syncRowFields();refreshEditorButtons();}return;}

@@ -64,6 +64,7 @@ export function validateEntryChanges(job,changes,{isCountryCode=code=>/^[A-Z]{2}
    if(!Array.isArray(value)||value.length>100)fail(key,'expected up to 100 listing URLs.');
    for(const source of value){
     if(!source||typeof source!=='object'||Array.isArray(source))fail(key,'invalid source.');
+    if(Object.hasOwn(source,'linkType')&&!['posting','search'].includes(source.linkType))fail(key,'link type must be posting or search.');
     if(typeof source.label!=='string'||!source.label.trim()||source.label.length>200||typeof source.url!=='string'||source.url.length>2000||!(httpUrl(source.url)||source.url===''&&(job.sources||[]).some(old=>old.url===''&&old.file===source.file))||typeof source.file!=='string'||source.file.length>300)fail(key,'each source needs a label and an http(s) URL; evidence file is optional.');
    }
    continue;
@@ -88,6 +89,11 @@ export function validateEntryChanges(job,changes,{isCountryCode=code=>/^[A-Z]{2}
 export function applyEntryChanges(job,changes,today,options){
  validateEntryChanges(job,changes,options);
  const previous=structuredClone(job),oldStatus=effectiveStatus(job);
+ const primary=(changes.sources??job.sources??[]).find(source=>source.url===(changes.url??job.url));
+ if(primary?.linkType&&['sources','url','linkType'].some(key=>Object.hasOwn(changes,key))){
+  if(Object.hasOwn(changes,'linkType')&&changes.linkType!==primary.linkType)fail('linkType','must match the primary source.');
+  changes={...changes,linkType:primary.linkType};
+ }
  const stageKeys=['status','applicationDate','interviewDate','offerDate','interviewOutcomeDate'];
  if(stageKeys.some(key=>Object.hasOwn(changes,key)))updateStage(job,{...changes,status:changes.status??oldStatus},today);
  // Date corrections are independent of the current stage. Only a real stage

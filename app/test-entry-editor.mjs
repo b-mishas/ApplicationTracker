@@ -49,6 +49,13 @@ try{
  assert.equal(undoneResponse.status,200);const undone=await undoneResponse.json();
  assert.deepEqual(withoutTimestamp(undone.job),original);
  assert.equal((await patch({id:original.id,revision:undone.revision,quickAction:'undo',undoToken:edited.undoToken})).status,409);
+ const typedSource={...original.sources[0],linkType:'search'};
+ const typedResponse=await patch({id:original.id,revision:undone.revision,changes:{sources:[typedSource]}});
+ assert.equal(typedResponse.status,200);const typedSaved=await typedResponse.json();
+ assert.equal(typedSaved.job.linkType,'search');assert.equal(typedSaved.job.sources[0].linkType,'search');
+ const typedUndo=await patch({id:original.id,revision:typedSaved.revision,quickAction:'undo',undoToken:typedSaved.undoToken});
+ assert.equal(typedUndo.status,200);Object.assign(undone,await typedUndo.json());
+ assert.deepEqual(withoutTimestamp(undone.job),original);
  console.log('PASS: multiple fields/URLs save atomically, preserve evidence and unrelated data, make a backup, reject stale writes and undo together.');
 
  const invalid=[null,[],{id:'replacement'},{updatedAt:'fake'},{firstSeen:'2026-02-30'},{country:'DE'},{bogus:'x'},JSON.parse('{"__proto__":{}}'),{company:''},{group:42},{fit:6},{fit:'4'},{status:'Unknown'},{postedDate:'2026-02-30'},{applicationDate:'yesterday'},{offerDate:null},{countries:['DE','DE']},{countries:['XX']},{url:'javascript:alert(1)'},{sources:'invalid'},{sources:[{label:'A',url:'ftp://example.org',file:''}]},{sources:[{label:'',url:'https://example.org',file:''}]},{statusHistory:[{id:'a',status:'Interview',date:'2026-02-30'}]},{customField:[]},{notes:'a'.repeat(50001)}];
@@ -146,9 +153,9 @@ try{
   const value=displayValue(original,key);
   return {dataset:{entryField:key},checked:Boolean(value),value:type==='countries'?(value||[]).join(', '):type==='json'?(value===undefined?'':JSON.stringify(value,null,2)):String(value??'')};
  });
- const sourceDraft=(index,label,url)=>({dataset:{sourceIndex:String(index)},querySelectorAll:()=>[
-  {dataset:{sourceField:'label'},value:label},{dataset:{sourceField:'url'},value:url}
- ]});
+ const sourceDraft=(index,label,url,type='')=>({dataset:{sourceIndex:String(index)},querySelectorAll:selector=>selector==='[data-source-type]'?[
+  {value:'posting',checked:type==='posting'},{value:'search',checked:type==='search'}
+ ]:[{dataset:{sourceField:'label'},value:label},{dataset:{sourceField:'url'},value:url}]});
  const draftForm={querySelectorAll:selector=>selector==='[data-entry-field]'?controls:selector==='[data-source-index]'?[
   sourceDraft(0,'Updated label',original.sources[0].url),sourceDraft(-1,'Added source','https://example.org/added')
  ]:[]};
@@ -158,6 +165,16 @@ try{
  assert.equal(extracted.sources[1].file,'');
  validateEntryChanges(original,extracted);
  assert.equal((renderEntryForm(repeatedSource).match(/data-source-field="url"[^>]*value="https:\/\/jobs.ashbyhq.com\/cradlebio\/example-id"/g)||[]).length,2);
+ // Changing primary retains the previous primary's known type as source metadata.
+ const switchedControls=controls.map(control=>({...control}));
+ switchedControls.find(control=>control.dataset.entryField==='url').value='https://example.org/added';
+ switchedControls.find(control=>control.dataset.entryField==='linkType').value='search';
+ const switchedForm={querySelectorAll:selector=>selector==='[data-entry-field]'?switchedControls:selector==='[data-source-index]'?[
+  sourceDraft(0,original.sources[0].label,original.sources[0].url,original.linkType),sourceDraft(-1,'Search','https://example.org/added','search')
+ ]:[]};
+ const switched=readEntryChanges(switchedForm,original);
+ assert.equal(switched.sources[0].linkType,original.linkType);assert.equal(switched.sources[1].linkType,'search');
+ assert.equal(switched.linkType,'search');
  const missingPrimary={...original,url:'https://example.org/missing-primary'};
  const editorRows=sourcesForEditor(missingPrimary);
  assert.equal(editorRows.length,original.sources.length+1);
@@ -174,6 +191,7 @@ try{
  assert.equal(switchedPrimary.url,original.sources[0].url);
  assert(switchedPrimary.sources.some(source=>source.url===missingPrimary.url),'switching primary preserves the previous link');
  console.log('PASS: stage transitions, generated/manual application text, milestone rollback, legacy preservation, advanced fields and escaped rendering.');
+
 }finally{
  if(server&&server.exitCode===null){const stopped=new Promise(resolve=>server.once('exit',resolve));server.kill();await stopped;}
  await rm(directory,{recursive:true,force:true,maxRetries:5});

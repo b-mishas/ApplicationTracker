@@ -44,6 +44,23 @@ await test('invalid deadline is rejected without rejecting a valid neighbour', a
  const bad=mk({applicationDeadline:'2026-02-30'}),good=mk({applicationDeadline:'2026-12-01'});
  const result=await imp(dir,await batch(dir,[bad,good]));assert.equal(result.rejected,1);assert.equal(result.added,1);
 });
+await test('optional source types import, enrich existing evidence and survive untyped refreshes', async dir => {
+ const a=mk();a.sources=[{label:'Company site',url:a.url,file:'',linkType:'posting'},{label:'Search',url:'https://example.org/search',file:'',linkType:'search'}];
+ const p=await batch(dir,[a],{runId:'source-types-aaaa'});await imp(dir,p);
+ let rec=(await read(dir)).jobs.find(j=>j.url===a.url);assert.deepEqual(rec.sources.map(s=>s.linkType),['posting','search']);
+ const next={...a,sources:a.sources.map(({linkType,...s})=>s)};
+ await imp(dir,await batch(dir,[next],{runId:'source-types-aaaa'}));
+ rec=(await read(dir)).jobs.find(j=>j.url===a.url);assert.deepEqual(rec.sources.map(s=>s.linkType),['posting','search']);
+ // Same evidence identity and source count: adding/changing a type still saves.
+ next.sources[1].linkType='posting';await imp(dir,await batch(dir,[next],{runId:'source-types-aaaa'}));
+ rec=(await read(dir)).jobs.find(j=>j.url===a.url);assert.equal(rec.sources[1].linkType,'posting');assert.equal(rec.sources.length,2);
+});
+await test('source type is optional but invalid enums and primary conflicts are rejected', async dir => {
+ const bad=mk(),conflict=mk(),valid=mk();
+ bad.sources=[{label:'Bad',url:bad.url,file:'',linkType:'unknown'}];
+ conflict.sources=[{label:'Conflict',url:conflict.url,file:'',linkType:'search'}];
+ const result=await imp(dir,await batch(dir,[bad,conflict,valid]));assert.equal(result.rejected,2);assert.equal(result.added,1);
+});
 await test('repeated import of the same batch is idempotent (no write, no new backup)', async dir => {
   const p = await batch(dir, [mk()]); await imp(dir, p); const before = await readFile(path.join(dir, 'jobs.json'), 'utf8');
   const r = await imp(dir, p); assert.equal(r.added, 0); assert.equal(r.updated, 0); assert.equal(r.unchanged, 1); assert.equal(r.written, false);

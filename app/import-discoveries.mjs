@@ -66,6 +66,7 @@ export function inspectBatch(batch, batchName) {
     if (!issues.length) {
       for(const country of j.countries)if(!isCountryCode(country))issues.push(at+'.countries: unsupported country code '+country);
       j.sources.forEach((s, k) => { if (s.file !== batchName) issues.push(`${at}.sources[${k}].file must be "${batchName}" (the batch file name), got "${s.file}"`); });
+      if (j.sources.some(s => s.url === j.url && s.linkType && s.linkType !== j.linkType)) issues.push(`${at}: primary source linkType must match the vacancy linkType`);
       if (j.availability !== 'Unverified' && (j.assessmentBasis !== 'Posting reviewed' || j.linkType !== 'posting')) issues.push(`${at}: availability ${j.availability} requires assessmentBasis "Posting reviewed" and linkType "posting"`);
       if (!!j.provider !== !!j.providerJobId) issues.push(`${at}: provider and providerJobId must be given together`);
       if (j.linkType === 'search' && j.availability !== 'Unverified') issues.push(`${at}: a search link cannot verify availability`);
@@ -110,7 +111,15 @@ function newRecord(j, ctx) {
   if (j.availability !== 'Unverified') r.availabilityAt = j.observedAt;
   return r;
 }
-const dedupeSources = list => { const seen = new Set(), out = []; for (const s of list) { const k = srcKey(s); if (!seen.has(k)) { seen.add(k); out.push({...s}); } } return out; };
+const dedupeSources = list => {
+ const seen = new Map();
+ for (const source of list) {
+  const key = srcKey(source),existing = seen.get(key);
+  if (!existing) seen.set(key,{...source});
+  else if (source.linkType) existing.linkType = source.linkType;
+ }
+ return [...seen.values()];
+};
 
 function mergeInto(rec, j, ctx) {
   const before = JSON.stringify(rec), original = JSON.parse(before), changed = new Set();
@@ -167,7 +176,9 @@ function mergeInto(rec, j, ctx) {
   }
   // sources
   const merged = dedupeSources([...(rec.sources || []), ...j.sources]);
-  if (merged.length !== (rec.sources || []).length) set('sources', merged);
+  // A known primary posting stays authoritative when merging older search evidence.
+  for (const source of merged) if (source.url === rec.url && source.linkType) source.linkType = rec.linkType;
+  if (!same(merged, rec.sources || [])) set('sources', merged);
   if (j.title !== rec.title && normTitle(j.title) !== normTitle(rec.title)) { const alt = rec.alternateTitles || []; if (!alt.includes(j.title)) set('alternateTitles', [...alt, j.title]); }
   if (before !== JSON.stringify(rec)) rec.updatedAt = ctx.now;
   return [...changed];

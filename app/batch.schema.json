@@ -47,6 +47,7 @@
             "type": "object", "additionalProperties": true,
             "required": ["label", "url", "file"],
             "properties": {
+              "linkType": {"enum": ["posting", "search"]},
               "label": {"type": "string", "minLength": 1, "maxLength": 200},
               "url": {"type": "string", "format": "http-url", "maxLength": 2000},
               "file": {"type": "string", "minLength": 1, "maxLength": 300}

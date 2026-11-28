@@ -31,8 +31,11 @@ export function renderRowControl(job,column){
   .replace('class="entry-label"','class="entry-label visually-hidden"')
   .replace('data-entry-field=','data-entry-row-field=');
 }
-export function sourceRow(source={},index=-1,primary=false){
- return `<div class="entry-source" data-source-index="${index}"><label>Label<input data-source-field="label" type="text" value="${esc(source.label)}"></label><label>Listing URL<input data-source-field="url" type="url" value="${esc(source.url)}"></label><div class="entry-source-actions"><label class="source-primary" title="Use this URL when clicking the position title"><input type="checkbox" data-source-primary aria-label="Use as primary listing"${primary?' checked':''}>Primary</label><button type="button" data-remove-source aria-label="Remove listing URL" title="Remove source"><span aria-hidden="true">×</span></button></div></div>`;
+let sourceRadioId=0;
+export function sourceRow(source={},index=-1,primary=false,primaryType=''){
+ const type=source.linkType??(primary?primaryType:''),name='source-type-'+(++sourceRadioId);
+ const radios=`<span class="source-type" role="group" aria-label="Link type">${['search','posting'].map(value=>`<label><input type="radio" name="${name}" data-source-type value="${value}"${type===value?' checked':''}${primary?'':' disabled'}>${value==='posting'?'Posting':'Search'}</label>`).join('')}</span>`;
+ return `<div class="entry-source" data-source-index="${index}" data-type-url="${esc(source.url??'')}"><label>Label<input data-source-field="label" type="text" value="${esc(source.label)}"></label><label>Listing URL<input data-source-field="url" type="url" value="${esc(source.url)}"></label><div class="entry-source-actions">${radios}<label class="source-primary" title="Use this URL when clicking the position title"><input type="checkbox" data-source-primary aria-label="Use as primary listing"${primary?' checked':''}>Primary</label><button type="button" data-remove-source aria-label="Remove listing URL" title="Remove source"><span aria-hidden="true">×</span></button></div></div>`;
 }
 export function sourcesForEditor(job){
  const rows=(job.sources||[]).map((source,index)=>({source,index}));
@@ -65,11 +68,11 @@ export function renderEntryForm(job,applicationMarkup,notesMarkup){
  // Preserve the existing three columns. Fields not normally displayed stay
  // under a disclosure instead of expanding the normal panel into a new layout.
  const assessment=key=>control(key).replace('class="entry-label"','class="entry-label visually-hidden"');
- return `<form class="entry-form" novalidate><input type="hidden" data-entry-field="url" value="${esc(job.url)}"><div class="detail-grid"><section><h3>Why it fits</h3>${assessment('reasoning')}<h3>Gaps</h3>${assessment('gaps')}</section><section class="entry-evidence"><h3>Evidence & location</h3>${['assessmentBasis','seniority'].map(control).join('')}${['firstSeen','postedDate','applicationDeadline'].map(control).join('')}<h3 class="entry-sources-heading">Sources</h3>${control('linkType')}<div data-entry-sources>${sourcesForEditor(job).map(({source,index,primary})=>sourceRow(source,index,primary)).join('')}</div><button type="button" data-add-source>+ Add URL</button></section><section class="application-steps"><h3>Application steps</h3>${applicationMarkup??applicationKeys.filter(key=>key!=='notes').map(control).join('')}${notesMarkup??control('notes')}</section></div><details class="entry-advanced"><summary>Additional fields</summary><div class="entry-additional">${fields.filter(field=>!shown.has(field[0])&&field[0]!=='urgent').map(field=>fieldControl(job,field)).join('')}</div><div class="entry-urgent-line">${control('urgent')}</div><h3>Record metadata (read-only)</h3><dl>${Object.keys(job).filter(key=>readOnlyFields.has(key)&&!hiddenFields.has(key)).map(key=>`<dt>${esc(fieldLabel(key))}</dt><dd>${esc(typeof job[key]==='object'?JSON.stringify(job[key]):job[key])}</dd>`).join('')}</dl></details></form>`;
+ return `<form class="entry-form" novalidate><input type="hidden" data-entry-field="url" value="${esc(job.url)}"><input type="hidden" data-entry-field="linkType" value="${esc(job.linkType)}"><div class="detail-grid"><section><h3>Why it fits</h3>${assessment('reasoning')}<h3>Gaps</h3>${assessment('gaps')}</section><section class="entry-evidence"><h3>Evidence & location</h3>${['assessmentBasis','seniority'].map(control).join('')}${['firstSeen','postedDate','applicationDeadline'].map(control).join('')}<h3 class="entry-sources-heading">Sources</h3><div data-entry-sources>${sourcesForEditor(job).map(({source,index,primary})=>sourceRow(source,index,primary,source.url===job.url?job.linkType:'')).join('')}</div><button type="button" data-add-source>+ Add URL</button></section><section class="application-steps"><h3>Application steps</h3>${applicationMarkup??applicationKeys.filter(key=>key!=='notes').map(control).join('')}${notesMarkup??control('notes')}</section></div><details class="entry-advanced"><summary>Additional fields</summary><div class="entry-additional">${fields.filter(field=>!shown.has(field[0])&&field[0]!=='urgent').map(field=>fieldControl(job,field)).join('')}</div><div class="entry-urgent-line">${control('urgent')}</div><h3>Record metadata (read-only)</h3><dl>${Object.keys(job).filter(key=>readOnlyFields.has(key)&&!hiddenFields.has(key)).map(key=>`<dt>${esc(fieldLabel(key))}</dt><dd>${esc(typeof job[key]==='object'?JSON.stringify(job[key]):job[key])}</dd>`).join('')}</dl></details></form>`;
 }
 // Snapshot raw input, rather than parsed JSON: invalid drafts still count as unsaved.
 export function formSnapshot(form){
- return JSON.stringify([...form.querySelectorAll('input,select,textarea,[data-source-index]')].map(control=>control.hasAttribute('data-source-index')?control.dataset.sourceIndex:control.type==='checkbox'?control.checked:control.value));
+ return JSON.stringify([...form.querySelectorAll('input,select,textarea,[data-source-index]')].map(control=>control.hasAttribute('data-source-index')?control.dataset.sourceIndex:['checkbox','radio'].includes(control.type)?control.checked:control.value));
 }
 export function readEntryChanges(form,job){
  const changes={};
@@ -82,8 +85,14 @@ export function readEntryChanges(form,job){
  }
  const sources=[...form.querySelectorAll('[data-source-index]')].map(row=>{
   const index=Number(row.dataset.sourceIndex),fallback={label:'Primary listing',url:job.url,file:''};
-  const source={...(index===-2?fallback:job.sources?.[index]||{file:''})};
+  const original=index===-2?fallback:job.sources?.[index]||{file:''};
+  const source={...original};
   for(const control of row.querySelectorAll('[data-source-field]'))source[control.dataset.sourceField]=control.value;
+  const type=[...row.querySelectorAll('[data-source-type]')].find(control=>control.checked)?.value;
+  const previousType=original.linkType??(original.url===job.url?job.linkType:'');
+  if(source.url!==original.url){
+   delete source.linkType;if(type)source.linkType=type;
+  }else if(type&&(type!==previousType||Object.hasOwn(changes,'url')&&original.url===job.url))source.linkType=type;
   if(index===-2&&!Object.hasOwn(changes,'url')&&JSON.stringify(source)===JSON.stringify(fallback))return null;
   return source;
  }).filter(Boolean);
