@@ -94,7 +94,7 @@ const canApply=job=>['New','Shortlisted'].includes(effectiveStatus(job));
 function stageControls(job,editing=false){
  const attribute=key=>editing?' data-entry-field="'+key+'"':'';
  const saved=interviewDetails(job),visible=stageFields(job,saved);
- return '<div class="stage-row">'
+ return '<div class="stage-row status-stage-row">'
   +'<label>Status <select class="edit-status" title="'+(editing?'Changes save with Save':'Status saves automatically')+'"'+attribute('status')+'>'+statuses.map(status=>'<option'+(status===effectiveStatus(job)?' selected':'')+'>'+status+'</option>').join('')+'</select></label>'
   +'<button type="button" class="apply-status" title="Mark this position as Applied"'+hiddenUnless(canApply(job))+'>Applied</button>'
   +dateInput('Application date','applicationDate',job.applicationDate||'',visible.application,editing)+'</div>'
@@ -108,7 +108,7 @@ function stageControls(job,editing=false){
 }
 function dateInput(label,key,value,visible=true,editing=false){
  const application=key==='applicationDate',id='step-'+key;
- return '<div class="date-field'+(key==='offerDate'?' date-field-half':'')+'"'+(application?' data-application-date':'')+hiddenUnless(visible)+'><label for="'+id+'">'+label+'</label><span class="date-control"><input id="'+id+'" type="date" '+(application?'class="edit-application-date"':'data-milestone="'+key+'"')+(editing?' data-entry-field="'+key+'"':'')+' value="'+esc(value)+'"><button type="button" class="clear-date" aria-label="Clear '+label.toLowerCase()+'" title="Clear '+label.toLowerCase()+'"'+(value?'':' disabled')+'><span aria-hidden="true">×</span></button></span></div>';
+ return '<div class="date-field"'+(application?' data-application-date':'')+hiddenUnless(visible)+'><label for="'+id+'">'+label+'</label><span class="date-control"><input id="'+id+'" type="date" '+(application?'class="edit-application-date"':'data-milestone="'+key+'"')+(editing?' data-entry-field="'+key+'"':'')+' value="'+esc(value)+'"><button type="button" class="clear-date" aria-label="Clear '+label.toLowerCase()+'" title="Clear '+label.toLowerCase()+'"'+(value?'':' disabled')+'><span aria-hidden="true">×</span></button></span></div>';
 }
 function milestoneInput(label,key,value,visible=true,editing=false){return dateInput(label,key,value,visible,editing);}
 function milestoneDraft(section,job,{includeHidden=false}={}){

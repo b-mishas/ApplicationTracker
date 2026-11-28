@@ -4,6 +4,12 @@
 
 --------------------
 
+## 2026-11-28 — Compact responsive application controls
+
+- Ported JobTracker c802981687b8ef9e7f9836d10b330e4cfcdb2cb5: matching 145 px Status/date controls, 12 px adjacent-control gaps, outcome buttons beside interview date, consistent labels and extra Cancel separation without changing button sizes.
+- Adapted to ApplicationTracker's responsive detail panels: application controls stack when their column cannot fit them. Chrome screenshots inspected at 1440×1000 and 900×900; Status/date widths measured 145 px with a 12 px gap, and narrow-panel overflow was eliminated. Full npm test passed before commit splitting; no runtime/data migration or distribution build.
+
+
 ## 2026-11-28 — Source link types and current Offers in Interviews
 
 - Ported JobTracker 85fd9667b25620cd23ac6644371829b91e137062: optional per-source posting/search types, primary synchronization, neutral unknown-source labels, validated import/enrichment and preservation through untyped refreshes. Interviews includes current Interview and Offer. Source actions wrap in narrow detail panels.

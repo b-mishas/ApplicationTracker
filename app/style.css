@@ -227,11 +227,11 @@ input,select,button,textarea,.overview,.overview>button,.export,.application-exp
 tr.job.urgent>td:first-child,tr.detail.urgent>td{box-shadow:inset var(--row-edge-width) 0 #bb3834}
 
 /* Retain native calendars; the adjacent cross clears the same date input. */
-.date-field{min-width:0}
+:root{--date-control-width:145px}
+.date-field{min-width:0;width:var(--date-control-width);max-width:100%}
 .detail section>.date-field{margin-top:10px}
-.date-field-half{width:calc((100% - 8px)/2)}
 .date-control{display:flex;align-items:center;max-width:100%;height:32px;margin:5px 0 10px;border:1px solid var(--control-border);border-radius:6px;background:white}
-.stage-row .date-control{margin:0}
+.stage-row .date-control{margin:5px 0 0}
 .detail .date-control input[type=date]{flex:1;min-width:0;width:100%;height:30px;margin:0;border:0;padding:4px 6px}
 .date-control:focus-within{outline:2px solid #5ca894;outline-offset:2px}
 .detail .date-control input:focus{outline:none}
@@ -267,20 +267,27 @@ tr.job.urgent>td:first-child,tr.detail.urgent>td{box-shadow:inset var(--row-edge
 /* A shared gap separates each top-level row of application fields. */
 .application-steps>label,.application-steps>.stage-row,.application-steps>.date-field,.application-steps>.applied-shortcuts{margin-top:12px}
 .application-steps>h3+.stage-row{margin-top:0}
-.application-steps .stage-row{gap:10px}
+.application-steps .stage-row{gap:12px}
+.application-steps [data-interview-row]{grid-template-columns:minmax(0,var(--date-control-width)) minmax(0,max-content);justify-content:start}
 .detail .application-steps .date-control,.detail .application-steps input[type=text],.detail .application-steps textarea{margin-bottom:0}
 .application-steps .edit-status,.application-steps .edit-interview-outcome{display:block;width:100%;margin-top:5px}
+/* Keep the frequent action beside a content-sized selector, rather than halfway across the panel. */
+.application-steps .status-stage-row{grid-template-columns:repeat(2,minmax(0,var(--date-control-width)));justify-content:start}
+.application-steps .status-stage-row:has(.apply-status:not([hidden])){width:min(100%,calc(var(--date-control-width) + 100px));grid-template-columns:minmax(0,1fr) 88px}
+.application-steps .edit-status{width:var(--date-control-width);max-width:100%}
+.application-steps .apply-status{width:88px}
 .applied-shortcuts{display:flex;gap:8px}
 .applied-shortcuts[hidden]{display:none}
 .applied-shortcuts button{height:32px;padding:4px 12px;font-size:12px}
 .application-steps>.save,.application-steps>.cancel{margin-top:12px}
+.application-steps>.cancel{margin-inline-start:8px}
 @media(max-width:850px){.workspace{gap:12px}.sidebar{padding-right:8px}.sidebar button{padding-inline:8px}.results .search-control{max-width:none}.results{gap:10px}}
 @media(max-width:580px){.workspace{flex-direction:column;gap:12px}.sidebar{width:100%;max-width:none;max-height:210px;display:flex;gap:20px;border-right:0;border-bottom:1px solid var(--control-border);padding:0 0 10px}.sidebar section{flex:1;align-content:start}.sidebar .sidebar-statistics{margin-top:0}.sidebar button{white-space:normal;gap:20px}.sidebar h2{margin-inline:8px}}
 
-.interview-outcomes{min-width:0;font-size:12px}
-.interview-outcomes>span{display:block;margin-bottom:4px}
-.interview-outcomes>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;width:100%}
-.interview-outcomes button{width:100%;min-width:0;min-height:32px;margin:0;padding:4px 3px;font-size:11px;white-space:nowrap}
+.interview-outcomes{min-width:0}
+.interview-outcomes>span{display:block;margin-bottom:5px}
+.interview-outcomes>div{display:grid;grid-template-columns:repeat(3,minmax(72px,1fr));gap:8px;width:max-content;max-width:100%}
+.interview-outcomes button{width:100%;min-width:0;min-height:32px;margin:0;padding:4px 8px;font-size:11px;white-space:nowrap}
 .interview-outcomes button[aria-pressed=true]{background:#e5e7eb;font-weight:700}
 
 /* Only an active Offer shortcut uses the gold status-badge colours. */
@@ -309,6 +316,7 @@ tr.job.urgent>td:first-child,tr.detail.urgent>td{box-shadow:inset var(--row-edge
 .entry-form .entry-evidence>.entry-sources-heading{margin-top:20px}
 .entry-evidence>.entry-field{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);align-items:center;gap:6px}
 .entry-form .entry-evidence>.entry-field input,.entry-form .entry-evidence>.entry-field select{width:100%;padding:5px;margin:0}
+.entry-form .entry-evidence>.entry-field input[type=date]{width:var(--date-control-width);max-width:100%}
 .entry-form .entry-source{position:relative;margin-bottom:8px}
 .entry-form .entry-source+.entry-source{border-top:1px solid #cbbfae;margin-top:12px;padding-top:12px}
 .entry-source label{margin-bottom:4px}
@@ -469,6 +477,8 @@ td.title{min-width:0;max-width:none}
  .sidebar-shell:not(.is-open) .sidebar-size-handle{visibility:hidden;pointer-events:none}
 }
 
-/* Source actions wrap inside narrow responsive detail columns. */
-.entry-evidence{container-type:inline-size}
+/* Stack compact controls when the responsive detail column cannot fit them. */
+.application-steps,.entry-evidence{container-type:inline-size}
+@container(max-width:388px){.application-steps [data-interview-row]{grid-template-columns:minmax(0,1fr)}}
+@container(max-width:301px){.application-steps .status-stage-row:not(:has(.apply-status:not([hidden]))){grid-template-columns:minmax(0,1fr)}}
 @container(max-width:330px){.entry-source-actions{position:static;flex-wrap:wrap;height:auto;margin-top:8px;gap:8px}.entry-source-actions .source-type{margin-right:0}}
